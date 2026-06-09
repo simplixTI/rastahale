@@ -21,6 +21,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminInstructors from "./pages/admin/AdminInstructors";
 import InstructorSection from "./pages/InstructorSection";
+import InstructorRanking from "./pages/InstructorRanking";
 import StudioDashboard from "./pages/studio/StudioDashboard";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
@@ -98,6 +99,7 @@ const AppRoutes = () => {
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
         <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
+        <Route path="/ranking" element={<ProtectedRoute><InstructorRanking /></ProtectedRoute>} />
         <Route path="/studio" element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

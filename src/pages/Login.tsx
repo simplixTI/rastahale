@@ -73,7 +73,7 @@ const Login = () => {
       playNetflixSound();
       // Show splash then redirect
       setTimeout(() => {
-        navigate(role === "admin" ? "/admin" : "/");
+        navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
       }, 2200);
     } else {
       setError("Email ou senha incorretos");
