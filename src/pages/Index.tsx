@@ -1,0 +1,146 @@
+import { useEffect, useRef, useState, ReactNode } from "react";
+import { Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import MobileLayout from "@/components/MobileLayout";
+import VideoCard from "@/components/VideoCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { useVideos } from "@/hooks/useVideos";
+import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
+
+const FadeInSection = ({ children, delay = 0 }: { children: ReactNode; delay?: number }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.unobserve(el); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "transition-all duration-700 ease-out",
+        visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+      )}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+};
+
+const Section = ({ title, children, delay = 0 }: { title: string; children: ReactNode; delay?: number }) => (
+  <FadeInSection delay={delay}>
+    <section className="mt-6">
+      <h2 className="mb-3 px-4 text-base font-bold text-foreground">{title}</h2>
+      <div
+        className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
+      >
+        {children}
+        <div className="shrink-0 w-1" aria-hidden="true" />
+      </div>
+    </section>
+  </FadeInSection>
+);
+
+const Index = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
+
+  const featured = videos.find((v) => v.id === "v5") ?? videos[0];
+  const continueWatching = videos.filter((v) => v.progress && v.progress > 0 && v.progress < 100);
+  const jiuFundamentos = videos.filter((v) => v.category === "jiu-jitsu" && v.subcategory === "Fundamentos");
+  const jiuAvancado = videos.filter((v) => v.category === "jiu-jitsu" && v.subcategory === "Avançado");
+  const lutaLivre = videos.filter((v) => v.category === "luta-livre");
+
+  if (isLoading) {
+    return (
+      <MobileLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  return (
+    <MobileLayout>
+      <FadeInSection>
+        <header className="flex items-center justify-between px-4 pt-4">
+          <img src={logo} alt="RastaHale" className="h-10 rounded-lg" />
+          <span className="text-xs font-medium text-muted-foreground">Olá, {user?.name?.split(" ")[0] ?? "Atleta"} 🤙</span>
+        </header>
+      </FadeInSection>
+
+      {featured && (
+        <FadeInSection delay={100}>
+          <button
+            onClick={() => navigate(`/video/${featured.id}`)}
+            className="group relative mx-4 mt-4 overflow-hidden rounded-xl"
+          >
+            <img
+              src={featured.thumbnail}
+              alt={featured.title}
+              className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <span className="mb-1 inline-block rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+                EM DESTAQUE
+              </span>
+              <h1 className="text-lg font-bold leading-tight text-primary-foreground">{featured.title}</h1>
+              <p className="mt-0.5 text-xs text-primary-foreground/70">{featured.duration}</p>
+            </div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-primary p-3 shadow-lg">
+              <Play size={20} className="text-primary-foreground" fill="currentColor" />
+            </div>
+          </button>
+        </FadeInSection>
+      )}
+
+      {continueWatching.length > 0 && (
+        <Section title="Continuar Assistindo" delay={200}>
+          {continueWatching.map((v) => (
+            <VideoCard key={v.id} video={v} size="sm" />
+          ))}
+        </Section>
+      )}
+
+      {jiuFundamentos.length > 0 && (
+        <Section title="Jiu Jitsu — Fundamentos" delay={100}>
+          {jiuFundamentos.map((v) => (
+            <VideoCard key={v.id} video={v} />
+          ))}
+        </Section>
+      )}
+
+      {jiuAvancado.length > 0 && (
+        <Section title="Jiu Jitsu — Avançado" delay={100}>
+          {jiuAvancado.map((v) => (
+            <VideoCard key={v.id} video={v} />
+          ))}
+        </Section>
+      )}
+
+      {lutaLivre.length > 0 && (
+        <Section title="Luta Livre" delay={100}>
+          {lutaLivre.map((v) => (
+            <VideoCard key={v.id} video={v} />
+          ))}
+        </Section>
+      )}
+    </MobileLayout>
+  );
+};
+
+export default Index;
