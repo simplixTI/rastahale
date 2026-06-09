@@ -25,6 +25,8 @@ import InstructorRanking from "./pages/InstructorRanking";
 import StudioDashboard from "./pages/studio/StudioDashboard";
 import StudioFeedback from "./pages/studio/StudioFeedback";
 import StudioRanking from "./pages/studio/StudioRanking";
+import StudioSessoes from "./pages/studio/StudioSessoes";
+import StudioPerfil from "./pages/studio/StudioPerfil";
 import StudioBottomBar from "./components/StudioBottomBar";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
@@ -106,7 +108,9 @@ const AppRoutes = () => {
         <Route path="/ranking" element={<ProtectedRoute><InstructorRanking /></ProtectedRoute>} />
         <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
         <Route path="/studio/feedback" element={<ProtectedRoute instructorOnly><StudioFeedback /></ProtectedRoute>} />
-        <Route path="/studio/ranking"  element={<ProtectedRoute instructorOnly><StudioRanking  /></ProtectedRoute>} />
+        <Route path="/studio/ranking"   element={<ProtectedRoute instructorOnly><StudioRanking  /></ProtectedRoute>} />
+        <Route path="/studio/sessoes"  element={<ProtectedRoute instructorOnly><StudioSessoes  /></ProtectedRoute>} />
+        <Route path="/studio/perfil"   element={<ProtectedRoute instructorOnly><StudioPerfil   /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar  && <BottomTabBar />}
