@@ -1,4 +1,4 @@
-import { ChevronRight, User, CreditCard, Settings, LogOut } from "lucide-react";
+import { ChevronRight, User, CreditCard, Settings, LogOut, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -22,9 +22,10 @@ const Profile = () => {
   const planName = profile?.planName ?? "—";
 
   const menuItems = [
-    { icon: User, label: "Editar Perfil", onClick: () => navigate("/perfil/editar") },
-    { icon: CreditCard, label: "Meu Plano", onClick: () => navigate("/perfil/plano") },
-    { icon: Settings, label: "Configurações", onClick: () => navigate("/perfil/configuracoes") },
+    { icon: User,     label: "Editar Perfil",   onClick: () => navigate("/perfil/editar")        },
+    { icon: CreditCard, label: "Meu Plano",     onClick: () => navigate("/perfil/plano")         },
+    { icon: Settings, label: "Configurações",   onClick: () => navigate("/perfil/configuracoes") },
+    { icon: Download, label: "Instalar App",    onClick: () => navigate("/instalar")             },
   ];
 
   return (

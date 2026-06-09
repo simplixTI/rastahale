@@ -20,6 +20,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminInstructors from "./pages/admin/AdminInstructors";
+import AdminRanking from "./pages/admin/AdminRanking";
 import InstructorSection from "./pages/InstructorSection";
 import InstructorRanking from "./pages/InstructorRanking";
 import StudioDashboard from "./pages/studio/StudioDashboard";
@@ -34,6 +35,7 @@ import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
 import Settings from "./pages/Settings";
 import BottomTabBar from "./components/BottomTabBar";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +107,7 @@ const AppRoutes = () => {
         <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
+        <Route path="/admin/ranking"    element={<ProtectedRoute adminOnly><AdminRanking     /></ProtectedRoute>} />
         <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute><InstructorRanking /></ProtectedRoute>} />
         <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
@@ -113,6 +116,7 @@ const AppRoutes = () => {
         <Route path="/studio/perfil"              element={<ProtectedRoute instructorOnly><StudioPerfil        /></ProtectedRoute>} />
         <Route path="/studio/perfil/editar"      element={<ProtectedRoute instructorOnly><StudioEditPerfil   /></ProtectedRoute>} />
         <Route path="/studio/perfil/configuracoes" element={<ProtectedRoute instructorOnly><StudioConfiguracoes /></ProtectedRoute>} />
+        <Route path="/instalar" element={<Install />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar  && <BottomTabBar />}

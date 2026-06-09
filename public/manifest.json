@@ -1,0 +1,40 @@
+{
+  "name": "RastaHale Academy",
+  "short_name": "RastaHale",
+  "description": "Plataforma de streaming educacional para Jiu-Jitsu e Luta Livre",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#f97316",
+  "lang": "pt-BR",
+  "categories": ["education", "sports", "fitness"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Início",
+      "url": "/",
+      "description": "Ir para a tela inicial"
+    },
+    {
+      "name": "Buscar",
+      "url": "/buscar",
+      "description": "Buscar aulas"
+    }
+  ]
+}

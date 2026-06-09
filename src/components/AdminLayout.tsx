@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  LayoutDashboard, Users, CreditCard, Video, DollarSign, LogOut, ChevronLeft, UserCircle2,
+  LayoutDashboard, Users, CreditCard, Video, DollarSign, LogOut, ChevronLeft, UserCircle2, Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
@@ -14,6 +14,7 @@ const navItems = [
   { path: "/admin/usuarios",      icon: Users,           label: "Usuários"    },
   { path: "/admin/pagamentos",    icon: CreditCard,      label: "Pagamentos"  },
   { path: "/admin/planos",        icon: DollarSign,      label: "Planos"      },
+  { path: "/admin/ranking",       icon: Trophy,          label: "Ranking"     },
 ];
 
 const AdminLayout = ({ children, title, showBack = false }: { children: ReactNode; title: string; showBack?: boolean }) => {
