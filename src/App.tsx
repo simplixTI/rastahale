@@ -20,6 +20,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminInstructors from "./pages/admin/AdminInstructors";
+import InstructorSection from "./pages/InstructorSection";
+import StudioDashboard from "./pages/studio/StudioDashboard";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
@@ -45,11 +47,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
+const ProtectedRoute = ({ children, adminOnly = false, instructorOnly = false }: {
+  children: React.ReactNode; adminOnly?: boolean; instructorOnly?: boolean;
+}) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (adminOnly && user.role !== "admin") return <Navigate to="/" replace />;
+  if (adminOnly      && user.role !== "admin")      return <Navigate to="/" replace />;
+  if (instructorOnly && user.role !== "instructor") return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -76,7 +81,7 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : "/"} replace /> : <Login />} />
+        <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
         <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/buscar" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/favoritos" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
@@ -92,6 +97,8 @@ const AppRoutes = () => {
         <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
+        <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
+        <Route path="/studio" element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar && <BottomTabBar />}

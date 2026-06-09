@@ -1,20 +1,22 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
-import { TEST_USER, TEST_ADMIN } from "@/data/mockData";
+import { TEST_USER, TEST_ADMIN, instructors as mockInstructors } from "@/data/mockData";
+
+export type UserRole = "user" | "admin" | "instructor";
 
 interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: "user" | "admin";
+  role: UserRole;
 }
 
 interface AuthCtx {
   user: AuthUser | null;
   session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<"admin" | "user" | null>;
+  login: (email: string, password: string) => Promise<UserRole | null>;
   logout: () => Promise<void>;
 }
 
@@ -28,8 +30,7 @@ const AuthContext = createContext<AuthCtx>({
 
 export const useAuth = () => useContext(AuthContext);
 
-// Credenciais de teste mapeadas para IDs do mockData
-const MOCK_CREDS: Record<string, { password: string; id: string; name: string; role: "user" | "admin" }> = {
+const MOCK_CREDS: Record<string, { password: string; id: string; name: string; role: UserRole }> = {
   [TEST_USER.email]:  { password: TEST_USER.password,  id: "u1",      name: TEST_USER.name,  role: "user"  },
   [TEST_ADMIN.email]: { password: TEST_ADMIN.password, id: "u-admin", name: TEST_ADMIN.name, role: "admin" },
 };
@@ -47,7 +48,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Tentar restaurar sessão mock do sessionStorage
     try {
       const saved = sessionStorage.getItem(AUTH_KEY);
       if (saved) {
@@ -57,15 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch { /* ignorar */ }
 
-    // 2. Fallback: verificar sessão Supabase real
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
         const { data: profile } = await supabase
-          .from("profiles")
-          .select("name, role")
-          .eq("id", s.user.id)
-          .single();
+          .from("profiles").select("name, role").eq("id", s.user.id).single();
         setUser({
           id:    s.user.id,
           email: s.user.email ?? "",
@@ -77,16 +73,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
-      // Ignorar eventos Supabase se já há usuário mock ativo
       if (sessionStorage.getItem(AUTH_KEY)) return;
-
       setSession(s);
       if (s?.user) {
         const { data: profile } = await supabase
-          .from("profiles")
-          .select("name, role")
-          .eq("id", s.user.id)
-          .single();
+          .from("profiles").select("name, role").eq("id", s.user.id).single();
         setUser({
           id:    s.user.id,
           email: s.user.email ?? "",
@@ -103,9 +94,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<"admin" | "user" | null> => {
-    // Verificar credenciais mock primeiro
-    const mock = MOCK_CREDS[email.toLowerCase().trim()];
+  const login = async (email: string, password: string): Promise<UserRole | null> => {
+    const key = email.toLowerCase().trim();
+
+    // 1. Credenciais fixas (admin / aluno demo)
+    const mock = MOCK_CREDS[key];
     if (mock && mock.password === password) {
       const authUser: AuthUser = { id: mock.id, email, name: mock.name, role: mock.role };
       sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
@@ -113,16 +106,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return mock.role;
     }
 
-    // Fallback: tentar Supabase Auth
+    // 2. Credenciais de instrutor (gerenciadas pelo admin)
+    const inst = mockInstructors.find(
+      (i) => i.loginEmail?.toLowerCase().trim() === key && i.loginPassword === password
+    );
+    if (inst) {
+      const authUser: AuthUser = { id: inst.id, email: inst.loginEmail!, name: inst.name, role: "instructor" };
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
+      setUser(authUser);
+      return "instructor";
+    }
+
+    // 3. Fallback Supabase Auth
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) return null;
       const { data: profile } = await supabase
-        .from("profiles")
-        .select("name, role")
-        .eq("id", data.user.id)
-        .single();
-      const role = profile?.role ?? data.user.user_metadata?.role ?? "user";
+        .from("profiles").select("name, role").eq("id", data.user.id).single();
+      const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
       setUser({
         id:    data.user.id,
         email: data.user.email ?? "",

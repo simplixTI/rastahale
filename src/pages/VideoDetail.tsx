@@ -199,13 +199,17 @@ const VideoDetail = () => {
 
         {/* Instructor */}
         {instructor && (
-          <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-            <img src={instructor.avatar} alt={instructor.name} className="h-10 w-10 rounded-full object-cover" />
-            <div>
+          <button
+            onClick={() => navigate(`/instrutor/${instructor.id}`)}
+            className="mt-4 flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left hover:border-primary/40 transition-colors"
+          >
+            <img src={instructor.avatar} alt={instructor.name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">{instructor.name}</p>
-              <p className="text-xs text-muted-foreground">{instructor.bio}</p>
+              <p className="text-xs text-muted-foreground truncate">{instructor.bio}</p>
             </div>
-          </div>
+            <span className="text-[10px] font-semibold text-primary flex-shrink-0">Ver sessão →</span>
+          </button>
         )}
 
         {/* Description */}

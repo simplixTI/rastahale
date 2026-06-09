@@ -3,6 +3,8 @@ export interface Instructor {
   name: string;
   avatar: string;
   bio: string;
+  loginEmail?: string;
+  loginPassword?: string;
 }
 
 export interface Video {

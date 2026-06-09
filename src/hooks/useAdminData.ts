@@ -537,13 +537,18 @@ export function useAdminInstructors() {
 export function useCreateInstructor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, bio, avatar }: { name: string; bio: string; avatar: string }) => {
+    mutationFn: async ({ name, bio, avatar, loginEmail, loginPassword }: {
+      name: string; bio: string; avatar: string; loginEmail?: string; loginPassword?: string;
+    }) => {
       const id = `inst-${Date.now()}`;
       if (!isMockMode()) {
-        const { error } = await supabase.from("instructors").insert({ id, name, bio, avatar_url: avatar || null });
+        const { error } = await supabase.from("instructors").insert({
+          id, name, bio, avatar_url: avatar || null,
+          login_email: loginEmail || null, login_password: loginPassword || null,
+        });
         if (!error) return { id };
       }
-      mockInstructors.push({ id, name, bio, avatar });
+      mockInstructors.push({ id, name, bio, avatar, loginEmail, loginPassword });
       return { id };
     },
     onSuccess: () => {
@@ -556,13 +561,22 @@ export function useCreateInstructor() {
 export function useUpdateInstructor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name, bio, avatar }: { id: string; name: string; bio: string; avatar: string }) => {
+    mutationFn: async ({ id, name, bio, avatar, loginEmail, loginPassword }: {
+      id: string; name: string; bio: string; avatar: string; loginEmail?: string; loginPassword?: string;
+    }) => {
       if (!isMockMode()) {
-        const { error } = await supabase.from("instructors").update({ name, bio, avatar_url: avatar || null }).eq("id", id);
+        const { error } = await supabase.from("instructors").update({
+          name, bio, avatar_url: avatar || null,
+          login_email: loginEmail || null, login_password: loginPassword || null,
+        }).eq("id", id);
         if (!error) return;
       }
       const inst = mockInstructors.find((i) => i.id === id);
-      if (inst) { inst.name = name; inst.bio = bio; inst.avatar = avatar; }
+      if (inst) {
+        inst.name = name; inst.bio = bio; inst.avatar = avatar;
+        inst.loginEmail = loginEmail || undefined;
+        inst.loginPassword = loginPassword || undefined;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-instructors"] });
