@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useUpdateInstructor } from "@/hooks/useAdminData";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 function isMockMode(): boolean {
@@ -68,7 +69,6 @@ const StudioEditPerfil = () => {
       } else {
         // upload to Supabase storage
         const path = `avatars/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-        const { supabase } = await import("@/lib/supabase");
         const { error } = await supabase.storage.from("media").upload(path, file);
         if (!error) {
           setAvatar(supabase.storage.from("media").getPublicUrl(path).data.publicUrl);

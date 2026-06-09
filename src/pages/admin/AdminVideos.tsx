@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail } from "@/hooks/useAdminData";
 import { videoCategories, getLevelColor, getCategoryLabel } from "@/data/mockData";
@@ -45,7 +46,6 @@ const AdminVideos = () => {
       if (isMockMode()) {
         url = URL.createObjectURL(file);
       } else {
-        const { supabase } = await import("@/lib/supabase");
         const path = `thumbnails/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
         const { error } = await supabase.storage.from("media").upload(path, file);
         if (error) { toast.error("Erro ao enviar imagem"); return; }

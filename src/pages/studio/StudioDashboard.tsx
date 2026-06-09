@@ -11,6 +11,7 @@ import {
   useAdminVideos, useCreateVideo, useToggleVideoVisibility,
   useUpdateVideo, useUpdateVideoThumbnail,
 } from "@/hooks/useAdminData";
+import { supabase } from "@/lib/supabase";
 import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions";
 import VideoFormModal from "@/components/VideoFormModal";
 import { getLevelColor, getCategoryLabel } from "@/data/mockData";
@@ -34,7 +35,6 @@ function isMockMode(): boolean {
 async function uploadFile(file: File, folder: string, onProgress?: (p: number) => void): Promise<string | null> {
   const path = `${folder}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
   try {
-    const { supabase } = await import("@/lib/supabase");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const opts: any = { upsert: false, onUploadProgress: onProgress ? ({ loaded, total }: { loaded: number; total: number }) => { if (total) onProgress(Math.round((loaded / total) * 100)); } : undefined };
     const { error } = await supabase.storage.from("media").upload(path, file, opts);
