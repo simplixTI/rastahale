@@ -33,11 +33,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Navegação (HTML): network-first com fallback para index.html (SPA)
+  // Usa index.html tanto em falha de rede quanto em 404 (rotas client-side)
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match("/index.html")
-      )
+      fetch(request)
+        .then((res) => (res.ok ? res : caches.match("/index.html")))
+        .catch(() => caches.match("/index.html"))
     );
     return;
   }
