@@ -1,7 +1,8 @@
 {
   "name": "RastaHale Academy",
   "short_name": "RastaHale",
-  "description": "Plataforma de streaming educacional para Jiu-Jitsu e Luta Livre",
+  "description": "Plataforma de streaming educacional para Jiu-Jitsu Brasileiro e Luta Livre",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -12,29 +13,40 @@
   "categories": ["education", "sports", "fitness"],
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Início",
       "url": "/",
-      "description": "Ir para a tela inicial"
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Buscar",
       "url": "/buscar",
-      "description": "Buscar aulas"
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
