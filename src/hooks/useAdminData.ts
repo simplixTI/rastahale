@@ -227,7 +227,7 @@ export function useAdminVideos() {
           }
         } catch { /* fallback */ }
       }
-      return mockVideos.map((v) => ({ ...v, videoUrl: null }));
+      return mockVideos.map((v) => ({ ...v, videoUrl: v.videoUrl ?? null }));
     },
     staleTime: 0,
   });

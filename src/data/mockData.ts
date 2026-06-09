@@ -10,6 +10,7 @@ export interface Video {
   title: string;
   description: string;
   thumbnail: string;
+  videoUrl?: string | null;
   duration: string;
   category: "jiu-jitsu" | "luta-livre";
   subcategory: string;

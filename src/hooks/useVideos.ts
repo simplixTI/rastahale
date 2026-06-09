@@ -118,7 +118,7 @@ function buildMockVideoList(userId: string): VideoWithProgress[] {
       title:            v.title,
       description:      v.description,
       thumbnail:        v.thumbnail,
-      videoUrl:         null,
+      videoUrl:         v.videoUrl ?? null,
       duration:         v.duration,
       category:         v.category,
       subcategory:      v.subcategory,

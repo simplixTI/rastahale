@@ -20,9 +20,23 @@ function isMockMode(): boolean {
   } catch { return true; }
 }
 
-async function uploadToStorage(file: File, folder: "thumbnails" | "videos"): Promise<string | null> {
+async function uploadToStorage(
+  file: File,
+  folder: "thumbnails" | "videos",
+  onProgress?: (pct: number) => void,
+): Promise<string | null> {
   const path = `${folder}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-  const { error } = await supabase.storage.from("media").upload(path, file);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const options: any = {
+    upsert: false,
+    // onUploadProgress é suportado pelo Supabase Storage JS v2 para uploads TUS (> 6 MB)
+    onUploadProgress: onProgress
+      ? ({ loaded, total }: { loaded: number; total: number }) => {
+          if (total) onProgress(Math.round((loaded / total) * 100));
+        }
+      : undefined,
+  };
+  const { error } = await supabase.storage.from("media").upload(path, file, options);
   if (error) return null;
   const { data } = supabase.storage.from("media").getPublicUrl(path);
   return data.publicUrl;
@@ -63,12 +77,13 @@ interface UploadZoneProps {
   label:      string;
   hint:       string;
   uploading:  boolean;
+  progress?:  number;
   fileName?:  string;
   onFile:     (file: File) => void;
 }
 
-function UploadZone({ accept, label, hint, uploading, fileName, onFile }: UploadZoneProps) {
-  const inputRef              = useRef<HTMLInputElement>(null);
+function UploadZone({ accept, label, hint, uploading, progress = 0, fileName, onFile }: UploadZoneProps) {
+  const inputRef                = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
   return (
@@ -84,7 +99,7 @@ function UploadZone({ accept, label, hint, uploading, fileName, onFile }: Upload
       }}
       className={cn(
         "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-5 transition-colors select-none",
-        uploading && "cursor-default opacity-70",
+        uploading && "cursor-default",
         dragging  ? "border-primary bg-primary/10"
                   : "border-border bg-secondary/50 hover:border-primary/50 hover:bg-secondary"
       )}
@@ -96,18 +111,29 @@ function UploadZone({ accept, label, hint, uploading, fileName, onFile }: Upload
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }}
       />
+
       {uploading
         ? <Loader2 size={22} className="animate-spin text-primary" />
         : <Upload size={22} className={cn("transition-colors", dragging ? "text-primary" : "text-muted-foreground")} />
       }
-      <div className="text-center">
+
+      <div className="w-full text-center">
         <p className="text-[11px] font-semibold text-foreground">
-          {uploading ? "Enviando…" : fileName ?? label}
+          {uploading ? `Enviando… ${progress}%` : fileName ?? label}
         </p>
         {!uploading && !fileName && (
           <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
         )}
       </div>
+
+      {uploading && progress > 0 && (
+        <div className="w-full overflow-hidden rounded-full bg-secondary h-1.5">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -157,12 +183,16 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const [thumbUploading, setThumbUploading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoFileName,  setVideoFileName]  = useState<string>("");
+  const [thumbProgress,  setThumbProgress]  = useState(0);
+  const [videoProgress,  setVideoProgress]  = useState(0);
 
   useEffect(() => {
     if (open) {
       setThumbMode("url");
       setVideoMode("url");
       setVideoFileName("");
+      setThumbProgress(0);
+      setVideoProgress(0);
       reset(
         video
           ? {
@@ -191,14 +221,17 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
 
   async function handleThumbFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem (PNG, JPG, WEBP)"); return; }
-    if (file.size > 5 * 1024 * 1024)     { toast.error("Imagem muito grande (máx. 5 MB)"); return; }
+    if (file.size > 10 * 1024 * 1024)    { toast.error("Imagem muito grande (máx. 10 MB)"); return; }
     setThumbUploading(true);
+    setThumbProgress(0);
     try {
       let url: string;
       if (isMockMode()) {
+        // Blob URL — funciona em memória para qualquer tamanho
         url = URL.createObjectURL(file);
+        setThumbProgress(100);
       } else {
-        url = (await uploadToStorage(file, "thumbnails")) ?? "";
+        url = (await uploadToStorage(file, "thumbnails", setThumbProgress)) ?? "";
         if (!url) { toast.error("Erro ao enviar thumbnail"); return; }
       }
       setValue("thumbnail", url, { shouldValidate: true });
@@ -209,14 +242,16 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
 
   async function handleVideoFile(file: File) {
     if (!file.type.startsWith("video/")) { toast.error("Selecione um arquivo de vídeo"); return; }
-    if (file.size > 500 * 1024 * 1024)   { toast.error("Vídeo muito grande (máx. 500 MB)"); return; }
+    // Sem limite de tamanho: mock usa blob URL (streaming local), Supabase usa TUS para arquivos grandes
     setVideoUploading(true);
+    setVideoProgress(0);
     try {
       let url: string;
       if (isMockMode()) {
         url = URL.createObjectURL(file);
+        setVideoProgress(100);
       } else {
-        url = (await uploadToStorage(file, "videos")) ?? "";
+        url = (await uploadToStorage(file, "videos", setVideoProgress)) ?? "";
         if (!url) { toast.error("Erro ao enviar vídeo"); return; }
       }
       setValue("videoUrl", url, { shouldValidate: true });
@@ -268,8 +303,9 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               <UploadZone
                 accept="image/*"
                 label="Clique ou arraste uma imagem"
-                hint="PNG, JPG, WEBP • máx. 5 MB"
+                hint="PNG, JPG, WEBP • máx. 10 MB"
                 uploading={thumbUploading}
+                progress={thumbProgress}
                 onFile={handleThumbFile}
               />
             )}
@@ -319,8 +355,9 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               <UploadZone
                 accept="video/*"
                 label="Clique ou arraste um vídeo"
-                hint="MP4, MOV, AVI • máx. 500 MB"
+                hint="MP4, MOV, AVI, MKV • sem limite de tamanho"
                 uploading={videoUploading}
+                progress={videoProgress}
                 fileName={videoFileName || undefined}
                 onFile={handleVideoFile}
               />

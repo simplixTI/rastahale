@@ -38,7 +38,7 @@ const AdminVideos = () => {
 
   async function handleThumbFileInline(file: File, videoId: string) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
-    if (file.size > 5 * 1024 * 1024)     { toast.error("Imagem muito grande (máx. 5 MB)"); return; }
+    if (file.size > 10 * 1024 * 1024)    { toast.error("Imagem muito grande (máx. 10 MB)"); return; }
     setThumbUploading(true);
     try {
       let url: string;
