@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Download, CheckCircle, Smartphone, Share,
@@ -11,7 +11,7 @@ import logo from "@/assets/logo.png";
 // ── Step ──────────────────────────────────────────────────────────────────────
 
 function Step({ number, icon, title, description }: {
-  number: number; icon: React.ReactNode; title: string; description: string;
+  number: number; icon: ReactNode; title: string; description: string;
 }) {
   return (
     <div className="flex gap-4">
@@ -33,7 +33,7 @@ function Step({ number, icon, title, description }: {
 }
 
 function StepLast({ number, icon, title, description }: {
-  number: number; icon: React.ReactNode; title: string; description: string;
+  number: number; icon: ReactNode; title: string; description: string;
 }) {
   return (
     <div className="flex gap-4">
@@ -83,7 +83,7 @@ const Install = () => {
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-10">
       {/* header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-2">
-        <button onClick={() => navigate(-1)}
+        <button onClick={() => navigate(history.length > 1 ? -1 : "/perfil")}
           className="rounded-full border border-border bg-card p-2 text-foreground">
           <ArrowLeft size={18} />
         </button>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "rastahale-v1";
+const CACHE_NAME = "rastahale-v3";
 const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/favicon.png", "/favicon.ico"];
 
 // Install: pré-cacheia assets estáticos
