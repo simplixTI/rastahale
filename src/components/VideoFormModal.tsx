@@ -1,18 +1,38 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { videoCategories, instructors, type Video } from "@/data/mockData";
 
+function isMockMode(): boolean {
+  try {
+    const saved = sessionStorage.getItem("rasta_auth_user");
+    if (!saved) return true;
+    const { id } = JSON.parse(saved) as { id: string };
+    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  } catch { return true; }
+}
+
+async function uploadToStorage(file: File, folder: "thumbnails" | "videos"): Promise<string | null> {
+  const path = `${folder}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const { error } = await supabase.storage.from("media").upload(path, file);
+  if (error) return null;
+  const { data } = supabase.storage.from("media").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 const schema = z.object({
   title:            z.string().min(3,  "Mínimo 3 caracteres"),
   description:      z.string().min(10, "Mínimo 10 caracteres"),
-  thumbnail:        z.string().url("URL inválida"),
-  videoUrl:         z.string().url("URL inválida").or(z.literal("")).optional(),
+  thumbnail:        z.string().min(1,  "Adicione uma thumbnail"),
+  videoUrl:         z.string().optional(),
   duration:         z.string().min(1,  "Ex: 12:30"),
   category:         z.enum(["jiu-jitsu", "luta-livre"]),
   subcategory:      z.string().min(1,  "Selecione"),
@@ -24,56 +44,134 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
 type VideoWithUrl = Video & { videoUrl?: string | null };
 
 interface Props {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  video?: VideoWithUrl | null;
-  onSubmit: (values: FormValues) => void;
-  isPending?: boolean;
+  open:           boolean;
+  onOpenChange:   (v: boolean) => void;
+  video?:         VideoWithUrl | null;
+  onSubmit:       (values: FormValues) => void;
+  isPending?:     boolean;
 }
 
 const fieldCls = "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary";
 const labelCls = "block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1";
 
+// ── UploadZone ────────────────────────────────────────────────────────────────
+interface UploadZoneProps {
+  accept:     string;
+  label:      string;
+  hint:       string;
+  uploading:  boolean;
+  fileName?:  string;
+  onFile:     (file: File) => void;
+}
+
+function UploadZone({ accept, label, hint, uploading, fileName, onFile }: UploadZoneProps) {
+  const inputRef              = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div
+      onClick={() => !uploading && inputRef.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        const file = e.dataTransfer.files[0];
+        if (file) onFile(file);
+      }}
+      className={cn(
+        "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-5 transition-colors select-none",
+        uploading && "cursor-default opacity-70",
+        dragging  ? "border-primary bg-primary/10"
+                  : "border-border bg-secondary/50 hover:border-primary/50 hover:bg-secondary"
+      )}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }}
+      />
+      {uploading
+        ? <Loader2 size={22} className="animate-spin text-primary" />
+        : <Upload size={22} className={cn("transition-colors", dragging ? "text-primary" : "text-muted-foreground")} />
+      }
+      <div className="text-center">
+        <p className="text-[11px] font-semibold text-foreground">
+          {uploading ? "Enviando…" : fileName ?? label}
+        </p>
+        {!uploading && !fileName && (
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── ModeTabs ──────────────────────────────────────────────────────────────────
+function ModeTabs({ mode, onChange }: { mode: "url" | "file"; onChange: (m: "url" | "file") => void }) {
+  return (
+    <div className="flex overflow-hidden rounded-lg border border-border">
+      {(["url", "file"] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          onClick={() => onChange(m)}
+          className={cn(
+            "flex items-center gap-1 px-3 py-1 text-[10px] font-semibold transition-colors",
+            mode === m
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {m === "url"
+            ? <><LinkIcon size={10} /> URL</>
+            : <><Upload size={10} /> Arquivo</>
+          }
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── VideoFormModal ────────────────────────────────────────────────────────────
 export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending }: Props) {
   const isEdit = !!video;
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title:            "",
-      description:      "",
-      thumbnail:        "",
-      videoUrl:         "",
-      duration:         "",
-      category:         "jiu-jitsu",
-      subcategory:      videoCategories[0],
-      level:            "Iniciante",
-      instructorId:     instructors[0]?.id ?? "",
-      visible:          true,
-      unlockByProgress: false,
-      requiredProgress: 50,
+      title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
+      category: "jiu-jitsu", subcategory: videoCategories[0],
+      level: "Iniciante", instructorId: instructors[0]?.id ?? "",
+      visible: true, unlockByProgress: false, requiredProgress: 50,
     },
   });
 
+  const [thumbMode,      setThumbMode]      = useState<"url" | "file">("url");
+  const [videoMode,      setVideoMode]      = useState<"url" | "file">("url");
+  const [thumbUploading, setThumbUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoFileName,  setVideoFileName]  = useState<string>("");
+
   useEffect(() => {
     if (open) {
+      setThumbMode("url");
+      setVideoMode("url");
+      setVideoFileName("");
       reset(
         video
           ? {
-              title:            video.title,
-              description:      video.description,
-              thumbnail:        video.thumbnail,
-              videoUrl:         video.videoUrl ?? "",
-              duration:         video.duration,
-              category:         video.category,
-              subcategory:      video.subcategory,
-              level:            video.level,
-              instructorId:     video.instructorId,
-              visible:          video.visible ?? true,
+              title: video.title, description: video.description,
+              thumbnail: video.thumbnail, videoUrl: video.videoUrl ?? "",
+              duration: video.duration, category: video.category,
+              subcategory: video.subcategory, level: video.level,
+              instructorId: video.instructorId,
+              visible: video.visible ?? true,
               unlockByProgress: video.unlockByProgress ?? false,
               requiredProgress: video.requiredProgress ?? 50,
             }
@@ -88,6 +186,47 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   }, [open, video, reset]);
 
   const unlockByProgress = watch("unlockByProgress");
+  const thumbValue       = watch("thumbnail");
+  const videoValue       = watch("videoUrl");
+
+  async function handleThumbFile(file: File) {
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem (PNG, JPG, WEBP)"); return; }
+    if (file.size > 5 * 1024 * 1024)     { toast.error("Imagem muito grande (máx. 5 MB)"); return; }
+    setThumbUploading(true);
+    try {
+      let url: string;
+      if (isMockMode()) {
+        url = URL.createObjectURL(file);
+      } else {
+        url = (await uploadToStorage(file, "thumbnails")) ?? "";
+        if (!url) { toast.error("Erro ao enviar thumbnail"); return; }
+      }
+      setValue("thumbnail", url, { shouldValidate: true });
+    } finally {
+      setThumbUploading(false);
+    }
+  }
+
+  async function handleVideoFile(file: File) {
+    if (!file.type.startsWith("video/")) { toast.error("Selecione um arquivo de vídeo"); return; }
+    if (file.size > 500 * 1024 * 1024)   { toast.error("Vídeo muito grande (máx. 500 MB)"); return; }
+    setVideoUploading(true);
+    try {
+      let url: string;
+      if (isMockMode()) {
+        url = URL.createObjectURL(file);
+      } else {
+        url = (await uploadToStorage(file, "videos")) ?? "";
+        if (!url) { toast.error("Erro ao enviar vídeo"); return; }
+      }
+      setValue("videoUrl", url, { shouldValidate: true });
+      setVideoFileName(file.name);
+    } finally {
+      setVideoUploading(false);
+    }
+  }
+
+  const busy = thumbUploading || videoUploading || !!isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,38 +238,110 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+
+          {/* Título */}
           <div>
             <label className={labelCls}>Título</label>
             <input {...register("title")} className={fieldCls} placeholder="Ex: Guarda Fechada — Fundamentos" />
             {errors.title && <p className="mt-0.5 text-[10px] text-red-400">{errors.title.message}</p>}
           </div>
 
+          {/* Descrição */}
           <div>
             <label className={labelCls}>Descrição</label>
-            <textarea {...register("description")} rows={2} className={cn(fieldCls, "resize-none")} placeholder="Descreva o conteúdo da aula..." />
+            <textarea {...register("description")} rows={2} className={cn(fieldCls, "resize-none")} placeholder="Descreva o conteúdo da aula…" />
             {errors.description && <p className="mt-0.5 text-[10px] text-red-400">{errors.description.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelCls}>Thumbnail (URL)</label>
-              <input {...register("thumbnail")} className={fieldCls} placeholder="https://..." />
-              {errors.thumbnail && <p className="mt-0.5 text-[10px] text-red-400">{errors.thumbnail.message}</p>}
-            </div>
-            <div>
-              <label className={labelCls}>Duração</label>
-              <input {...register("duration")} className={fieldCls} placeholder="12:30" />
-              {errors.duration && <p className="mt-0.5 text-[10px] text-red-400">{errors.duration.message}</p>}
-            </div>
-          </div>
-
+          {/* Thumbnail */}
           <div>
-            <label className={labelCls}>URL do Vídeo (YouTube ou MP4)</label>
-            <input {...register("videoUrl")} className={fieldCls} placeholder="https://youtube.com/watch?v=... ou https://..." />
-            {errors.videoUrl && <p className="mt-0.5 text-[10px] text-red-400">{errors.videoUrl.message}</p>}
-            <p className="mt-0.5 text-[10px] text-muted-foreground">Cole um link do YouTube ou URL direta de vídeo</p>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className={cn(labelCls, "mb-0 flex items-center gap-1")}>
+                <ImageIcon size={11} /> Thumbnail
+              </label>
+              <ModeTabs mode={thumbMode} onChange={setThumbMode} />
+            </div>
+
+            {thumbMode === "url" ? (
+              <input {...register("thumbnail")} className={fieldCls} placeholder="https://..." />
+            ) : (
+              <UploadZone
+                accept="image/*"
+                label="Clique ou arraste uma imagem"
+                hint="PNG, JPG, WEBP • máx. 5 MB"
+                uploading={thumbUploading}
+                onFile={handleThumbFile}
+              />
+            )}
+
+            {thumbValue && (
+              <div className="relative mt-1.5 h-28 w-full overflow-hidden rounded-lg border border-border">
+                <img
+                  src={thumbValue}
+                  alt="preview"
+                  className="h-full w-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setValue("thumbnail", "", { shouldValidate: true })}
+                  className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1"
+                >
+                  <X size={10} className="text-white" />
+                </button>
+              </div>
+            )}
+            {errors.thumbnail && <p className="mt-0.5 text-[10px] text-red-400">{errors.thumbnail.message}</p>}
           </div>
 
+          {/* Duração */}
+          <div>
+            <label className={labelCls}>Duração</label>
+            <input {...register("duration")} className={fieldCls} placeholder="12:30" />
+            {errors.duration && <p className="mt-0.5 text-[10px] text-red-400">{errors.duration.message}</p>}
+          </div>
+
+          {/* Vídeo */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className={cn(labelCls, "mb-0 flex items-center gap-1")}>
+                <VideoIcon size={11} /> Vídeo
+              </label>
+              <ModeTabs mode={videoMode} onChange={setVideoMode} />
+            </div>
+
+            {videoMode === "url" ? (
+              <>
+                <input {...register("videoUrl")} className={fieldCls} placeholder="https://youtube.com/watch?v=… ou URL direta" />
+                <p className="mt-0.5 text-[10px] text-muted-foreground">YouTube, Vimeo ou link direto de MP4</p>
+              </>
+            ) : (
+              <UploadZone
+                accept="video/*"
+                label="Clique ou arraste um vídeo"
+                hint="MP4, MOV, AVI • máx. 500 MB"
+                uploading={videoUploading}
+                fileName={videoFileName || undefined}
+                onFile={handleVideoFile}
+              />
+            )}
+
+            {videoValue && videoFileName && (
+              <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+                <VideoIcon size={13} className="shrink-0 text-emerald-400" />
+                <p className="flex-1 truncate text-[10px] text-emerald-400">{videoFileName}</p>
+                <button
+                  type="button"
+                  onClick={() => { setValue("videoUrl", ""); setVideoFileName(""); }}
+                >
+                  <X size={11} className="text-emerald-400" />
+                </button>
+              </div>
+            )}
+            {errors.videoUrl && <p className="mt-0.5 text-[10px] text-red-400">{errors.videoUrl.message}</p>}
+          </div>
+
+          {/* Modalidade / Subcategoria */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelCls}>Modalidade</label>
@@ -147,6 +358,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             </div>
           </div>
 
+          {/* Nível / Instrutor */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelCls}>Nível</label>
@@ -164,12 +376,13 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             </div>
           </div>
 
+          {/* Toggles */}
           <div className="rounded-lg border border-border bg-card p-3 space-y-2.5">
-            <label className="flex items-center justify-between cursor-pointer">
+            <label className="flex cursor-pointer items-center justify-between">
               <span className="text-xs text-foreground">Visível para alunos</span>
               <input type="checkbox" {...register("visible")} className="accent-primary h-4 w-4" />
             </label>
-            <label className="flex items-center justify-between cursor-pointer">
+            <label className="flex cursor-pointer items-center justify-between">
               <span className="text-xs text-foreground">Travado por progresso</span>
               <input type="checkbox" {...register("unlockByProgress")} className="accent-primary h-4 w-4" />
             </label>
@@ -198,10 +411,10 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             </button>
             <button
               type="submit"
-              disabled={isPending}
+              disabled={busy}
               className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
-              {isPending ? "Salvando..." : isEdit ? "Salvar" : "Adicionar"}
+              {thumbUploading || videoUploading ? "Enviando…" : isPending ? "Salvando…" : isEdit ? "Salvar" : "Adicionar"}
             </button>
           </DialogFooter>
         </form>

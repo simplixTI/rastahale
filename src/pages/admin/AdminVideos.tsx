@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail } from "@/hooks/useAdminData";
@@ -22,8 +22,47 @@ const AdminVideos = () => {
   const [showUpload, setShowUpload] = useState(false);
   type AdminVideo = typeof videos[number];
   const [editingVideo, setEditingVideo] = useState<AdminVideo | null>(null);
-  const [thumbEditId, setThumbEditId] = useState<string | null>(null);
-  const [thumbUrl, setThumbUrl] = useState("");
+  const [thumbEditId,    setThumbEditId]    = useState<string | null>(null);
+  const [thumbUrl,       setThumbUrl]       = useState("");
+  const [thumbUploading, setThumbUploading] = useState(false);
+  const thumbFileRef = useRef<HTMLInputElement>(null);
+
+  function isMockMode(): boolean {
+    try {
+      const saved = sessionStorage.getItem("rasta_auth_user");
+      if (!saved) return true;
+      const { id } = JSON.parse(saved) as { id: string };
+      return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    } catch { return true; }
+  }
+
+  async function handleThumbFileInline(file: File, videoId: string) {
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
+    if (file.size > 5 * 1024 * 1024)     { toast.error("Imagem muito grande (máx. 5 MB)"); return; }
+    setThumbUploading(true);
+    try {
+      let url: string;
+      if (isMockMode()) {
+        url = URL.createObjectURL(file);
+      } else {
+        const { supabase } = await import("@/lib/supabase");
+        const path = `thumbnails/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+        const { error } = await supabase.storage.from("media").upload(path, file);
+        if (error) { toast.error("Erro ao enviar imagem"); return; }
+        const { data } = supabase.storage.from("media").getPublicUrl(path);
+        url = data.publicUrl;
+      }
+      updateThumbnail.mutate(
+        { videoId, thumbnail: url },
+        {
+          onSuccess: () => { toast.success("Thumbnail atualizada"); setThumbEditId(null); setThumbUrl(""); },
+          onError:   () => toast.error("Erro ao atualizar thumbnail"),
+        }
+      );
+    } finally {
+      setThumbUploading(false);
+    }
+  }
 
   const allCategories = ["Todas", ...videoCategories];
 
@@ -204,31 +243,55 @@ const AdminVideos = () => {
                           Progresso
                         </button>
                         {thumbEditId === v.id ? (
-                          <div className="flex flex-1 items-center gap-1 px-2 py-1 border-r border-border/50">
+                          <div className="col-span-2 flex flex-col gap-1.5 px-2 py-2 border-r border-border/50">
                             <input
-                              autoFocus
-                              value={thumbUrl}
-                              onChange={(e) => setThumbUrl(e.target.value)}
-                              placeholder="https://..."
-                              className="flex-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-foreground outline-none"
-                            />
-                            <button
-                              onClick={() => {
-                                if (!thumbUrl.trim()) { toast.error("Informe a URL da thumbnail"); return; }
-                                updateThumbnail.mutate(
-                                  { videoId: v.id, thumbnail: thumbUrl.trim() },
-                                  {
-                                    onSuccess: () => { toast.success("Thumbnail atualizada"); setThumbEditId(null); setThumbUrl(""); },
-                                    onError:   () => toast.error("Erro ao atualizar thumbnail"),
-                                  }
-                                );
+                              ref={thumbFileRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleThumbFileInline(file, v.id);
+                                e.target.value = "";
                               }}
-                              className="text-emerald-400"
+                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                autoFocus
+                                value={thumbUrl}
+                                onChange={(e) => setThumbUrl(e.target.value)}
+                                placeholder="https://..."
+                                className="flex-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-foreground outline-none"
+                              />
+                              <button
+                                onClick={() => {
+                                  if (!thumbUrl.trim()) { toast.error("Informe a URL da thumbnail"); return; }
+                                  updateThumbnail.mutate(
+                                    { videoId: v.id, thumbnail: thumbUrl.trim() },
+                                    {
+                                      onSuccess: () => { toast.success("Thumbnail atualizada"); setThumbEditId(null); setThumbUrl(""); },
+                                      onError:   () => toast.error("Erro ao atualizar thumbnail"),
+                                    }
+                                  );
+                                }}
+                                className="text-emerald-400"
+                              >
+                                <Check size={12} />
+                              </button>
+                              <button onClick={() => { setThumbEditId(null); setThumbUrl(""); }} className="text-muted-foreground">
+                                <X size={12} />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={thumbUploading}
+                              onClick={() => thumbFileRef.current?.click()}
+                              className="flex items-center justify-center gap-1 rounded border border-dashed border-border py-1.5 text-[10px] font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground disabled:opacity-50 transition-colors"
                             >
-                              <Check size={12} />
-                            </button>
-                            <button onClick={() => { setThumbEditId(null); setThumbUrl(""); }} className="text-muted-foreground">
-                              <X size={12} />
+                              {thumbUploading
+                                ? <><span className="inline-block h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" /> Enviando…</>
+                                : <><Upload size={10} /> Enviar arquivo</>
+                              }
                             </button>
                           </div>
                         ) : (
