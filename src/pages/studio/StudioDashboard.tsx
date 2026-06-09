@@ -418,12 +418,12 @@ const StudioDashboard = () => {
         }} isPending={updateVideo.isPending} />
 
       <SessionFormModal open={showSessForm} onOpenChange={setShowSessForm} myVideos={myVideos}
-        onSave={(t, d, ids) => { create(t, d, ids); toast.success("Sessão criada!"); }} />
+        onSave={(t, d, ids) => { create(t, d, ids); toast.success("Sessão criada!", { duration: 1500 }); }} />
 
       {editSess && (
         <SessionFormModal open={!!editSess} onOpenChange={(v) => { if (!v) setEditSess(null); }}
           session={editSess} myVideos={myVideos}
-          onSave={(t, d, ids) => { update(editSess.id, t, d, ids); toast.success("Sessão atualizada!"); setEditSess(null); }} />
+          onSave={(t, d, ids) => { update(editSess.id, t, d, ids); toast.success("Sessão atualizada!", { duration: 1500 }); setEditSess(null); }} />
       )}
 
       {delSess && (
@@ -433,7 +433,7 @@ const StudioDashboard = () => {
             <p className="text-xs text-muted-foreground">A sessão <span className="font-semibold text-foreground">"{delSess.title}"</span> será removida. Os vídeos não são afetados.</p>
             <DialogFooter className="pt-2">
               <button onClick={() => setDelSess(null)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-              <button onClick={() => { remove(delSess.id); toast.success("Sessão removida"); setDelSess(null); }} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
+              <button onClick={() => { remove(delSess.id); toast.success("Sessão removida", { duration: 1500 }); setDelSess(null); }} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
