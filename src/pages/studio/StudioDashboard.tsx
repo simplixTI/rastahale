@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  LogOut, Plus, BookOpen, Eye, EyeOff, Upload, Edit2, Image,
+  Plus, BookOpen, Eye, EyeOff, Upload, Edit2, Image,
   Check, X, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -154,8 +154,8 @@ function VideoRow({ v, onEdit }: { v: AdminVideo; onEdit: () => void }) {
 // ── StudioDashboard ───────────────────────────────────────────────────────────
 
 const StudioDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate         = useNavigate();
+  const { user }  = useAuth();
+  const navigate  = useNavigate();
 
   const { data: allVideos = [], isLoading } = useAdminVideos();
   const createVideo                         = useCreateVideo();
@@ -180,10 +180,7 @@ const StudioDashboard = () => {
               <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{user?.name}</p>
             </div>
           </div>
-          <button onClick={async () => { await logout(); navigate("/login"); }}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <LogOut size={14} /> Sair
-          </button>
+          <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">Instrutor</span>
         </div>
       </header>
 

@@ -23,6 +23,9 @@ import AdminInstructors from "./pages/admin/AdminInstructors";
 import InstructorSection from "./pages/InstructorSection";
 import InstructorRanking from "./pages/InstructorRanking";
 import StudioDashboard from "./pages/studio/StudioDashboard";
+import StudioFeedback from "./pages/studio/StudioFeedback";
+import StudioRanking from "./pages/studio/StudioRanking";
+import StudioBottomBar from "./components/StudioBottomBar";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
@@ -63,9 +66,10 @@ const AppRoutes = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith("/admin");
-  const isLogin = location.pathname === "/login";
-  const showTabBar = !isAdmin && !isLogin;
+  const isAdmin    = location.pathname.startsWith("/admin");
+  const isStudio   = location.pathname.startsWith("/studio");
+  const isLogin    = location.pathname === "/login";
+  const showTabBar = !isAdmin && !isLogin && !isStudio;
 
   // Redireciona ao login quando a sessão expira.
   // Usa ref para evitar stale closure sem re-registrar a cada render.
@@ -100,10 +104,13 @@ const AppRoutes = () => {
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
         <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute><InstructorRanking /></ProtectedRoute>} />
-        <Route path="/studio" element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
+        <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
+        <Route path="/studio/feedback" element={<ProtectedRoute instructorOnly><StudioFeedback /></ProtectedRoute>} />
+        <Route path="/studio/ranking"  element={<ProtectedRoute instructorOnly><StudioRanking  /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {showTabBar && <BottomTabBar />}
+      {showTabBar  && <BottomTabBar />}
+      {isStudio    && <StudioBottomBar />}
     </>
   );
 };
