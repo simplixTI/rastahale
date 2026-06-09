@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
 
 // Netflix "ta-dum" style sound — short base64 encoded sine wave burst
 const playNetflixSound = () => {
@@ -59,8 +59,30 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallPopup(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+    setShowInstallPopup(false);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +116,44 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
+      {/* PWA Install Popup */}
+      {showInstallPopup && (
+        <div className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-3rem)] max-w-[360px] -translate-x-1/2 rounded-2xl border border-border bg-card p-4 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+          <button
+            onClick={() => setShowInstallPopup(false)}
+            className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+          >
+            <X size={16} />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Smartphone size={24} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Instalar RastaHale</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Acesse como app — rápido e sem browser</p>
+            </div>
+          </div>
+          <button
+            onClick={handleInstall}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <Download size={15} />
+            Instalar agora
+          </button>
+        </div>
+      )}
+
+      {/* Floating install button (when popup is dismissed) */}
+      {installPrompt && !showInstallPopup && (
+        <button
+          onClick={() => setShowInstallPopup(true)}
+          className="fixed bottom-6 right-5 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-lg transition-transform hover:scale-105"
+        >
+          <Download size={14} />
+          Instalar
+        </button>
+      )}
       <div className="w-full max-w-[360px]">
         <div className="flex justify-center">
           <img src={logo} alt="RastaHale" className="h-20 rounded-2xl" />
