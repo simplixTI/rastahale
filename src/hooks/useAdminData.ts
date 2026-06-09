@@ -5,7 +5,9 @@ import {
   mockUsers,
   mockPayments,
   mockPlans,
+  instructors as mockInstructors,
   type Video,
+  type Instructor,
 } from "@/data/mockData";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -504,5 +506,105 @@ export function useAdminDashboard() {
       };
     },
     staleTime: 0,
+  });
+}
+
+// ── Admin: instrutores ─────────────────────────────────────────────────────
+
+export function useAdminInstructors() {
+  return useQuery({
+    queryKey: ["admin-instructors"],
+    queryFn: async () => {
+      if (!isMockMode()) {
+        try {
+          const { data, error } = await supabase.from("instructors").select("*");
+          if (!error && data && data.length > 0) {
+            return data.map((i) => ({
+              id:     i.id,
+              name:   i.name,
+              avatar: i.avatar_url ?? "",
+              bio:    i.bio ?? "",
+            }));
+          }
+        } catch { /* fallback */ }
+      }
+      return mockInstructors.map((i) => ({ ...i }));
+    },
+    staleTime: 0,
+  });
+}
+
+export function useCreateInstructor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ name, bio, avatar }: { name: string; bio: string; avatar: string }) => {
+      const id = `inst-${Date.now()}`;
+      if (!isMockMode()) {
+        const { error } = await supabase.from("instructors").insert({ id, name, bio, avatar_url: avatar || null });
+        if (!error) return { id };
+      }
+      mockInstructors.push({ id, name, bio, avatar });
+      return { id };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+    },
+  });
+}
+
+export function useUpdateInstructor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name, bio, avatar }: { id: string; name: string; bio: string; avatar: string }) => {
+      if (!isMockMode()) {
+        const { error } = await supabase.from("instructors").update({ name, bio, avatar_url: avatar || null }).eq("id", id);
+        if (!error) return;
+      }
+      const inst = mockInstructors.find((i) => i.id === id);
+      if (inst) { inst.name = name; inst.bio = bio; inst.avatar = avatar; }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+    },
+  });
+}
+
+export function useUpdateInstructorAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, avatar }: { id: string; avatar: string }) => {
+      if (!isMockMode()) {
+        const { error } = await supabase.from("instructors").update({ avatar_url: avatar }).eq("id", id);
+        if (!error) return;
+      }
+      const inst = mockInstructors.find((i) => i.id === id);
+      if (inst) inst.avatar = avatar;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+    },
+  });
+}
+
+export function useDeleteInstructor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      if (!isMockMode()) {
+        const { error } = await supabase.from("instructors").delete().eq("id", id);
+        if (!error) return;
+      }
+      const idx = mockInstructors.findIndex((i) => i.id === id);
+      if (idx !== -1) mockInstructors.splice(idx, 1);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+      qc.invalidateQueries({ queryKey: ["admin-videos"] });
+    },
   });
 }

@@ -19,6 +19,7 @@ import AdminVideos from "./pages/admin/AdminVideos";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPlans from "./pages/admin/AdminPlans";
+import AdminInstructors from "./pages/admin/AdminInstructors";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
@@ -90,6 +91,7 @@ const AppRoutes = () => {
         <Route path="/admin/usuarios" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
         <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
+        <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar && <BottomTabBar />}
