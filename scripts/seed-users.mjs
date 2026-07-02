@@ -27,6 +27,8 @@ const USERS = [
   { email: "mariana@teste.com",    password: "rasta123",  name: "Mariana Souza",   role: "user",   plan: "Básico",        status: "pendente" },
   { email: "carlos@teste.com",     password: "rasta123",  name: "Carlos Ferreira", role: "user",   plan: "Premium",       status: "inativo" },
   { email: "juliana@teste.com",    password: "rasta123",  name: "Juliana Rocha",   role: "user",   plan: "Anual Premium", status: "ativo" },
+  // Instrutor real (área /studio). TROQUE a senha por uma forte antes de usar em produção.
+  { email: "professor@rastahale.com", password: "prof123", name: "Professor RastaHale", role: "instructor", plan: "Anual Premium", status: "ativo", isInstructor: true, bio: "Instrutor de Jiu-Jitsu e Luta Livre." },
 ];
 
 async function upsertUsers() {
@@ -62,6 +64,16 @@ async function upsertUsers() {
       last_access: new Date().toISOString(),
       videos_watched: 0, total_hours: 0,
     });
+
+    // Instrutor: cria também a linha em `instructors` com id = UUID do auth user,
+    // para que os vídeos enviados no /studio (instructor_id = user.id) satisfaçam o FK.
+    if (u.isInstructor) {
+      const { error: instErr } = await supabase.from("instructors").upsert({
+        id: userId, name: u.name, avatar_url: "", bio: u.bio ?? "",
+      });
+      if (instErr) console.error(`   ⚠  instructors ${u.email}: ${instErr.message}`);
+      else console.log(`   🥋  instructors row criada para ${u.email}`);
+    }
   }
   return ids;
 }
@@ -139,8 +151,9 @@ async function main() {
   await seedPayments(ids);
   console.log("\n🎉  Seed concluído!\n");
   console.log("Credenciais:");
-  console.log("  Aluno:  aluno@rastahale.com  / rasta123");
-  console.log("  Admin:  admin@rastahale.com  / admin123\n");
+  console.log("  Aluno:      aluno@rastahale.com      / rasta123");
+  console.log("  Admin:      admin@rastahale.com      / admin123");
+  console.log("  Professor:  professor@rastahale.com  / prof123\n");
 }
 
 main().catch((e) => { console.error("❌", e.message); process.exit(1); });

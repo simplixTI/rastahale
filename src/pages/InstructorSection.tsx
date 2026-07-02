@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, Play, Star, Send, Trophy, Trash2, MessageCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Play, Star, Send, Trophy, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructorComments } from "@/hooks/useInstructorComments";
+import { useStudioSessions } from "@/hooks/useStudioSessions";
 import VideoCard from "@/components/VideoCard";
 import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ const InstructorSection = () => {
   const { data: instructor,  isLoading: loadInst } = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid } = useVideos(user?.id ?? "");
   const { comments, addComment, removeComment, userComment, avgRating } = useInstructorComments(id ?? "");
+  const { sessions } = useStudioSessions(id ?? "");
 
   const [commentText, setCommentText] = useState("");
   const [rating,      setRating]      = useState(0);
@@ -202,6 +204,36 @@ const InstructorSection = () => {
               </div>
             </div>
           ))
+        )}
+
+        {/* módulos do professor (sessões criadas no Studio) */}
+        {sessions.length > 0 && (
+          <div className="mt-8">
+            <div className="mb-3 flex items-center gap-2">
+              <LayoutList size={16} className="text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Módulos</h2>
+            </div>
+            <div className="space-y-4">
+              {sessions.map((s) => {
+                const modVids = s.videoIds
+                  .map((vid) => allVideos.find((v) => v.id === vid))
+                  .filter(Boolean) as typeof allVideos;
+                return (
+                  <div key={s.id} className="rounded-xl border border-border bg-card p-3">
+                    <p className="text-xs font-bold text-foreground">{s.title}</p>
+                    {s.description && <p className="mt-0.5 text-[11px] text-muted-foreground">{s.description}</p>}
+                    {modVids.length > 0 ? (
+                      <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                        {modVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-[10px] text-muted-foreground">Nenhuma aula neste módulo ainda.</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* lista completa */}

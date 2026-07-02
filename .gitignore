@@ -17,6 +17,12 @@ dist-ssr
 .env.*
 !.env.example
 
+# Supabase CLI local state — contém ref do projeto e connection string (segredo)
+supabase/.temp/
+
+# Arquivos temporários do runtime do Claude Code
+.claude/scheduled_tasks.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,10 +1,11 @@
-import { Home, Search, Heart, BarChart3, User } from "lucide-react";
+import { Home, Search, Users, Heart, BarChart3, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/buscar", icon: Search, label: "Buscar" },
+  { path: "/professores", icon: Users, label: "Professores" },
   { path: "/favoritos", icon: Heart, label: "Favoritos" },
   { path: "/progresso", icon: BarChart3, label: "Progresso" },
   { path: "/perfil", icon: User, label: "Perfil" },
@@ -24,12 +25,12 @@ const BottomTabBar = () => {
               key={path}
               onClick={() => navigate(path)}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] transition-colors",
+                "flex flex-1 min-w-0 flex-col items-center gap-0.5 px-1 py-1 text-[10px] transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
               <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
-              <span className={cn("font-medium", isActive && "font-semibold")}>{label}</span>
+              <span className={cn("max-w-full truncate font-medium", isActive && "font-semibold")}>{label}</span>
             </button>
           );
         })}

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useAdminVideos, useCreateVideo, useToggleVideoVisibility,
-  useUpdateVideo, useUpdateVideoThumbnail,
+  useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo,
 } from "@/hooks/useAdminData";
 import { supabase } from "@/lib/supabase";
 import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions";
@@ -272,6 +272,7 @@ const StudioDashboard = () => {
   const { data: allVideos = [], isLoading }  = useAdminVideos();
   const createVideo                          = useCreateVideo();
   const updateVideo                          = useUpdateVideo();
+  const deleteVideo                          = useDeleteVideo();
   const { sessions, create, update, remove } = useStudioSessions(user?.id ?? "");
 
   const [tab,          setTab]         = useState<"aulas" | "sessoes">("aulas");
@@ -406,7 +407,7 @@ const StudioDashboard = () => {
             { ...values, instructorId: user.id, videoUrl: values.videoUrl || null } as Parameters<typeof createVideo.mutate>[0],
             { onSuccess: () => { toast.success("Aula enviada!"); setShowUpload(false); }, onError: () => toast.error("Erro ao enviar aula") }
           );
-        }} isPending={createVideo.isPending} />
+        }} isPending={createVideo.isPending} hideInstructor autoDuration />
 
       <VideoFormModal open={!!editingVideo} onOpenChange={(v) => { if (!v) setEditing(null); }}
         video={editingVideo}
@@ -415,7 +416,14 @@ const StudioDashboard = () => {
           updateVideo.mutate({ id: editingVideo.id, ...values, videoUrl: values.videoUrl || null },
             { onSuccess: () => { toast.success("Aula atualizada!"); setEditing(null); }, onError: () => toast.error("Erro ao atualizar") }
           );
-        }} isPending={updateVideo.isPending} />
+        }} isPending={updateVideo.isPending}
+        onDelete={() => {
+          if (!editingVideo) return;
+          deleteVideo.mutate(editingVideo.id, {
+            onSuccess: () => { toast.success("Aula excluída"); setEditing(null); },
+            onError:   () => toast.error("Erro ao excluir"),
+          });
+        }} isDeleting={deleteVideo.isPending} hideInstructor autoDuration />
 
       <SessionFormModal open={showSessForm} onOpenChange={setShowSessForm} myVideos={myVideos}
         onSave={(t, d, ids) => { create(t, d, ids); toast.success("Sessão criada!", { duration: 1500 }); }} />

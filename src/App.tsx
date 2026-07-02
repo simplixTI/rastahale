@@ -23,6 +23,7 @@ import AdminInstructors from "./pages/admin/AdminInstructors";
 import AdminRanking from "./pages/admin/AdminRanking";
 import InstructorSection from "./pages/InstructorSection";
 import InstructorRanking from "./pages/InstructorRanking";
+import Instructors from "./pages/Instructors";
 import StudioDashboard from "./pages/studio/StudioDashboard";
 import StudioFeedback from "./pages/studio/StudioFeedback";
 import StudioRanking from "./pages/studio/StudioRanking";
@@ -108,6 +109,7 @@ const AppRoutes = () => {
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
         <Route path="/admin/ranking"    element={<ProtectedRoute adminOnly><AdminRanking     /></ProtectedRoute>} />
+        <Route path="/professores" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
         <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute><InstructorRanking /></ProtectedRoute>} />
         <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />

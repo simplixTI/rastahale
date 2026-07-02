@@ -365,6 +365,25 @@ export function useUpdateVideo() {
   });
 }
 
+export function useDeleteVideo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!isMockMode()) {
+        const { error } = await supabase.from("videos").delete().eq("id", id);
+        if (!error) return;
+      }
+      const idx = mockVideos.findIndex((v) => v.id === id);
+      if (idx !== -1) mockVideos.splice(idx, 1);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-videos"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+      qc.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    },
+  });
+}
+
 // ── Admin: planos ──────────────────────────────────────────────────────────
 
 export function useAdminPlans() {

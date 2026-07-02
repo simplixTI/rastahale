@@ -3,7 +3,7 @@ import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as Vi
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
-import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail } from "@/hooks/useAdminData";
+import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo } from "@/hooks/useAdminData";
 import { videoCategories, getLevelColor, getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import VideoFormModal from "@/components/VideoFormModal";
@@ -16,6 +16,7 @@ const AdminVideos = () => {
   const toggleLock = useToggleVideoLock();
   const createVideo = useCreateVideo();
   const updateVideo = useUpdateVideo();
+  const deleteVideo = useDeleteVideo();
   const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
   const [selectedLevel, setSelectedLevel] = useState<string>("Todos");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -106,6 +107,15 @@ const AdminVideos = () => {
           }
         }}
         isPending={updateVideo.isPending}
+        onDelete={() => {
+          if (editingVideo) {
+            deleteVideo.mutate(editingVideo.id, {
+              onSuccess: () => { toast.success("Vídeo excluído"); setEditingVideo(null); },
+              onError:   () => toast.error("Erro ao excluir vídeo"),
+            });
+          }
+        }}
+        isDeleting={deleteVideo.isPending}
       />
 
       <div className="flex items-center justify-between">

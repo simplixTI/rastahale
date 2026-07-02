@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { TEST_USER, TEST_ADMIN, instructors as mockInstructors } from "@/data/mockData";
 
@@ -47,84 +47,90 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Persiste o usuário logado (mock OU real) em sessionStorage. O ID salvo é o
+  // que os hooks usam em isMockMode(): UUID real => Supabase, id curto => mock.
+  const persist = (authUser: AuthUser) => {
+    sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
+    setUser(authUser);
+  };
+
   useEffect(() => {
+    // Restaura sessão salva na aba (vale para modo demo e para usuário real).
     try {
       const saved = sessionStorage.getItem(AUTH_KEY);
-      if (saved) {
-        setUser(JSON.parse(saved));
-        setLoading(false);
-        return;
-      }
+      if (saved) setUser(JSON.parse(saved));
     } catch { /* ignorar */ }
 
+    // Sem Supabase configurado: modo demo (mock). Não assina eventos de auth.
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    const buildUser = async (u: NonNullable<Session["user"]>): Promise<AuthUser> => {
+      const { data: profile } = await supabase
+        .from("profiles").select("name, role").eq("id", u.id).single();
+      return {
+        id:    u.id,
+        email: u.email ?? "",
+        name:  profile?.name ?? u.user_metadata?.name ?? "",
+        role:  profile?.role ?? u.user_metadata?.role ?? "user",
+      };
+    };
+
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!active) return;
       setSession(s);
-      if (s?.user) {
-        const { data: profile } = await supabase
-          .from("profiles").select("name, role").eq("id", s.user.id).single();
-        setUser({
-          id:    s.user.id,
-          email: s.user.email ?? "",
-          name:  profile?.name ?? s.user.user_metadata?.name ?? "",
-          role:  profile?.role ?? s.user.user_metadata?.role ?? "user",
-        });
-      }
+      if (s?.user) persist(await buildUser(s.user));
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
-      if (sessionStorage.getItem(AUTH_KEY)) return;
+      if (!active) return;
       setSession(s);
       if (s?.user) {
-        const { data: profile } = await supabase
-          .from("profiles").select("name, role").eq("id", s.user.id).single();
-        setUser({
-          id:    s.user.id,
-          email: s.user.email ?? "",
-          name:  profile?.name ?? s.user.user_metadata?.name ?? "",
-          role:  profile?.role ?? s.user.user_metadata?.role ?? "user",
-        });
+        persist(await buildUser(s.user));
       } else {
         setUser(null);
+        sessionStorage.removeItem(AUTH_KEY);
         if (event === "SIGNED_OUT") onSessionExpired?.();
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
   const login = async (email: string, password: string): Promise<UserRole | null> => {
     const key = email.toLowerCase().trim();
 
-    // 1. Credenciais fixas (admin / aluno demo)
-    const mock = MOCK_CREDS[key];
-    if (mock && mock.password === password) {
-      const authUser: AuthUser = { id: mock.id, email, name: mock.name, role: mock.role };
-      sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-      setUser(authUser);
-      return mock.role;
+    // Modo demo (sem Supabase): credenciais mock locais (admin / aluno / instrutor).
+    if (!isSupabaseConfigured) {
+      const mock = MOCK_CREDS[key];
+      if (mock && mock.password === password) {
+        persist({ id: mock.id, email, name: mock.name, role: mock.role });
+        return mock.role;
+      }
+      const inst = mockInstructors.find(
+        (i) => i.loginEmail?.toLowerCase().trim() === key && i.loginPassword === password
+      );
+      if (inst) {
+        persist({ id: inst.id, email: inst.loginEmail!, name: inst.name, role: "instructor" });
+        return "instructor";
+      }
+      return null;
     }
 
-    // 2. Credenciais de instrutor (gerenciadas pelo admin)
-    const inst = mockInstructors.find(
-      (i) => i.loginEmail?.toLowerCase().trim() === key && i.loginPassword === password
-    );
-    if (inst) {
-      const authUser: AuthUser = { id: inst.id, email: inst.loginEmail!, name: inst.name, role: "instructor" };
-      sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-      setUser(authUser);
-      return "instructor";
-    }
-
-    // 3. Fallback Supabase Auth
+    // Supabase configurado: autenticação real (papel vem de profiles.role).
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) return null;
       const { data: profile } = await supabase
         .from("profiles").select("name, role").eq("id", data.user.id).single();
       const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
-      setUser({
+      persist({
         id:    data.user.id,
         email: data.user.email ?? "",
         name:  profile?.name ?? data.user.user_metadata?.name ?? "",

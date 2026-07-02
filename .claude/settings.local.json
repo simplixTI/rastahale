@@ -35,7 +35,17 @@
       "Bash(git commit -m ' *)",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(npx tsc -p tsconfig.app.json --noEmit)",
+      "PowerShell(& \".\\\\node_modules\\\\.bin\\\\tsc.cmd\" -p tsconfig.app.json --noEmit)",
+      "PowerShell(& \".\\\\node_modules\\\\.bin\\\\tsc.exe\" -p tsconfig.app.json --noEmit)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(git init)",
+      "PowerShell(git remote add origin https://github.com/lucasstxp/rasta-wave-flow.git)",
+      "PowerShell(git fetch origin)",
+      "PowerShell(git config user.name)",
+      "PowerShell(git config user.email)",
+      "PowerShell(winget install --id Git.Git -e --accept-source-agreements --accept-package-agreements)"
     ]
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon } from "lucide-react";
+import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import {
@@ -18,6 +18,27 @@ function isMockMode(): boolean {
     const { id } = JSON.parse(saved) as { id: string };
     return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   } catch { return true; }
+}
+
+/** Extrai a duração (mm:ss) de um arquivo de vídeo lendo os metadados no navegador. */
+function getVideoDurationFromFile(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const v = document.createElement("video");
+      v.preload = "metadata";
+      v.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        const total = Math.round(v.duration);
+        if (!isFinite(total) || total <= 0) { resolve(""); return; }
+        const min = Math.floor(total / 60);
+        const sec = total % 60;
+        resolve(`${min}:${String(sec).padStart(2, "0")}`);
+      };
+      v.onerror = () => { URL.revokeObjectURL(url); resolve(""); };
+      v.src = url;
+    } catch { resolve(""); }
+  });
 }
 
 async function uploadToStorage(
@@ -66,6 +87,12 @@ interface Props {
   video?:         VideoWithUrl | null;
   onSubmit:       (values: FormValues) => void;
   isPending?:     boolean;
+  onDelete?:      () => void;
+  isDeleting?:    boolean;
+  /** Oculta o seletor de instrutor (ex: Studio — o dono é o próprio professor). */
+  hideInstructor?: boolean;
+  /** Extrai a duração do próprio vídeo em vez de pedir para digitar. */
+  autoDuration?:  boolean;
 }
 
 const fieldCls = "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary";
@@ -165,7 +192,7 @@ function ModeTabs({ mode, onChange }: { mode: "url" | "file"; onChange: (m: "url
 }
 
 // ── VideoFormModal ────────────────────────────────────────────────────────────
-export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending }: Props) {
+export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending, onDelete, isDeleting, hideInstructor, autoDuration }: Props) {
   const isEdit = !!video;
 
   const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<FormValues>({
@@ -185,6 +212,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const [videoFileName,  setVideoFileName]  = useState<string>("");
   const [thumbProgress,  setThumbProgress]  = useState(0);
   const [videoProgress,  setVideoProgress]  = useState(0);
+  const [confirmDelete,  setConfirmDelete]  = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -193,6 +221,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       setVideoFileName("");
       setThumbProgress(0);
       setVideoProgress(0);
+      setConfirmDelete(false);
       reset(
         video
           ? {
@@ -206,7 +235,8 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               requiredProgress: video.requiredProgress ?? 50,
             }
           : {
-              title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
+              title: "", description: "", thumbnail: "", videoUrl: "",
+              duration: autoDuration ? "00:00" : "",
               category: "jiu-jitsu", subcategory: videoCategories[0],
               level: "Iniciante", instructorId: instructors[0]?.id ?? "",
               visible: true, unlockByProgress: false, requiredProgress: 50,
@@ -218,6 +248,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const unlockByProgress = watch("unlockByProgress");
   const thumbValue       = watch("thumbnail");
   const videoValue       = watch("videoUrl");
+  const durationValue    = watch("duration");
 
   async function handleThumbFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem (PNG, JPG, WEBP)"); return; }
@@ -256,6 +287,12 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       }
       setValue("videoUrl", url, { shouldValidate: true });
       setVideoFileName(file.name);
+
+      // Pega a duração do próprio vídeo (fluxo do professor)
+      if (autoDuration) {
+        const dur = await getVideoDurationFromFile(file);
+        if (dur) setValue("duration", dur, { shouldValidate: true });
+      }
     } finally {
       setVideoUploading(false);
     }
@@ -331,11 +368,22 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           </div>
 
           {/* Duração */}
-          <div>
-            <label className={labelCls}>Duração</label>
-            <input {...register("duration")} className={fieldCls} placeholder="12:30" />
-            {errors.duration && <p className="mt-0.5 text-[10px] text-red-400">{errors.duration.message}</p>}
-          </div>
+          {autoDuration ? (
+            <div>
+              <label className={labelCls}>Duração</label>
+              <div className={cn(fieldCls, "flex items-center")}>
+                {durationValue && durationValue !== "00:00"
+                  ? <span className="text-foreground">{durationValue}</span>
+                  : <span className="text-muted-foreground">Detectada automaticamente do vídeo</span>}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className={labelCls}>Duração</label>
+              <input {...register("duration")} className={fieldCls} placeholder="12:30" />
+              {errors.duration && <p className="mt-0.5 text-[10px] text-red-400">{errors.duration.message}</p>}
+            </div>
+          )}
 
           {/* Vídeo */}
           <div>
@@ -396,7 +444,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           </div>
 
           {/* Nível / Instrutor */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className={cn("grid gap-2", hideInstructor ? "grid-cols-1" : "grid-cols-2")}>
             <div>
               <label className={labelCls}>Nível</label>
               <select {...register("level")} className={fieldCls}>
@@ -405,12 +453,14 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
                 <option>Avançado</option>
               </select>
             </div>
-            <div>
-              <label className={labelCls}>Instrutor</label>
-              <select {...register("instructorId")} className={fieldCls}>
-                {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-              </select>
-            </div>
+            {!hideInstructor && (
+              <div>
+                <label className={labelCls}>Instrutor</label>
+                <select {...register("instructorId")} className={fieldCls}>
+                  {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Toggles */}
@@ -437,6 +487,40 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               </div>
             )}
           </div>
+
+          {/* Excluir vídeo — só na edição */}
+          {isEdit && onDelete && (
+            <div className="border-t border-border pt-3">
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-500/30 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 size={13} /> Excluir vídeo
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 p-2">
+                  <span className="flex-1 text-[11px] text-red-400">Excluir permanentemente?</span>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={onDelete}
+                    className="rounded-lg bg-red-500 px-3 py-1.5 text-[11px] font-medium text-white disabled:opacity-50"
+                  >
+                    {isDeleting ? "Excluindo…" : "Sim, excluir"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <DialogFooter className="pt-1">
             <button
