@@ -191,28 +191,44 @@ alter table public.payments       enable row level security;
 alter table public.user_progress  enable row level security;
 
 -- instructors
+drop policy if exists "instructors_read"  on public.instructors;
+drop policy if exists "instructors_write" on public.instructors;
 create policy "instructors_read"   on public.instructors for select using (true);
 create policy "instructors_write"  on public.instructors for all    using (public.is_admin());
 
 -- videos
+drop policy if exists "videos_read"        on public.videos;
+drop policy if exists "videos_write_admin" on public.videos;
 create policy "videos_read"        on public.videos for select using (visible = true or public.is_admin());
 create policy "videos_write_admin" on public.videos for all    using (public.is_admin());
 
 -- plans
+drop policy if exists "plans_read"  on public.plans;
+drop policy if exists "plans_write" on public.plans;
 create policy "plans_read"         on public.plans for select using (true);
 create policy "plans_write"        on public.plans for all    using (public.is_admin());
 
 -- profiles
+drop policy if exists "profiles_read_own"   on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+drop policy if exists "profiles_insert"     on public.profiles;
+drop policy if exists "profiles_admin_all"  on public.profiles;
 create policy "profiles_read_own"   on public.profiles for select using (id = auth.uid() or public.is_admin());
 create policy "profiles_update_own" on public.profiles for update using (id = auth.uid() or public.is_admin());
 create policy "profiles_insert"     on public.profiles for insert with check (id = auth.uid());
 create policy "profiles_admin_all"  on public.profiles for delete using (public.is_admin());
 
 -- payments
+drop policy if exists "payments_read_own"    on public.payments;
+drop policy if exists "payments_write_admin" on public.payments;
 create policy "payments_read_own"    on public.payments for select using (user_id = auth.uid() or public.is_admin());
 create policy "payments_write_admin" on public.payments for all    using (public.is_admin());
 
 -- user_progress
+drop policy if exists "progress_read_own"   on public.user_progress;
+drop policy if exists "progress_insert_own" on public.user_progress;
+drop policy if exists "progress_update_own" on public.user_progress;
+drop policy if exists "progress_delete_own" on public.user_progress;
 create policy "progress_read_own"   on public.user_progress for select using (user_id = auth.uid() or public.is_admin());
 create policy "progress_insert_own" on public.user_progress for insert with check (user_id = auth.uid());
 create policy "progress_update_own" on public.user_progress for update using (user_id = auth.uid());
