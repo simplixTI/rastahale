@@ -68,6 +68,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     let active = true;
+    let settled = false;
+    // Falha de segurança: se o Supabase não responder (rede lenta, incidente
+    // na plataforma etc.), libera a UI em vez de travar o app para sempre.
+    const releaseLoading = () => {
+      if (!settled) { settled = true; setLoading(false); }
+    };
+    const timeoutId = setTimeout(releaseLoading, 8000);
 
     const buildUser = async (u: NonNullable<Session["user"]>): Promise<AuthUser> => {
       const { data: profile } = await supabase
@@ -84,8 +91,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!active) return;
       setSession(s);
       if (s?.user) persist(await buildUser(s.user));
-      setLoading(false);
-    });
+      releaseLoading();
+    }).catch(() => releaseLoading());
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
       if (!active) return;
@@ -97,10 +104,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.removeItem(AUTH_KEY);
         if (event === "SIGNED_OUT") onSessionExpired?.();
       }
-      setLoading(false);
+      releaseLoading();
     });
 
-    return () => { active = false; subscription.unsubscribe(); };
+    return () => { active = false; clearTimeout(timeoutId); subscription.unsubscribe(); };
   }, []);
 
   const login = async (email: string, password: string): Promise<UserRole | null> => {
