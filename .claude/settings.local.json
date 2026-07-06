@@ -45,7 +45,24 @@
       "PowerShell(git fetch origin)",
       "PowerShell(git config user.name)",
       "PowerShell(git config user.email)",
-      "PowerShell(winget install --id Git.Git -e --accept-source-agreements --accept-package-agreements)"
+      "PowerShell(winget install --id Git.Git -e --accept-source-agreements --accept-package-agreements)",
+      "Bash(gh repo *)",
+      "PowerShell(gh repo view lucasstxp/rasta-wave-flow --json isPrivate,visibility 2>&1)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp add playwright npx @playwright/mcp@latest)",
+      "Read(//c/Users/Banzai/**)",
+      "Bash(node -e ' *)",
+      "Bash(head -c 200 ~/.claude.json)",
+      "Bash(cp ~/.claude.json ~/.claude.json.bak)",
+      "Bash(rm ~/.claude.json.bak)",
+      "PowerShell(npm.cmd config get prefix; echo \"---npm global root---\"; npm.cmd root -g; echo \"---search common paths---\"; $paths = @\\(\"$env:APPDATA\\\\npm\\\\claude.cmd\",\"$env:APPDATA\\\\npm\\\\claude.ps1\",\"$env:LOCALAPPDATA\\\\Programs\\\\claude-code\",\"$env:ProgramFiles\\\\claude\",\"$env:USERPROFILE\\\\.local\\\\bin\\\\claude.exe\",\"$env:USERPROFILE\\\\.npm-global\\\\claude.cmd\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { Write-Output \"FOUND: $p\" } else { Write-Output \"missing: $p\" } })",
+      "Bash(supabase projects *)",
+      "Bash(git pull *)",
+      "Bash(npx vercel *)",
+      "Bash(git fetch *)",
+      "Bash(timeout 15 npx vercel login)",
+      "mcp__playwright__browser_navigate",
+      "Bash(npx playwright *)"
     ]
   }
 }
