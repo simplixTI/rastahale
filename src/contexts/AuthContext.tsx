@@ -37,6 +37,15 @@ const MOCK_CREDS: Record<string, { password: string; id: string; name: string; r
 
 const AUTH_KEY = "rasta_auth_user";
 
+// Evita que uma chamada de rede travada (Supabase lento/instável) prenda a UI
+// para sempre — usado no login e na restauração de sessão.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+}
+
 let onSessionExpired: (() => void) | null = null;
 export const registerSessionExpiredCallback = (cb: () => void) => {
   onSessionExpired = cb;
@@ -132,10 +141,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Supabase configurado: autenticação real (papel vem de profiles.role).
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }), 10000
+      );
       if (error || !data.user) return null;
-      const { data: profile } = await supabase
-        .from("profiles").select("name, role").eq("id", data.user.id).single();
+      const { data: profile } = await withTimeout(
+        supabase.from("profiles").select("name, role").eq("id", data.user.id).single(),
+        10000
+      );
       const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
       persist({
         id:    data.user.id,
