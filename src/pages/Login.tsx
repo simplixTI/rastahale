@@ -89,19 +89,23 @@ const Login = () => {
     setError("");
     setIsLoading(true);
 
-    const role = await login(email, password);
-    if (role) {
-      setShowSplash(true);
-      playNetflixSound();
-      // Show splash then redirect
-      setTimeout(() => {
-        navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
-      }, 2200);
-    } else {
-      setError("Email ou senha incorretos");
+    try {
+      const role = await login(email, password);
+      if (role) {
+        setShowSplash(true);
+        playNetflixSound();
+        // Show splash then redirect
+        setTimeout(() => {
+          navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
+        }, 2200);
+      } else {
+        setError("Email ou senha incorretos");
+        setIsLoading(false);
+      }
+    } catch {
+      setError("Não foi possível conectar. Verifique sua internet e tente novamente.");
       setIsLoading(false);
     }
-
   };
 
   if (showSplash) {

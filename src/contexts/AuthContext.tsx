@@ -158,7 +158,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       return role;
     } catch {
-      return null;
+      // Timeout ou falha de rede — não é credencial errada, quem chama deve
+      // distinguir isso de "email ou senha incorretos" (ver Login.tsx).
+      throw new Error("connection");
     }
   };
 
