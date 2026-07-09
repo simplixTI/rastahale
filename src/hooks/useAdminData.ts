@@ -317,7 +317,12 @@ export function useCreateVideo() {
           required_progress:  data.requiredProgress ?? 0,
         };
         const { error } = await supabase.from("videos").insert(row);
-        if (!error) return { id };
+        // Em modo Supabase NÃO caímos para o mock em caso de erro: isso
+        // mascarava falhas reais (ex: coluna video_url ausente no banco) —
+        // o modal fechava "com sucesso" mas nada era salvo. Propaga o erro
+        // para a UI mostrar o toast e manter o modal aberto.
+        if (error) throw error;
+        return { id };
       }
       mockVideos.push({ ...data, id });
       return { id };
@@ -350,7 +355,9 @@ export function useUpdateVideo() {
 
       if (!isMockMode()) {
         const { error } = await supabase.from("videos").update(updates).eq("id", id);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const idx = mockVideos.findIndex((v) => v.id === id);
       if (idx !== -1) {

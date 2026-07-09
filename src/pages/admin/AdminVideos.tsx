@@ -90,7 +90,10 @@ const AdminVideos = () => {
         open={showUpload}
         onOpenChange={setShowUpload}
         onSubmit={(values) => {
-          createVideo.mutate({ ...values, videoUrl: values.videoUrl || null } as Parameters<typeof createVideo.mutate>[0], { onSuccess: () => setShowUpload(false) });
+          createVideo.mutate({ ...values, videoUrl: values.videoUrl || null } as Parameters<typeof createVideo.mutate>[0], {
+            onSuccess: () => { setShowUpload(false); toast.success("Vídeo adicionado"); },
+            onError:   (e) => toast.error(`Erro ao salvar vídeo: ${(e as Error)?.message ?? "tente novamente"}`),
+          });
         }}
         isPending={createVideo.isPending}
       />
@@ -102,7 +105,10 @@ const AdminVideos = () => {
           if (editingVideo) {
             updateVideo.mutate(
               { id: editingVideo.id, ...values, videoUrl: values.videoUrl || null },
-              { onSuccess: () => setEditingVideo(null) }
+              {
+                onSuccess: () => { setEditingVideo(null); toast.success("Vídeo atualizado"); },
+                onError:   (e) => toast.error(`Erro ao salvar vídeo: ${(e as Error)?.message ?? "tente novamente"}`),
+              }
             );
           }
         }}
