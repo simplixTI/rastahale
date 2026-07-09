@@ -168,7 +168,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem(AUTH_KEY);
     setUser(null);
     setSession(null);
-    try { await supabase.auth.signOut(); } catch { /* ignorar erro de rede */ }
+
+    // Tenta revogar a sessão no servidor, mas NÃO depende disso: em rede
+    // lenta/instável o signOut() lança "Failed to fetch" ANTES de limpar o
+    // token do localStorage. Se o token sobrevive, o próximo load restaura uma
+    // sessão morta e joga /login → /admin, impedindo trocar de conta / relogar.
+    try {
+      await withTimeout(supabase.auth.signOut({ scope: "local" }), 4000);
+    } catch { /* ignorar — a limpeza abaixo garante o logout local */ }
+
+    // Garantia de logout local: remove o token persistido do Supabase mesmo
+    // que o signOut acima tenha falhado por rede. Sem isso, o app "não sai"
+    // da conta e não loga em outra.
+    try {
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith("sb-") && k.endsWith("-auth-token")) localStorage.removeItem(k);
+      }
+    } catch { /* ignorar */ }
   };
 
   return (
