@@ -26,6 +26,19 @@ function isMockMode(): boolean {
   } catch { return true; }
 }
 
+/**
+ * true quando o erro é "coluna não existe no schema cache" (PGRST204). Usado
+ * para degradar graciosamente quando a migração 007 (login do instrutor) ainda
+ * não foi aplicada: refazemos o insert/update sem as colunas de credenciais.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isMissingColumnError(error: any): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST204") return true;
+  const msg = String(error.message ?? "").toLowerCase();
+  return msg.includes("column") && (msg.includes("schema cache") || msg.includes("does not exist"));
+}
+
 const toProfile = (u: typeof mockUsers[number]) => ({
   id:             u.id,
   name:           u.name,
@@ -545,12 +558,19 @@ export function useAdminInstructors() {
         try {
           const { data, error } = await supabase.from("instructors").select("*");
           if (!error && data && data.length > 0) {
-            return data.map((i) => ({
-              id:     i.id,
-              name:   i.name,
-              avatar: i.avatar_url ?? "",
-              bio:    i.bio ?? "",
-            }));
+            return data.map((i) => {
+              // login_email/login_password podem não existir se a migração 007
+              // não foi aplicada — acessa via cast e cai para undefined.
+              const row = i as Record<string, unknown>;
+              return {
+                id:            i.id,
+                name:          i.name,
+                avatar:        i.avatar_url ?? "",
+                bio:           i.bio ?? "",
+                loginEmail:    (row.login_email    as string | null) ?? undefined,
+                loginPassword: (row.login_password as string | null) ?? undefined,
+              };
+            });
           }
         } catch { /* fallback */ }
       }
@@ -568,11 +588,19 @@ export function useCreateInstructor() {
     }) => {
       const id = `inst-${Date.now()}`;
       if (!isMockMode()) {
-        const { error } = await supabase.from("instructors").insert({
-          id, name, bio, avatar_url: avatar || null,
-          login_email: loginEmail || null, login_password: loginPassword || null,
+        const base = { id, name, bio, avatar_url: avatar || null };
+        // Tenta salvar com as credenciais de Studio. Se as colunas ainda não
+        // existem (migração 007 não aplicada), refaz sem elas — o instrutor é
+        // criado de qualquer forma. NÃO caímos para o mock em erro real: isso
+        // mascarava falhas e o instrutor "sumia" após o refetch do Supabase.
+        let { error } = await supabase.from("instructors").insert({
+          ...base, login_email: loginEmail || null, login_password: loginPassword || null,
         });
-        if (!error) return { id };
+        if (error && isMissingColumnError(error)) {
+          ({ error } = await supabase.from("instructors").insert(base));
+        }
+        if (error) throw error;
+        return { id };
       }
       mockInstructors.push({ id, name, bio, avatar, loginEmail, loginPassword });
       return { id };
@@ -591,11 +619,15 @@ export function useUpdateInstructor() {
       id: string; name: string; bio: string; avatar: string; loginEmail?: string; loginPassword?: string;
     }) => {
       if (!isMockMode()) {
-        const { error } = await supabase.from("instructors").update({
-          name, bio, avatar_url: avatar || null,
-          login_email: loginEmail || null, login_password: loginPassword || null,
+        const base = { name, bio, avatar_url: avatar || null };
+        let { error } = await supabase.from("instructors").update({
+          ...base, login_email: loginEmail || null, login_password: loginPassword || null,
         }).eq("id", id);
-        if (!error) return;
+        if (error && isMissingColumnError(error)) {
+          ({ error } = await supabase.from("instructors").update(base).eq("id", id));
+        }
+        if (error) throw error;
+        return;
       }
       const inst = mockInstructors.find((i) => i.id === id);
       if (inst) {
@@ -617,7 +649,8 @@ export function useUpdateInstructorAvatar() {
     mutationFn: async ({ id, avatar }: { id: string; avatar: string }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("instructors").update({ avatar_url: avatar }).eq("id", id);
-        if (!error) return;
+        if (error) throw error;
+        return;
       }
       const inst = mockInstructors.find((i) => i.id === id);
       if (inst) inst.avatar = avatar;
@@ -635,7 +668,8 @@ export function useDeleteInstructor() {
     mutationFn: async ({ id }: { id: string }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("instructors").delete().eq("id", id);
-        if (!error) return;
+        if (error) throw error;
+        return;
       }
       const idx = mockInstructors.findIndex((i) => i.id === id);
       if (idx !== -1) mockInstructors.splice(idx, 1);

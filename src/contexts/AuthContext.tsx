@@ -103,11 +103,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       releaseLoading();
     }).catch(() => releaseLoading());
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       if (!active) return;
       setSession(s);
       if (s?.user) {
-        persist(await buildUser(s.user));
+        // NÃO chamar supabase.from()/await DENTRO deste callback: o Supabase o
+        // invoca segurando o lock interno de auth; um await que precise do token
+        // (ex: buscar profiles) tenta readquirir o mesmo lock e DEADLOCKA — o
+        // signInWithPassword fica pendurado, estoura o timeout do login e o app
+        // mostra "não foi possível conectar" (era o motivo do login não entrar).
+        // setTimeout(0) roda buildUser DEPOIS do lock ser liberado.
+        const su = s.user;
+        setTimeout(async () => {
+          if (!active) return;
+          persist(await buildUser(su));
+        }, 0);
       } else {
         setUser(null);
         sessionStorage.removeItem(AUTH_KEY);
@@ -179,12 +189,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Garantia de logout local: remove o token persistido do Supabase mesmo
     // que o signOut acima tenha falhado por rede. Sem isso, o app "não sai"
-    // da conta e não loga em outra.
-    try {
-      for (const k of Object.keys(localStorage)) {
-        if (k.startsWith("sb-") && k.endsWith("-auth-token")) localStorage.removeItem(k);
-      }
-    } catch { /* ignorar */ }
+    // da conta e não loga em outra. O token vive em sessionStorage (ver
+    // supabase.ts), mas limpamos ambos por segurança (config antiga usava
+    // localStorage e pode haver token residual).
+    for (const store of [sessionStorage, localStorage]) {
+      try {
+        for (const k of Object.keys(store)) {
+          if (k.startsWith("sb-") && k.includes("auth-token")) store.removeItem(k);
+        }
+      } catch { /* ignorar */ }
+    }
   };
 
   return (
