@@ -119,9 +119,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           persist(await buildUser(su));
         }, 0);
       } else {
-        setUser(null);
-        sessionStorage.removeItem(AUTH_KEY);
-        if (event === "SIGNED_OUT") onSessionExpired?.();
+        // Sem sessão do Supabase. NÃO derrubar um login local de instrutor: ele
+        // não é usuário do Supabase Auth (vive só no sessionStorage), então o
+        // INITIAL_SESSION nulo no load NÃO deve deslogá-lo. Só limpamos em
+        // logout explícito / sessão revogada (SIGNED_OUT).
+        if (event === "SIGNED_OUT") {
+          setUser(null);
+          sessionStorage.removeItem(AUTH_KEY);
+          onSessionExpired?.();
+        }
       }
       releaseLoading();
     });
@@ -154,19 +160,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await withTimeout(
         supabase.auth.signInWithPassword({ email, password }), 10000
       );
-      if (error || !data.user) return null;
-      const { data: profile } = await withTimeout(
-        supabase.from("profiles").select("name, role").eq("id", data.user.id).single(),
+      if (!error && data.user) {
+        const { data: profile } = await withTimeout(
+          supabase.from("profiles").select("name, role").eq("id", data.user.id).single(),
+          10000
+        );
+        const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
+        persist({
+          id:    data.user.id,
+          email: data.user.email ?? "",
+          name:  profile?.name ?? data.user.user_metadata?.name ?? "",
+          role,
+        });
+        return role;
+      }
+
+      // Não é usuário do Supabase Auth: pode ser um INSTRUTOR. As credenciais do
+      // instrutor ficam na tabela `instructors` (definidas pelo admin) — não há
+      // usuário de Auth para eles. Valida email + senha direto na tabela. O
+      // filtro por login_password roda no servidor, então a senha não volta ao
+      // cliente. Se as colunas de login não existirem (migração 007), a query
+      // retorna erro e tratamos como "sem match".
+      // Cast: login_email/login_password não estão no tipo gerado do banco.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instQuery: any = supabase.from("instructors");
+      const { data: inst } = await withTimeout(
+        instQuery
+          .select("id, name, login_email")
+          .eq("login_email", key)
+          .eq("login_password", password)
+          .maybeSingle(),
         10000
       );
-      const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
-      persist({
-        id:    data.user.id,
-        email: data.user.email ?? "",
-        name:  profile?.name ?? data.user.user_metadata?.name ?? "",
-        role,
-      });
-      return role;
+      if (inst?.id) {
+        persist({ id: inst.id, email: inst.login_email ?? key, name: inst.name, role: "instructor" });
+        return "instructor";
+      }
+      return null;
     } catch {
       // Timeout ou falha de rede — não é credencial errada, quem chama deve
       // distinguir isso de "email ou senha incorretos" (ver Login.tsx).

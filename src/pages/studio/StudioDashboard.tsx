@@ -11,7 +11,7 @@ import {
   useAdminVideos, useCreateVideo, useToggleVideoVisibility,
   useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo,
 } from "@/hooks/useAdminData";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions";
 import VideoFormModal from "@/components/VideoFormModal";
 import { getLevelColor, getCategoryLabel } from "@/data/mockData";
@@ -23,13 +23,11 @@ import {
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
+// Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
+// UUID); usar heurística de UUID marcaria a sessão como mock e o Studio leria
+// vídeos mock em vez dos reais do Supabase.
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 async function uploadFile(file: File, folder: string, onProgress?: (p: number) => void): Promise<string | null> {

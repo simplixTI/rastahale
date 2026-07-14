@@ -5,16 +5,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useUpdateInstructor } from "@/hooks/useAdminData";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+// Modo demo = Supabase não configurado (ver nota em StudioDashboard).
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 function resizeToSquare(file: File, size = 300): Promise<string> {

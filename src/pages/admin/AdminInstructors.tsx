@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import {
   KeyRound, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
 import {
   useAdminInstructors, useCreateInstructor,
@@ -23,13 +23,11 @@ import {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+// Modo demo = Supabase não configurado. NÃO usar heurística de UUID no id do
+// usuário: o instrutor loga com id "inst-…" (não é UUID) mas em produção seus
+// dados vivem no Supabase — o UUID daria falso "mock" e leria dados errados.
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 async function uploadAvatar(file: File, onProgress?: (p: number) => void): Promise<string | null> {
@@ -150,8 +148,10 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
     defaultValues: { name: "", bio: "", avatar: "", loginEmail: "", loginPassword: "" },
   });
 
-  // reset ao abrir
-  useState(() => {
+  // Preenche o formulário ao abrir (edição = dados atuais; criação = vazio).
+  // Precisa ser useEffect com [open, instructor]: useState(() => …) só roda uma
+  // vez na montagem, então a edição abria com os campos em branco.
+  useEffect(() => {
     if (open) {
       reset(instructor
         ? { name: instructor.name, bio: instructor.bio, avatar: instructor.avatar,
@@ -160,7 +160,7 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
       );
       setProgress(0);
     }
-  });
+  }, [open, instructor, reset]);
 
   const avatarValue = watch("avatar");
 

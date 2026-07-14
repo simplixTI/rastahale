@@ -4,20 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { videoCategories, instructors, type Video } from "@/data/mockData";
 
+// Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
+// UUID); a heurística de UUID marcaria a sessão como mock e o upload usaria
+// createObjectURL (não persiste) em vez do Supabase Storage.
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 /** Extrai a duração (mm:ss) de um arquivo de vídeo lendo os metadados no navegador. */

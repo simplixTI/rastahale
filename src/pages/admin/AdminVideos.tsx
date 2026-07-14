@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo } from "@/hooks/useAdminData";
 import { videoCategories, getLevelColor, getCategoryLabel } from "@/data/mockData";
@@ -30,12 +30,7 @@ const AdminVideos = () => {
   const thumbFileRef = useRef<HTMLInputElement>(null);
 
   function isMockMode(): boolean {
-    try {
-      const saved = sessionStorage.getItem("rasta_auth_user");
-      if (!saved) return true;
-      const { id } = JSON.parse(saved) as { id: string };
-      return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    } catch { return true; }
+    return !isSupabaseConfigured;
   }
 
   async function handleThumbFileInline(file: File, videoId: string) {

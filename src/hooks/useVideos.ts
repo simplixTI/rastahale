@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { videos as mockVideos } from "@/data/mockData";
 
@@ -41,13 +41,10 @@ function isSupabaseUser(userId: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
 }
 
+// Modo demo = Supabase não configurado. isSupabaseUser() (acima) segue para as
+// checagens por-usuário (progresso/favoritos), que usam UUID de aluno real.
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !isSupabaseUser(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgress[]> {

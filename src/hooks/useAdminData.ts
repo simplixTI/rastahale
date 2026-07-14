@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
   videos as mockVideos,
   mockUsers,
@@ -16,14 +16,14 @@ function isSupabaseUser(userId: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
 }
 
-/** Retorna true quando o usuário logado é mock (não Supabase real). */
+/**
+ * Modo demo = Supabase não configurado. Antes usava heurística de UUID no id do
+ * usuário logado, mas o instrutor loga com id "inst-…" (não é UUID) e em
+ * produção seus dados vivem no Supabase — o UUID marcaria "mock" por engano e o
+ * Studio leria dados mock. isSupabaseUser() continua para checagens por-usuário.
+ */
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !isSupabaseUser(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 /**

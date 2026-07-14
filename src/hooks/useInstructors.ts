@@ -1,14 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { instructors as mockInstructors } from "@/data/mockData";
 
+// Modo demo = Supabase não configurado (ver nota em useAdminData).
 function isMockMode(): boolean {
-  try {
-    const saved = sessionStorage.getItem("rasta_auth_user");
-    if (!saved) return true;
-    const { id } = JSON.parse(saved) as { id: string };
-    return !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  } catch { return true; }
+  return !isSupabaseConfigured;
 }
 
 export function useInstructors() {
