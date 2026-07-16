@@ -7,6 +7,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { videoCategories } from "@/data/mockData";
+import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
@@ -49,6 +50,13 @@ const labelCls = "block text-[10px] font-semibold uppercase tracking-wider text-
 
 export default function PlanFormModal({ open, onOpenChange, plan, onSubmit, isPending }: Props) {
   const isEdit = !!plan;
+
+  const { data: modules = [] } = useModules();
+  // Módulos disponíveis (nomes únicos das duas modalidades); fallback à lista fixa.
+  const planCategories = (() => {
+    const names = moduleNames(modules);
+    return names.length ? names : [...videoCategories];
+  })();
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -150,7 +158,7 @@ export default function PlanFormModal({ open, onOpenChange, plan, onSubmit, isPe
           <div>
             <label className={labelCls}>Categorias liberadas</label>
             <div className="flex flex-wrap gap-1.5">
-              {videoCategories.map((cat) => {
+              {planCategories.map((cat) => {
                 const active = categories.includes(cat);
                 return (
                   <button

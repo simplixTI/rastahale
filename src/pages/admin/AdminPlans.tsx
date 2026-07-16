@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminPlans, useTogglePlanActive, useCreatePlan, useUpdatePlan } from "@/hooks/useAdminData";
 import { videoCategories } from "@/data/mockData";
+import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
 import PlanFormModal from "@/components/PlanFormModal";
 
@@ -11,6 +12,11 @@ type PlanRow = ReturnType<typeof useAdminPlans>["data"] extends (infer P)[] ? P 
 
 const AdminPlans = () => {
   const { data: plans = [], isLoading } = useAdminPlans();
+  const { data: modules = [] } = useModules();
+  const planCategories = (() => {
+    const names = moduleNames(modules);
+    return names.length ? names : [...videoCategories];
+  })();
   const toggleActive = useTogglePlanActive();
   const createPlan   = useCreatePlan();
   const updatePlan   = useUpdatePlan();
@@ -134,7 +140,7 @@ const AdminPlans = () => {
                     <div className="border-t border-border p-4">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Categorias liberadas</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {videoCategories.map((cat) => {
+                        {planCategories.map((cat) => {
                           const included = (p.categories ?? []).includes(cat);
                           return (
                             <span

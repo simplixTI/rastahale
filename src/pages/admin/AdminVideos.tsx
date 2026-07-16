@@ -1,17 +1,21 @@
 import { useState, useMemo, useRef } from "react";
-import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo } from "@/hooks/useAdminData";
-import { videoCategories, getLevelColor, getCategoryLabel } from "@/data/mockData";
+import { getLevelColor, getCategoryLabel } from "@/data/mockData";
+import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
 import VideoFormModal from "@/components/VideoFormModal";
 
 const levels = ["Todos", "Iniciante", "Intermediário", "Avançado"] as const;
 
 const AdminVideos = () => {
+  const navigate = useNavigate();
   const { data: videos = [], isLoading } = useAdminVideos();
+  const { data: modules = [] } = useModules();
   const toggleVisibility = useToggleVideoVisibility();
   const toggleLock = useToggleVideoLock();
   const createVideo = useCreateVideo();
@@ -60,7 +64,7 @@ const AdminVideos = () => {
     }
   }
 
-  const allCategories = ["Todas", ...videoCategories];
+  const allCategories = ["Todas", ...moduleNames(modules)];
 
   const filtered = useMemo(() => {
     return videos.filter((v) => {
@@ -121,12 +125,20 @@ const AdminVideos = () => {
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">Gerenciar Vídeos</h2>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
-        >
-          <Plus size={12} /> Upload
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/admin/modulos")}
+            className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Layers size={12} /> Módulos
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+          >
+            <Plus size={12} /> Upload
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 flex gap-2 text-xs">

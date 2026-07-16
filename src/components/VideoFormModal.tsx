@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { videoCategories, instructors, type Video } from "@/data/mockData";
+import { useModules, moduleNames } from "@/hooks/useModules";
 
 // Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
 // UUID); a heurística de UUID marcaria a sessão como mock e o upload usaria
@@ -202,6 +203,14 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       visible: true, unlockByProgress: false, requiredProgress: 50,
     },
   });
+
+  const { data: modules = [] } = useModules();
+  const selectedCategory = watch("category");
+  // Módulos da modalidade selecionada (fallback para a lista fixa se vazio).
+  const subOptions = (() => {
+    const names = moduleNames(modules, selectedCategory);
+    return names.length ? names : [...videoCategories];
+  })();
 
   const [thumbMode,      setThumbMode]      = useState<"url" | "file">("url");
   const [videoMode,      setVideoMode]      = useState<"url" | "file">("url");
@@ -434,9 +443,9 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               </select>
             </div>
             <div>
-              <label className={labelCls}>Subcategoria</label>
+              <label className={labelCls}>Módulo</label>
               <select {...register("subcategory")} className={fieldCls}>
-                {videoCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                {subOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
