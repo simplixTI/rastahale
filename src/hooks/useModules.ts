@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { videoCategories } from "@/data/mockData";
 
-export type Modality = "jiu-jitsu" | "luta-livre";
+// Modalidade = string livre (jiu-jitsu, luta-livre ou qualquer outra criada no
+// admin). Ver hook useModalities.
+export type Modality = string;
 export interface Module {
   id: string;
   name: string;

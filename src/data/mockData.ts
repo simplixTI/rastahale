@@ -14,7 +14,7 @@ export interface Video {
   thumbnail: string;
   videoUrl?: string | null;
   duration: string;
-  category: "jiu-jitsu" | "luta-livre";
+  category: string; // modalidade (jiu-jitsu, luta-livre ou qualquer outra criada no admin)
   subcategory: string;
   level: "Iniciante" | "Intermediário" | "Avançado";
   instructorId: string;

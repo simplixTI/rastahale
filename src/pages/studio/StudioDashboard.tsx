@@ -82,7 +82,7 @@ function ThumbInlineEdit({ videoId, onClose }: { videoId: string; onClose: () =>
 
 // ── VideoRow ──────────────────────────────────────────────────────────────────
 
-type AdminVideo = { id: string; title: string; thumbnail: string; duration: string; category: "jiu-jitsu" | "luta-livre"; subcategory: string; level: "Iniciante" | "Intermediário" | "Avançado"; visible: boolean; description: string; instructorId: string; unlockByProgress: boolean; requiredProgress: number; videoUrl: string | null };
+type AdminVideo = { id: string; title: string; thumbnail: string; duration: string; category: string; subcategory: string; level: "Iniciante" | "Intermediário" | "Avançado"; visible: boolean; description: string; instructorId: string; unlockByProgress: boolean; requiredProgress: number; videoUrl: string | null };
 
 function VideoRow({ v, onEdit }: { v: AdminVideo; onEdit: () => void }) {
   const toggleVisibility          = useToggleVideoVisibility();

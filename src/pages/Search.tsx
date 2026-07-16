@@ -4,15 +4,18 @@ import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
+import { useModalities } from "@/hooks/useModalities";
 import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
-const categories = ["all", "jiu-jitsu", "luta-livre"] as const;
 const levels = ["all", "Iniciante", "Intermediário", "Avançado"] as const;
 
 const Search = () => {
   const { user } = useAuth();
   const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
+  const { data: modalities = [] } = useModalities();
+  // Chips de modalidade: "all" + modalidades cadastradas.
+  const categories = ["all", ...modalities.map((m) => m.id)];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [level, setLevel] = useState<string>("all");

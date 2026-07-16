@@ -231,7 +231,7 @@ export function useAdminVideos() {
               thumbnail:        v.thumbnail ?? "",
               videoUrl:         v.video_url ?? null,
               duration:         v.duration,
-              category:         v.category as "jiu-jitsu" | "luta-livre",
+              category:         v.category as string,
               subcategory:      v.subcategory,
               level:            v.level as "Iniciante" | "Intermediário" | "Avançado",
               instructorId:     v.instructor_id,

@@ -5,6 +5,7 @@ import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
+import { useModalities } from "@/hooks/useModalities";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useAllComments } from "@/hooks/useInstructorComments";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
+  const { data: modalities = [] }             = useModalities();
   const { data: instructors = [] }            = useInstructors();
   const allComments                           = useAllComments();
 
@@ -157,6 +159,19 @@ const Index = () => {
           ))}
         </Section>
       )}
+
+      {/* Modalidades novas (além de Jiu-Jitsu / Luta Livre): uma seção por modalidade */}
+      {modalities
+        .filter((m) => m.id !== "jiu-jitsu" && m.id !== "luta-livre")
+        .map((m) => {
+          const vids = videos.filter((v) => v.category === m.id);
+          if (vids.length === 0) return null;
+          return (
+            <Section key={m.id} title={m.label} delay={100}>
+              {vids.map((v) => <VideoCard key={v.id} video={v} />)}
+            </Section>
+          );
+        })}
 
       {/* Top Instrutores */}
       {rankedInstructors.length > 0 && (

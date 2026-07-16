@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { videoCategories, instructors, type Video } from "@/data/mockData";
 import { useModules, moduleNames } from "@/hooks/useModules";
+import { useModalities } from "@/hooks/useModalities";
 
 // Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
 // UUID); a heurística de UUID marcaria a sessão como mock e o upload usaria
@@ -68,7 +69,7 @@ const schema = z.object({
   thumbnail:        z.string().min(1,  "Adicione uma thumbnail"),
   videoUrl:         z.string().optional(),
   duration:         z.string().min(1,  "Ex: 12:30"),
-  category:         z.enum(["jiu-jitsu", "luta-livre"]),
+  category:         z.string().min(1,  "Selecione a modalidade"),
   subcategory:      z.string().min(1,  "Selecione"),
   level:            z.enum(["Iniciante", "Intermediário", "Avançado"]),
   instructorId:     z.string().min(1,  "Selecione"),
@@ -204,13 +205,32 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     },
   });
 
-  const { data: modules = [] } = useModules();
+  const { data: modules = [] }       = useModules();
+  const { data: modalities = [] }    = useModalities();
   const selectedCategory = watch("category");
   // Módulos da modalidade selecionada (fallback para a lista fixa se vazio).
   const subOptions = (() => {
     const names = moduleNames(modules, selectedCategory);
     return names.length ? names : [...videoCategories];
   })();
+
+  // Ao TROCAR de modalidade, o módulo (subcategoria) atual pode não existir na
+  // nova modalidade — o <select> mostra a 1ª opção mas o valor do form ficaria
+  // com o antigo (salvando o módulo errado). Reseta para a 1ª opção válida.
+  // Ignora a 1ª execução após abrir (para não sobrescrever a subcategoria de um
+  // vídeo em edição).
+  const prevCategory = useRef<string | undefined>(undefined);
+  const currentSub   = watch("subcategory");
+  useEffect(() => {
+    if (!open) { prevCategory.current = undefined; return; }
+    if (prevCategory.current === undefined) { prevCategory.current = selectedCategory; return; }
+    if (prevCategory.current !== selectedCategory) {
+      prevCategory.current = selectedCategory;
+      if (subOptions.length && !subOptions.includes(currentSub)) {
+        setValue("subcategory", subOptions[0], { shouldValidate: true });
+      }
+    }
+  }, [selectedCategory, open, currentSub, subOptions, setValue]);
 
   const [thumbMode,      setThumbMode]      = useState<"url" | "file">("url");
   const [videoMode,      setVideoMode]      = useState<"url" | "file">("url");
@@ -438,8 +458,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             <div>
               <label className={labelCls}>Modalidade</label>
               <select {...register("category")} className={fieldCls}>
-                <option value="jiu-jitsu">Jiu Jitsu</option>
-                <option value="luta-livre">Luta Livre</option>
+                {modalities.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
               </select>
             </div>
             <div>

@@ -10,7 +10,7 @@ export interface VideoWithProgress {
   thumbnail: string;
   videoUrl: string | null;
   duration: string;
-  category: "jiu-jitsu" | "luta-livre";
+  category: string;
   subcategory: string;
   level: "Iniciante" | "Intermediário" | "Avançado";
   instructorId: string;
@@ -90,7 +90,7 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
       thumbnail:        v.thumbnail ?? "",
       videoUrl:         v.video_url ?? null,
       duration:         v.duration,
-      category:         v.category as "jiu-jitsu" | "luta-livre",
+      category:         v.category as string,
       subcategory:      v.subcategory,
       level:            v.level as "Iniciante" | "Intermediário" | "Avançado",
       instructorId:     v.instructor_id,
