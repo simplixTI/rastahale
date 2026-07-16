@@ -9,9 +9,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { videoCategories, instructors, type Video } from "@/data/mockData";
+import { videoCategories, type Video } from "@/data/mockData";
 import { useModules, moduleNames } from "@/hooks/useModules";
 import { useModalities } from "@/hooks/useModalities";
+import { useInstructors } from "@/hooks/useInstructors";
 
 // Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
 // UUID); a heurística de UUID marcaria a sessão como mock e o upload usaria
@@ -195,6 +196,11 @@ function ModeTabs({ mode, onChange }: { mode: "url" | "file"; onChange: (m: "url
 export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending, onDelete, isDeleting, hideInstructor, autoDuration }: Props) {
   const isEdit = !!video;
 
+  // Instrutores REAIS do banco (antes era a lista fixa do mockData, que não
+  // incluía os instrutores criados no admin — impedia vincular aulas a eles).
+  // Declarado ANTES do useForm porque os defaultValues o utilizam.
+  const { data: instructors = [] }   = useInstructors();
+
   const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -231,6 +237,17 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       }
     }
   }, [selectedCategory, open, currentSub, subOptions, setValue]);
+
+  // Os instrutores chegam de forma assíncrona: se o valor atual estiver vazio ou
+  // apontar para um instrutor que não existe mais (ex: removido), seleciona o
+  // primeiro válido. Não mexe quando o valor já é um instrutor existente.
+  const currentInstructor = watch("instructorId");
+  useEffect(() => {
+    if (!open || instructors.length === 0) return;
+    if (!currentInstructor || !instructors.some((i) => i.id === currentInstructor)) {
+      setValue("instructorId", instructors[0].id, { shouldValidate: true });
+    }
+  }, [open, instructors, currentInstructor, setValue]);
 
   const [thumbMode,      setThumbMode]      = useState<"url" | "file">("url");
   const [videoMode,      setVideoMode]      = useState<"url" | "file">("url");
