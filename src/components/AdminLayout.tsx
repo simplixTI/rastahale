@@ -17,7 +17,7 @@ const navItems = [
   { path: "/admin/ranking",       icon: Trophy,          label: "Ranking"     },
 ];
 
-const AdminLayout = ({ children, title, showBack = false }: { children: ReactNode; title: string; showBack?: boolean }) => {
+const AdminLayout = ({ children, title, showBack = false, backTo }: { children: ReactNode; title: string; showBack?: boolean; backTo?: string }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,8 +28,8 @@ const AdminLayout = ({ children, title, showBack = false }: { children: ReactNod
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {showBack && (
-              <button onClick={() => navigate(-1)} className="text-muted-foreground">
+            {(showBack || backTo) && (
+              <button onClick={() => (backTo ? navigate(backTo) : navigate(-1))} className="text-muted-foreground hover:text-foreground transition-colors">
                 <ChevronLeft size={20} />
               </button>
             )}
