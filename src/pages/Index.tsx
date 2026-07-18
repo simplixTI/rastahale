@@ -67,7 +67,8 @@ const Index = () => {
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
   const continueWatching = videos.filter((v) => v.progress && v.progress > 0 && v.progress < 100);
 
-  // Atletas do carrossel: quem tem pelo menos uma aula publicada.
+  // Carrossel com todos os atletas cadastrados (inclusive os que ainda não têm
+  // aula) — quem tem mais aulas aparece primeiro.
   const athletes = instructors
     .map((inst) => {
       const instVids  = videos.filter((v) => v.instructorId === inst.id);
@@ -75,7 +76,7 @@ const Index = () => {
       const avgRating = comments.length ? comments.reduce((s, c) => s + c.rating, 0) / comments.length : 0;
       return { ...inst, videoCount: instVids.length, avgRating };
     })
-    .filter((a) => a.videoCount > 0);
+    .sort((a, b) => b.videoCount - a.videoCount);
 
   const rankedInstructors = instructors
     .map((inst) => {
