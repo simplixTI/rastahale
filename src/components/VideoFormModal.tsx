@@ -92,8 +92,6 @@ interface Props {
   isDeleting?:    boolean;
   /** Oculta o seletor de instrutor (ex: Studio — o dono é o próprio professor). */
   hideInstructor?: boolean;
-  /** Extrai a duração do próprio vídeo em vez de pedir para digitar. */
-  autoDuration?:  boolean;
 }
 
 const fieldCls = "w-full rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary";
@@ -193,7 +191,7 @@ function ModeTabs({ mode, onChange }: { mode: "url" | "file"; onChange: (m: "url
 }
 
 // ── VideoFormModal ────────────────────────────────────────────────────────────
-export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending, onDelete, isDeleting, hideInstructor, autoDuration }: Props) {
+export default function VideoFormModal({ open, onOpenChange, video, onSubmit, isPending, onDelete, isDeleting, hideInstructor }: Props) {
   const isEdit = !!video;
 
   // Instrutores REAIS do banco (antes era a lista fixa do mockData, que não
@@ -279,8 +277,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               requiredProgress: video.requiredProgress ?? 50,
             }
           : {
-              title: "", description: "", thumbnail: "", videoUrl: "",
-              duration: autoDuration ? "00:00" : "",
+              title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
               category: "jiu-jitsu", subcategory: videoCategories[0],
               level: "Iniciante", instructorId: instructors[0]?.id ?? "",
               visible: true, unlockByProgress: false, requiredProgress: 50,
@@ -332,11 +329,9 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       setValue("videoUrl", url, { shouldValidate: true });
       setVideoFileName(file.name);
 
-      // Pega a duração do próprio vídeo (fluxo do professor)
-      if (autoDuration) {
-        const dur = await getVideoDurationFromFile(file);
-        if (dur) setValue("duration", dur, { shouldValidate: true });
-      }
+      // Arquivo enviado: a duração sai dos metadados do próprio vídeo.
+      const dur = await getVideoDurationFromFile(file);
+      if (dur) setValue("duration", dur, { shouldValidate: true });
     } finally {
       setVideoUploading(false);
     }
@@ -411,15 +406,17 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             {errors.thumbnail && <p className="mt-0.5 text-[10px] text-red-400">{errors.thumbnail.message}</p>}
           </div>
 
-          {/* Duração */}
-          {autoDuration ? (
+          {/* Duração — automática quando o vídeo é um arquivo enviado; digitada
+              quando é uma URL (não dá para ler os metadados de link externo). */}
+          {videoMode === "file" ? (
             <div>
               <label className={labelCls}>Duração</label>
               <div className={cn(fieldCls, "flex items-center")}>
-                {durationValue && durationValue !== "00:00"
+                {durationValue
                   ? <span className="text-foreground">{durationValue}</span>
                   : <span className="text-muted-foreground">Detectada automaticamente do vídeo</span>}
               </div>
+              {errors.duration && <p className="mt-0.5 text-[10px] text-red-400">{errors.duration.message}</p>}
             </div>
           ) : (
             <div>

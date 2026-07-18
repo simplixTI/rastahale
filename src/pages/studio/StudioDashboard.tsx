@@ -405,7 +405,7 @@ const StudioDashboard = () => {
             { ...values, instructorId: user.id, videoUrl: values.videoUrl || null } as Parameters<typeof createVideo.mutate>[0],
             { onSuccess: () => { toast.success("Aula enviada!"); setShowUpload(false); }, onError: () => toast.error("Erro ao enviar aula") }
           );
-        }} isPending={createVideo.isPending} hideInstructor autoDuration />
+        }} isPending={createVideo.isPending} hideInstructor />
 
       <VideoFormModal open={!!editingVideo} onOpenChange={(v) => { if (!v) setEditing(null); }}
         video={editingVideo}
@@ -421,7 +421,7 @@ const StudioDashboard = () => {
             onSuccess: () => { toast.success("Aula excluída"); setEditing(null); },
             onError:   () => toast.error("Erro ao excluir"),
           });
-        }} isDeleting={deleteVideo.isPending} hideInstructor autoDuration />
+        }} isDeleting={deleteVideo.isPending} hideInstructor />
 
       <SessionFormModal open={showSessForm} onOpenChange={setShowSessForm} myVideos={myVideos}
         onSave={(t, d, ids) => { create(t, d, ids); toast.success("Sessão criada!", { duration: 1500 }); }} />

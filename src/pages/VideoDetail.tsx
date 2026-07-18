@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Heart, CheckCircle, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,20 +10,106 @@ import { getLevelColor, getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
-// Detecta e normaliza URL do YouTube → embed
-function getYouTubeEmbedUrl(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`;
-  }
-  return null;
+// Extrai o id de 11 caracteres de uma URL do YouTube
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
 }
 
-function VideoPlayer({ videoUrl, thumbnail, title }: { videoUrl: string | null; thumbnail: string; title: string }) {
+// Intervalo entre gravações de progresso durante a reprodução.
+const SAVE_INTERVAL_MS = 10_000;
+
+// ── YouTube IFrame API ────────────────────────────────────────────────────────
+// Necessária para saber em que ponto do vídeo o aluno parou — o iframe simples
+// não expõe o tempo de reprodução.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare global {
+  interface Window {
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+function loadYouTubeApi(): Promise<any> {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  return new Promise((resolve) => {
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { previous?.(); resolve(window.YT); };
+    if (!document.getElementById("youtube-iframe-api")) {
+      const script = document.createElement("script");
+      script.id  = "youtube-iframe-api";
+      script.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(script);
+    }
+  });
+}
+
+function YouTubePlayer({ videoId, startAt, onProgress }: {
+  videoId: string; startAt: number; onProgress: (pct: number) => void;
+}) {
+  const hostRef     = useRef<HTMLDivElement>(null);
+  // Refs para o efeito não reiniciar o player a cada render.
+  const progressRef = useRef(onProgress);
+  const startAtRef  = useRef(startAt);
+  useEffect(() => { progressRef.current = onProgress; }, [onProgress]);
+
+  useEffect(() => {
+    let player: any;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let cancelled = false;
+
+    const report = () => {
+      try {
+        const total   = player?.getDuration?.() ?? 0;
+        const current = player?.getCurrentTime?.() ?? 0;
+        if (total > 0) progressRef.current((current / total) * 100);
+      } catch { /* player já destruído */ }
+    };
+
+    loadYouTubeApi().then((YT) => {
+      if (cancelled || !hostRef.current) return;
+      player = new YT.Player(hostRef.current, {
+        videoId,
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: () => {
+            if (startAtRef.current > 0) player.seekTo(startAtRef.current, true);
+          },
+          onStateChange: (event: any) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              if (!timer) timer = setInterval(report, SAVE_INTERVAL_MS);
+            } else {
+              if (timer) { clearInterval(timer); timer = undefined; }
+              report();
+            }
+          },
+        },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+      report();
+      try { player?.destroy?.(); } catch { /* ignora */ }
+    };
+  }, [videoId]);
+
+  return <div ref={hostRef} className="h-full w-full" />;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+// ── VideoPlayer ───────────────────────────────────────────────────────────────
+
+function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
+  videoUrl: string | null; thumbnail: string; title: string;
+  startAt: number; onProgress: (pct: number) => void;
+}) {
   const [playing, setPlaying] = useState(false);
+  const videoRef   = useRef<HTMLVideoElement>(null);
+  const lastSentAt = useRef(0);
+  const seeked     = useRef(false);
 
   if (!videoUrl) {
     return (
@@ -37,9 +123,9 @@ function VideoPlayer({ videoUrl, thumbnail, title }: { videoUrl: string | null; 
     );
   }
 
-  const youtubeEmbed = getYouTubeEmbedUrl(videoUrl);
+  const youtubeId = getYouTubeId(videoUrl);
 
-  if (youtubeEmbed) {
+  if (youtubeId) {
     if (!playing) {
       return (
         <div className="relative aspect-video w-full bg-black">
@@ -57,27 +143,43 @@ function VideoPlayer({ videoUrl, thumbnail, title }: { videoUrl: string | null; 
     }
     return (
       <div className="aspect-video w-full bg-black">
-        <iframe
-          src={youtubeEmbed}
-          title={title}
-          className="h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        <YouTubePlayer videoId={youtubeId} startAt={startAt} onProgress={onProgress} />
       </div>
     );
   }
 
   // HTML5 video (mp4, webm, etc.)
+  const report = () => {
+    const el = videoRef.current;
+    if (el && el.duration > 0) onProgress((el.currentTime / el.duration) * 100);
+  };
+
   return (
     <div className="aspect-video w-full bg-black">
       <video
+        ref={videoRef}
         src={videoUrl}
         controls
         autoPlay={false}
         className="h-full w-full"
         poster={thumbnail}
         controlsList="nodownload"
+        onLoadedMetadata={() => {
+          // Retoma de onde parou (só uma vez, para não brigar com o usuário).
+          const el = videoRef.current;
+          if (el && !seeked.current && startAt > 0 && startAt < el.duration) {
+            seeked.current = true;
+            el.currentTime = startAt;
+          }
+        }}
+        onTimeUpdate={() => {
+          const now = Date.now();
+          if (now - lastSentAt.current < SAVE_INTERVAL_MS) return;
+          lastSentAt.current = now;
+          report();
+        }}
+        onPause={report}
+        onEnded={() => onProgress(100)}
       >
         Seu navegador não suporta reprodução de vídeo.
       </video>
@@ -95,6 +197,24 @@ const VideoDetail = () => {
   const toggleFavoriteMutation     = useToggleFavorite();
   const updateProgressMutation     = useUpdateProgress();
   const { data: allVideos = [] }   = useVideos(user?.id ?? "");
+
+  // Grava o progresso de reprodução. A partir de 95% conta como assistida —
+  // os segundos finais (créditos, despedida) raramente são vistos até o fim.
+  const lastSavedPct = useRef(-1);
+  const handleProgress = useCallback((pct: number) => {
+    const userId  = user?.id;
+    const videoId = video?.id;
+    if (!userId || !videoId) return;
+    const rounded = Math.min(100, Math.max(0, Math.round(pct)));
+    if (rounded < 1 || rounded === lastSavedPct.current) return;
+    lastSavedPct.current = rounded;
+    const finished = rounded >= 95;
+    updateProgressMutation.mutate({
+      userId, videoId,
+      progress: finished ? 100 : rounded,
+      watched:  finished,
+    });
+  }, [user?.id, video?.id, updateProgressMutation]);
 
   if (isLoading) {
     return (
@@ -116,6 +236,15 @@ const VideoDetail = () => {
   const isWatched = video.watched ?? false;
   const related   = allVideos.filter((v) => v.category === video.category && v.id !== video.id).slice(0, 5);
 
+  // Ponto de retomada, em segundos, a partir do progresso salvo.
+  const startAt = (() => {
+    const pct = video.progress ?? 0;
+    if (isWatched || pct <= 0 || pct >= 95) return 0;
+    const [min = 0, sec = 0] = (video.duration ?? "").split(":").map(Number);
+    const totalSeconds = (min || 0) * 60 + (sec || 0);
+    return totalSeconds > 0 ? Math.floor((pct / 100) * totalSeconds) : 0;
+  })();
+
   const handleToggleFavorite = () => {
     if (!user) return;
     toggleFavoriteMutation.mutate({ userId: user.id, videoId: video.id, isFavorite: !isFav });
@@ -135,7 +264,13 @@ const VideoDetail = () => {
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
       {/* Player */}
       <div className="relative w-full">
-        <VideoPlayer videoUrl={video.videoUrl ?? null} thumbnail={video.thumbnail} title={video.title} />
+        <VideoPlayer
+          videoUrl={video.videoUrl ?? null}
+          thumbnail={video.thumbnail}
+          title={video.title}
+          startAt={startAt}
+          onProgress={handleProgress}
+        />
         <button
           onClick={() => navigate(-1)}
           className="absolute left-3 top-3 z-10 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm"

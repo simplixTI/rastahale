@@ -61,7 +61,10 @@ const Index = () => {
   const { data: instructors = [] }            = useInstructors();
 
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
-  const continueWatching = videos.filter((v) => v.progress && v.progress > 0 && v.progress < 100);
+  // Aulas começadas e ainda não terminadas.
+  const continueWatching = videos.filter(
+    (v) => !v.watched && (v.progress ?? 0) > 0 && (v.progress ?? 0) < 100
+  );
 
   // Carrossel com todos os atletas cadastrados (inclusive os que ainda não têm
   // aula) — quem tem mais aulas aparece primeiro.
