@@ -1,9 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, ChevronRight, Clock, LayoutList, Star } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronRight, Clock, LayoutList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
-import { useInstructorComments } from "@/hooks/useInstructorComments";
 import { formatMinutes, totalMinutes } from "@/lib/duration";
 import { getCategoryLabel } from "@/data/mockData";
 
@@ -14,7 +13,6 @@ const AthleteModules = () => {
 
   const { data: instructor, isLoading: loadInst }     = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid }  = useVideos(user?.id ?? "");
-  const { comments, avgRating }                       = useInstructorComments(id ?? "");
 
   const videos = allVideos.filter((v) => v.instructorId === id);
 
@@ -82,12 +80,6 @@ const AthleteModules = () => {
                 <LayoutList size={12} className="text-primary" />
                 {modules.length} módulo{modules.length !== 1 ? "s" : ""}
               </span>
-              {avgRating > 0 && (
-                <span className="flex items-center gap-1 text-xs text-amber-400">
-                  <Star size={12} fill="currentColor" />
-                  {avgRating.toFixed(1)} ({comments.length})
-                </span>
-              )}
             </div>
 
             <button

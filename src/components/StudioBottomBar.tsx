@@ -1,4 +1,4 @@
-import { Video, MessageCircle, Trophy, LogOut, UserCircle } from "lucide-react";
+import { Video, MessageCircle, LogOut, UserCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { path: "/studio",          icon: Video,         label: "Aulas"   },
   { path: "/studio/feedback", icon: MessageCircle, label: "Feedback"},
-  { path: "/studio/ranking",  icon: Trophy,        label: "Ranking" },
   { path: "/studio/perfil",   icon: UserCircle,    label: "Perfil"  },
 ];
 

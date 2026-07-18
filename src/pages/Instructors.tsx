@@ -1,26 +1,20 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Star, ChevronRight, Users } from "lucide-react";
+import { BookOpen, ChevronRight, Users } from "lucide-react";
 import MobileLayout from "@/components/MobileLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
-import { useAllComments } from "@/hooks/useInstructorComments";
 
 const Instructors = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: instructors = [], isLoading } = useInstructors();
   const { data: videos = [] }                  = useVideos(user?.id ?? "");
-  const allComments                            = useAllComments();
 
-  const cards = instructors.map((inst) => {
-    const instVids = videos.filter((v) => v.instructorId === inst.id);
-    const comments = allComments.filter((c) => c.instructorId === inst.id);
-    const avgRating = comments.length
-      ? comments.reduce((s, c) => s + c.rating, 0) / comments.length
-      : 0;
-    return { ...inst, videoCount: instVids.length, avgRating, commentCount: comments.length };
-  });
+  const cards = instructors.map((inst) => ({
+    ...inst,
+    videoCount: videos.filter((v) => v.instructorId === inst.id).length,
+  }));
 
   return (
     <MobileLayout>
@@ -61,11 +55,6 @@ const Instructors = () => {
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <BookOpen size={11} className="text-primary" /> {inst.videoCount} aula{inst.videoCount !== 1 ? "s" : ""}
                   </span>
-                  {inst.avgRating > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-400">
-                      <Star size={11} fill="currentColor" /> {inst.avgRating.toFixed(1)}
-                    </span>
-                  )}
                 </div>
               </div>
               <ChevronRight size={16} className="flex-shrink-0 text-muted-foreground" />

@@ -6,7 +6,6 @@ export interface InstructorComment {
   userId: string;
   userName: string;
   text: string;
-  rating: number; // 1–5
   createdAt: string;
 }
 
@@ -31,7 +30,6 @@ export function useInstructorComments(instructorId: string) {
     userId: string,
     userName: string,
     text: string,
-    rating: number,
   ) => {
     const newComment: InstructorComment = {
       id:           `cmt-${Date.now()}`,
@@ -39,7 +37,6 @@ export function useInstructorComments(instructorId: string) {
       userId,
       userName,
       text:         text.trim(),
-      rating:       Math.max(1, Math.min(5, Math.round(rating))),
       createdAt:    new Date().toISOString(),
     };
     const updated = [...load(), newComment];
@@ -57,15 +54,5 @@ export function useInstructorComments(instructorId: string) {
   const userComment = (userId: string) =>
     comments.find((c) => c.userId === userId);
 
-  const avgRating = comments.length
-    ? comments.reduce((s, c) => s + c.rating, 0) / comments.length
-    : 0;
-
-  return { comments, addComment, removeComment, userComment, avgRating };
-}
-
-/** Agrega todos os comentários para o ranking global. */
-export function useAllComments() {
-  const [all] = useState<InstructorComment[]>(load);
-  return all;
+  return { comments, addComment, removeComment, userComment };
 }

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Star } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 export interface AthleteCardData {
   id: string;
@@ -7,7 +7,6 @@ export interface AthleteCardData {
   avatar: string;
   bio: string;
   videoCount: number;
-  avgRating: number;
 }
 
 const AthleteCard = ({ athlete }: { athlete: AthleteCardData }) => {
@@ -26,12 +25,6 @@ const AthleteCard = ({ athlete }: { athlete: AthleteCardData }) => {
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-
-        {athlete.avgRating > 0 && (
-          <span className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 backdrop-blur-sm">
-            <Star size={9} fill="currentColor" /> {athlete.avgRating.toFixed(1)}
-          </span>
-        )}
 
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
           <p className="truncate text-sm font-bold leading-tight text-primary-foreground">{athlete.name}</p>

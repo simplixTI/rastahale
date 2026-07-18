@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, Play, Star, Send, Trophy, Trash2, MessageCircle, LayoutList } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
@@ -11,32 +11,10 @@ import VideoCard from "@/components/VideoCard";
 import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
-// ── StarRating ────────────────────────────────────────────────────────────────
-
-function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [hover, setHover] = useState(0);
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button"
-          onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
-          onClick={() => onChange(n)}
-          className="transition-transform hover:scale-110"
-        >
-          <Star size={20}
-            className={cn("transition-colors", (hover || value) >= n ? "text-amber-400" : "text-muted-foreground")}
-            fill={(hover || value) >= n ? "currentColor" : "none"}
-          />
-        </button>
-      ))}
-    </div>
-  );
-}
-
 // ── CommentCard ───────────────────────────────────────────────────────────────
 
 function CommentCard({ comment, canDelete, onDelete }: {
-  comment: { id: string; userName: string; text: string; rating: number; createdAt: string };
+  comment: { id: string; userName: string; text: string; createdAt: string };
   canDelete: boolean; onDelete: () => void;
 }) {
   const date = (() => {
@@ -55,21 +33,11 @@ function CommentCard({ comment, canDelete, onDelete }: {
             <p className="text-[10px] text-muted-foreground">{date}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="flex">
-            {[1,2,3,4,5].map((n) => (
-              <Star key={n} size={10}
-                className={comment.rating >= n ? "text-amber-400" : "text-muted-foreground"}
-                fill={comment.rating >= n ? "currentColor" : "none"}
-              />
-            ))}
-          </div>
-          {canDelete && (
-            <button onClick={onDelete} className="ml-1 text-muted-foreground hover:text-red-400 transition-colors">
-              <Trash2 size={12} />
-            </button>
-          )}
-        </div>
+        {canDelete && (
+          <button onClick={onDelete} className="text-muted-foreground hover:text-red-400 transition-colors">
+            <Trash2 size={12} />
+          </button>
+        )}
       </div>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{comment.text}</p>
     </div>
@@ -85,11 +53,10 @@ const InstructorSection = () => {
 
   const { data: instructor,  isLoading: loadInst } = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid } = useVideos(user?.id ?? "");
-  const { comments, addComment, removeComment, userComment, avgRating } = useInstructorComments(id ?? "");
+  const { comments, addComment, removeComment, userComment } = useInstructorComments(id ?? "");
   const { sessions } = useStudioSessions(id ?? "");
 
   const [commentText, setCommentText] = useState("");
-  const [rating,      setRating]      = useState(0);
 
   const videos = allVideos.filter((v) => v.instructorId === id);
 
@@ -110,12 +77,10 @@ const InstructorSection = () => {
 
   function handleSubmitComment() {
     if (!user) { toast.error("Faça login para comentar"); return; }
-    if (rating === 0) { toast.error("Selecione uma avaliação (1–5 estrelas)"); return; }
     if (commentText.trim().length < 10) { toast.error("Escreva pelo menos 10 caracteres"); return; }
     if (myComment) { toast.error("Você já deixou um comentário para este instrutor"); return; }
-    addComment(user.id, user.name, commentText, rating);
+    addComment(user.id, user.name, commentText);
     setCommentText("");
-    setRating(0);
     toast.success("Comentário enviado!");
   }
 
@@ -168,19 +133,13 @@ const InstructorSection = () => {
                   <span>{totalHours > 0 ? `${totalHours}h ` : ""}{remainMin}min</span>
                 </div>
               )}
-              {avgRating > 0 && (
-                <div className="flex items-center gap-1 text-xs text-amber-400">
-                  <Star size={12} fill="currentColor" />
-                  <span>{avgRating.toFixed(1)} ({comments.length})</span>
+              {comments.length > 0 && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MessageCircle size={12} className="text-primary" />
+                  <span>{comments.length} comentário{comments.length !== 1 ? "s" : ""}</span>
                 </div>
               )}
             </div>
-
-            {/* link ranking */}
-            <button onClick={() => navigate("/ranking")}
-              className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors">
-              <Trophy size={11} /> Ver ranking de instrutores
-            </button>
           </div>
         </div>
       </div>
@@ -273,8 +232,8 @@ const InstructorSection = () => {
               O que os alunos dizem
             </h2>
             {comments.length > 0 && (
-              <span className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-amber-400">
-                <Star size={11} fill="currentColor" /> {avgRating.toFixed(1)}
+              <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
+                {comments.length}
               </span>
             )}
           </div>
@@ -282,31 +241,29 @@ const InstructorSection = () => {
           {/* formulário — só para quem ainda não comentou */}
           {!myComment && user?.role !== "instructor" && (
             <div className="mb-4 rounded-xl border border-border bg-card p-4 space-y-3">
-              <p className="text-xs font-semibold text-foreground">Deixe sua avaliação</p>
-
-              <StarRating value={rating} onChange={setRating} />
+              <p className="text-xs font-semibold text-foreground">Deixe seu comentário</p>
 
               <textarea
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 rows={3}
-                placeholder="Por que você gosta deste instrutor? (mín. 10 caracteres)"
+                placeholder="O que você achou das aulas deste professor? (mín. 10 caracteres)"
                 className="w-full resize-none rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
 
               <button
                 onClick={handleSubmitComment}
-                disabled={rating === 0 || commentText.trim().length < 10}
+                disabled={commentText.trim().length < 10}
                 className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               >
-                <Send size={12} /> Enviar avaliação
+                <Send size={12} /> Enviar comentário
               </button>
             </div>
           )}
 
           {myComment && (
             <div className="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-              <p className="text-[10px] text-primary font-semibold">✓ Você já avaliou este instrutor</p>
+              <p className="text-[10px] text-primary font-semibold">✓ Você já comentou sobre este professor</p>
             </div>
           )}
 
@@ -314,8 +271,8 @@ const InstructorSection = () => {
           {comments.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <MessageCircle size={28} className="text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
-              <p className="text-xs text-muted-foreground">Seja o primeiro a avaliar!</p>
+              <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
+              <p className="text-xs text-muted-foreground">Seja o primeiro a comentar!</p>
             </div>
           ) : (
             <div className="space-y-3">

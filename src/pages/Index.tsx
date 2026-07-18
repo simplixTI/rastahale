@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, ReactNode } from "react";
-import { Play, Trophy, Star, ChevronRight } from "lucide-react";
+import { Play, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
@@ -7,7 +7,6 @@ import AthleteCard from "@/components/AthleteCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructors } from "@/hooks/useInstructors";
-import { useAllComments } from "@/hooks/useInstructorComments";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo.png";
 
@@ -55,14 +54,11 @@ const Section = ({ title, children, delay = 0 }: { title: string; children: Reac
   </FadeInSection>
 );
 
-const BASE_POP: Record<string, number> = { "inst-1": 420, "inst-3": 310 };
-
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
   const { data: instructors = [] }            = useInstructors();
-  const allComments                           = useAllComments();
 
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
   const continueWatching = videos.filter((v) => v.progress && v.progress > 0 && v.progress < 100);
@@ -70,25 +66,11 @@ const Index = () => {
   // Carrossel com todos os atletas cadastrados (inclusive os que ainda não têm
   // aula) — quem tem mais aulas aparece primeiro.
   const athletes = instructors
-    .map((inst) => {
-      const instVids  = videos.filter((v) => v.instructorId === inst.id);
-      const comments  = allComments.filter((c) => c.instructorId === inst.id);
-      const avgRating = comments.length ? comments.reduce((s, c) => s + c.rating, 0) / comments.length : 0;
-      return { ...inst, videoCount: instVids.length, avgRating };
-    })
+    .map((inst) => ({
+      ...inst,
+      videoCount: videos.filter((v) => v.instructorId === inst.id).length,
+    }))
     .sort((a, b) => b.videoCount - a.videoCount);
-
-  const rankedInstructors = instructors
-    .map((inst) => {
-      const instVids  = videos.filter((v) => v.instructorId === inst.id);
-      const watched   = instVids.filter((v) => v.watched || (v.progress ?? 0) > 0).length;
-      const comments  = allComments.filter((c) => c.instructorId === inst.id);
-      const avgRating = comments.length ? comments.reduce((s, c) => s + c.rating, 0) / comments.length : 0;
-      const score     = (BASE_POP[inst.id] ?? 0) + watched * 15 + comments.length * 5 + avgRating * 10;
-      return { ...inst, score, avgRating, videoCount: instVids.length };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
 
   if (isLoading) {
     return (
@@ -169,45 +151,6 @@ const Index = () => {
         </FadeInSection>
       )}
 
-      {/* Top Instrutores */}
-      {rankedInstructors.length > 0 && (
-        <FadeInSection delay={150}>
-          <section className="mt-6 px-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Trophy size={14} className="text-amber-400" />
-                <h2 className="text-base font-bold text-foreground">Top Instrutores</h2>
-              </div>
-              <button onClick={() => navigate("/ranking")}
-                className="flex items-center gap-0.5 text-[11px] font-semibold text-primary">
-                Ver ranking <ChevronRight size={12} />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {rankedInstructors.map((inst, idx) => (
-                <button key={inst.id} onClick={() => navigate(`/instrutor/${inst.id}`)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left hover:border-primary/30 transition-colors">
-                  <span className="w-5 flex-shrink-0 text-center text-sm font-bold text-muted-foreground">
-                    {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}º`}
-                  </span>
-                  <img src={inst.avatar} alt={inst.name}
-                    className="h-10 w-10 flex-shrink-0 rounded-full object-cover border border-border" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-foreground truncate">{inst.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{inst.videoCount} aulas</p>
-                  </div>
-                  {inst.avgRating > 0 && (
-                    <span className="flex items-center gap-0.5 text-[11px] font-semibold text-amber-400 flex-shrink-0">
-                      <Star size={11} fill="currentColor" /> {inst.avgRating.toFixed(1)}
-                    </span>
-                  )}
-                  <ChevronRight size={14} className="text-muted-foreground flex-shrink-0" />
-                </button>
-              ))}
-            </div>
-          </section>
-        </FadeInSection>
-      )}
     </MobileLayout>
   );
 };
