@@ -3,9 +3,9 @@ import { Play, Trophy, Star, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
+import AthleteCard from "@/components/AthleteCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
-import { useModalities } from "@/hooks/useModalities";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useAllComments } from "@/hooks/useInstructorComments";
 import { cn } from "@/lib/utils";
@@ -61,15 +61,21 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
-  const { data: modalities = [] }             = useModalities();
   const { data: instructors = [] }            = useInstructors();
   const allComments                           = useAllComments();
 
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
   const continueWatching = videos.filter((v) => v.progress && v.progress > 0 && v.progress < 100);
-  const jiuFundamentos   = videos.filter((v) => v.category === "jiu-jitsu" && v.subcategory === "Fundamentos");
-  const jiuAvancado      = videos.filter((v) => v.category === "jiu-jitsu" && v.subcategory === "Avançado");
-  const lutaLivre        = videos.filter((v) => v.category === "luta-livre");
+
+  // Atletas do carrossel: quem tem pelo menos uma aula publicada.
+  const athletes = instructors
+    .map((inst) => {
+      const instVids  = videos.filter((v) => v.instructorId === inst.id);
+      const comments  = allComments.filter((c) => c.instructorId === inst.id);
+      const avgRating = comments.length ? comments.reduce((s, c) => s + c.rating, 0) / comments.length : 0;
+      return { ...inst, videoCount: instVids.length, avgRating };
+    })
+    .filter((a) => a.videoCount > 0);
 
   const rankedInstructors = instructors
     .map((inst) => {
@@ -136,42 +142,31 @@ const Index = () => {
         </Section>
       )}
 
-      {jiuFundamentos.length > 0 && (
-        <Section title="Jiu Jitsu — Fundamentos" delay={100}>
-          {jiuFundamentos.map((v) => (
-            <VideoCard key={v.id} video={v} />
-          ))}
-        </Section>
+      {/* Carrossel de atletas — clicar abre os módulos do professor */}
+      {athletes.length > 0 && (
+        <FadeInSection delay={100}>
+          <section className="mt-6">
+            <div className="mb-3 flex items-center justify-between px-4">
+              <h2 className="text-base font-bold text-foreground">Nossos Atletas</h2>
+              <button
+                onClick={() => navigate("/professores")}
+                className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
+              >
+                Ver todos <ChevronRight size={12} />
+              </button>
+            </div>
+            <div
+              className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+              style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
+            >
+              {athletes.map((a) => (
+                <AthleteCard key={a.id} athlete={a} />
+              ))}
+              <div className="shrink-0 w-1" aria-hidden="true" />
+            </div>
+          </section>
+        </FadeInSection>
       )}
-
-      {jiuAvancado.length > 0 && (
-        <Section title="Jiu Jitsu — Avançado" delay={100}>
-          {jiuAvancado.map((v) => (
-            <VideoCard key={v.id} video={v} />
-          ))}
-        </Section>
-      )}
-
-      {lutaLivre.length > 0 && (
-        <Section title="Luta Livre" delay={100}>
-          {lutaLivre.map((v) => (
-            <VideoCard key={v.id} video={v} />
-          ))}
-        </Section>
-      )}
-
-      {/* Modalidades novas (além de Jiu-Jitsu / Luta Livre): uma seção por modalidade */}
-      {modalities
-        .filter((m) => m.id !== "jiu-jitsu" && m.id !== "luta-livre")
-        .map((m) => {
-          const vids = videos.filter((v) => v.category === m.id);
-          if (vids.length === 0) return null;
-          return (
-            <Section key={m.id} title={m.label} delay={100}>
-              {vids.map((v) => <VideoCard key={v.id} video={v} />)}
-            </Section>
-          );
-        })}
 
       {/* Top Instrutores */}
       {rankedInstructors.length > 0 && (
