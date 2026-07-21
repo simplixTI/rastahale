@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import AthleteCard from "@/components/AthleteCard";
+import StudentRanking from "@/components/StudentRanking";
+import StoreBanner from "@/components/StoreBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -153,6 +155,16 @@ const Index = () => {
           </section>
         </FadeInSection>
       )}
+
+      {/* Ranking dos alunos (gamificação por faixas) */}
+      <FadeInSection delay={150}>
+        <StudentRanking />
+      </FadeInSection>
+
+      {/* Loja */}
+      <FadeInSection delay={100}>
+        <StoreBanner />
+      </FadeInSection>
 
     </MobileLayout>
   );
