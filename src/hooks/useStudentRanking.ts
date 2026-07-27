@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useAdminUsers } from "@/hooks/useAdminData";
+import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useSeason, seasonPoints, type SeasonConfig } from "@/hooks/useSeason";
 import { beltForPoints, type BeltProgress } from "@/lib/belts";
 
@@ -15,24 +15,23 @@ export interface RankedStudent {
 
 /**
  * Ranking de alunos por pontos da temporada (aulas assistidas desde o último
- * reinício). Lê a tabela de perfis (useAdminUsers) + a config da temporada
+ * reinício). Lê o leaderboard (useLeaderboard) + a config da temporada
  * (baselines) e ordena no cliente.
  *
- * Observação de RLS: em produção, se a política do Supabase permitir que o
- * aluno leia apenas o próprio perfil, o ranking mostrará só ele. O admin lê
- * todos, então a premiação (feita pelo painel admin) funciona normalmente.
+ * Observação de RLS: com a view `leaderboard` aplicada (migração 011), o aluno
+ * vê todos os concorrentes. Sem ela, o fallback usa `profiles` — e aí a RLS
+ * mostra só o próprio aluno (o admin continua vendo todos).
  */
 export function useStudentRanking() {
-  const { data: users = [], isLoading: loadUsers }   = useAdminUsers();
+  const { data: users = [], isLoading: loadUsers }   = useLeaderboard();
   const { data: season, isLoading: loadSeason }      = useSeason();
 
   const ranking = useMemo<RankedStudent[]>(() => {
     const baselines      = season?.baselines ?? {};
     const seasonStarted  = Object.keys(baselines).length > 0;
     return users
-      .filter((u) => u.role === "user")
       .map((u) => {
-        const watched = u.videos_watched ?? 0;
+        const watched = u.videosWatched ?? 0;
         // Sem temporada iniciada: conta as aulas totais (baseline 0).
         // Com temporada: conta a partir do baseline; quem entrou depois começa em 0.
         const baseline = seasonStarted ? (baselines[u.id] ?? watched) : 0;
@@ -40,7 +39,7 @@ export function useStudentRanking() {
         return {
           id:            u.id,
           name:          u.name,
-          avatarUrl:     u.avatar_url ?? "",
+          avatarUrl:     u.avatarUrl ?? "",
           videosWatched: watched,
           points,
           belt:          beltForPoints(points),
