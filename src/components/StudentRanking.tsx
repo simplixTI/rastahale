@@ -1,13 +1,29 @@
-import { Trophy, Flame, BookOpen } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Trophy, Flame, BookOpen, Gift, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentRanking, type RankedStudent } from "@/hooks/useStudentRanking";
+import { seasonHasEnded } from "@/hooks/useSeason";
+import VoucherModal from "@/components/VoucherModal";
 import { cn } from "@/lib/utils";
+
+const VOUCHER_ACK_KEY = "rasta_voucher_ack";
 
 function positionLabel(pos: number): string {
   if (pos === 1) return "🥇";
   if (pos === 2) return "🥈";
   if (pos === 3) return "🥉";
   return `${pos}º`;
+}
+
+/** Tempo restante até a data final, em formato curto. */
+function timeLeft(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "encerrado";
+  const days  = Math.floor(ms / 86_400_000);
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000);
+  if (days > 0) return `${days}d ${hours}h`;
+  const mins = Math.floor((ms % 3_600_000) / 60_000);
+  return `${hours}h ${mins}min`;
 }
 
 function Avatar({ student }: { student: RankedStudent }) {
@@ -40,12 +56,10 @@ function RankRow({ student, isMe }: { student: RankedStudent; isMe: boolean }) {
       </span>
       <Avatar student={student} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-xs font-bold text-foreground">
-            {student.name}
-            {isMe && <span className="ml-1 text-[10px] font-semibold text-primary">(você)</span>}
-          </p>
-        </div>
+        <p className="truncate text-xs font-bold text-foreground">
+          {student.name}
+          {isMe && <span className="ml-1 text-[10px] font-semibold text-primary">(você)</span>}
+        </p>
         <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
           <span aria-hidden="true">{student.belt.belt.emoji}</span>
           {student.belt.belt.name}
@@ -106,15 +120,55 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
   );
 }
 
+/** Banner do desafio: prêmio + contagem regressiva até a data final. */
+function ChallengeBanner({ endsAt, prizeText }: { endsAt: string; prizeText: string }) {
+  return (
+    <div className="mb-3 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
+        <Gift size={16} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-bold text-foreground">
+          Desafio da temporada
+        </p>
+        <p className="truncate text-[11px] text-muted-foreground">
+          1º lugar ganha: {prizeText || "um prêmio especial"}
+        </p>
+      </div>
+      <div className="flex flex-shrink-0 items-center gap-1 rounded-full bg-background/60 px-2 py-1 text-[10px] font-semibold text-amber-400">
+        <Clock size={11} /> {timeLeft(endsAt)}
+      </div>
+    </div>
+  );
+}
+
 const StudentRanking = () => {
-  const { user }               = useAuth();
-  const { ranking, isLoading } = useStudentRanking();
+  const { user }                       = useAuth();
+  const { ranking, season, isLoading } = useStudentRanking();
+  const [showVoucher, setShowVoucher]  = useState(false);
+
+  // Mostra o modal do voucher uma vez para o vencedor (por premiação).
+  useEffect(() => {
+    if (!user || !season?.awardedAt) return;
+    if (season.winnerId !== user.id) return;
+    let acked = "";
+    try { acked = localStorage.getItem(VOUCHER_ACK_KEY) ?? ""; } catch { /* ignora */ }
+    if (acked !== season.awardedAt) setShowVoucher(true);
+  }, [user, season]);
+
+  function dismissVoucher() {
+    setShowVoucher(false);
+    try {
+      if (season?.awardedAt) localStorage.setItem(VOUCHER_ACK_KEY, season.awardedAt);
+    } catch { /* ignora */ }
+  }
 
   if (isLoading || ranking.length === 0) return null;
 
-  const top     = ranking.slice(0, 5);
-  const me      = user ? ranking.find((s) => s.id === user.id) : undefined;
-  const meInTop = me ? top.some((s) => s.id === me.id) : false;
+  const top       = ranking.slice(0, 5);
+  const me        = user ? ranking.find((s) => s.id === user.id) : undefined;
+  const meInTop   = me ? top.some((s) => s.id === me.id) : false;
+  const scheduled = season?.endsAt && !seasonHasEnded(season);
 
   return (
     <section className="mt-6 px-4">
@@ -122,6 +176,10 @@ const StudentRanking = () => {
         <Trophy size={16} className="text-amber-400" />
         <h2 className="text-base font-bold text-foreground">Ranking dos Alunos</h2>
       </div>
+
+      {scheduled && season && (
+        <ChallengeBanner endsAt={season.endsAt!} prizeText={season.prizeText} />
+      )}
 
       {me && <MyBeltCard me={me} />}
 
@@ -131,13 +189,19 @@ const StudentRanking = () => {
         ))}
       </div>
 
-      {/* Se o aluno não está no top 5, mostra a linha dele separada. */}
       {me && !meInTop && (
         <>
           <p className="my-2 text-center text-[10px] text-muted-foreground">• • •</p>
           <RankRow student={me} isMe />
         </>
       )}
+
+      <VoucherModal
+        open={showVoucher}
+        onClose={dismissVoucher}
+        prizeText={season?.prizeText ?? ""}
+        prizeCode={season?.prizeCode ?? ""}
+      />
     </section>
   );
 };
