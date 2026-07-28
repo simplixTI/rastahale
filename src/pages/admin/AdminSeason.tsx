@@ -118,7 +118,7 @@ const AdminSeason = () => {
           <input value={prizeCode} onChange={(e) => setPrizeCode(e.target.value)} placeholder="Ex: RASTA100" className={fieldCls} />
         </div>
         <button onClick={handleSave} disabled={saveConfig.isPending}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50">
+          className="flex w-full items-center justify-center gap-2 rounded-full btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50">
           {saveConfig.isPending ? <Loader2 size={14} className="animate-spin" /> : null} Salvar temporada
         </button>
       </div>
@@ -176,8 +176,8 @@ const AdminSeason = () => {
               recomeça a partir de agora). Nenhum prêmio é entregue.
             </p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setConfirm(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-              <button onClick={handleRestart} disabled={restart.isPending} className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">Reiniciar</button>
+              <button onClick={() => setConfirm(null)} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+              <button onClick={handleRestart} disabled={restart.isPending} className="rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">Reiniciar</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -196,7 +196,7 @@ const AdminSeason = () => {
               {!ended && <span className="mt-1 block text-amber-400">A data final ainda não chegou — encerrar mesmo assim?</span>}
             </p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setConfirm(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+              <button onClick={() => setConfirm(null)} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
               <button onClick={handleAward} disabled={award.isPending} className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Premiar 1º lugar</button>
             </DialogFooter>
           </DialogContent>

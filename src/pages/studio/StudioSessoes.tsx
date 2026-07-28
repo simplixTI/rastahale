@@ -138,11 +138,11 @@ function SessionFormModal({ open, onOpenChange, session, myVideos = [], onSave }
 
         <DialogFooter className="pt-2">
           <button type="button" onClick={() => onOpenChange(false)}
-            className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+            className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
             Cancelar
           </button>
           <button onClick={handleSave}
-            className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+            className="rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
             {isEdit ? "Salvar" : "Criar Sessão"}
           </button>
         </DialogFooter>
@@ -250,7 +250,7 @@ const StudioSessoes = () => {
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1 rounded-2xl btn-press bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+            className="flex items-center gap-1 rounded-full btn-press bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
           >
             <Plus size={12} /> Nova
           </button>
@@ -288,11 +288,11 @@ const StudioSessoes = () => {
               Os vídeos não são afetados.
             </p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setDeleting(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+              <button onClick={() => setDeleting(null)} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
                 Cancelar
               </button>
               <button onClick={() => { remove(deleting.id); toast.success("Sessão removida"); setDeleting(null); }}
-                className="rounded-2xl btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">
+                className="rounded-full btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">
                 Remover
               </button>
             </DialogFooter>
@@ -321,7 +321,7 @@ const StudioSessoes = () => {
             <p className="text-sm font-semibold text-foreground">Nenhuma sessão criada</p>
             <p className="text-xs text-muted-foreground">Organize seus vídeos em sessões temáticas.</p>
             <button onClick={() => setShowCreate(true)}
-              className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+              className="rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
               Criar primeira sessão
             </button>
           </div>

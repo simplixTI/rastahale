@@ -134,7 +134,7 @@ const AdminVideos = () => {
           </button>
           <button
             onClick={() => setShowUpload(true)}
-            className="flex items-center gap-1 rounded-2xl btn-press bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
+            className="flex items-center gap-1 rounded-full btn-press bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
           >
             <Plus size={12} /> Upload
           </button>

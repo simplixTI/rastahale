@@ -546,7 +546,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
                     type="button"
                     disabled={isDeleting}
                     onClick={onDelete}
-                    className="rounded-2xl btn-press bg-red-500 px-3 py-1.5 text-[11px] font-medium text-white disabled:opacity-50"
+                    className="rounded-full btn-press bg-red-500 px-3 py-1.5 text-[11px] font-medium text-white disabled:opacity-50"
                   >
                     {isDeleting ? "Excluindo…" : "Sim, excluir"}
                   </button>
@@ -566,14 +566,14 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground"
+              className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              className="rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
               {thumbUploading || videoUploading ? "Enviando…" : isPending ? "Salvando…" : isEdit ? "Salvar" : "Adicionar"}
             </button>

@@ -139,7 +139,7 @@ const EditProfile = () => {
           onClick={handleSave}
           disabled={isSaving || !name.trim()}
           className={cn(
-            "mt-2 flex w-full items-center justify-center gap-2 rounded-2xl btn-press py-3 text-sm font-bold transition-all",
+            "mt-2 flex w-full items-center justify-center gap-2 rounded-full btn-press py-3 text-sm font-bold transition-all",
             saved
               ? "bg-emerald-500 text-white"
               : "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
