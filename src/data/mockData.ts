@@ -334,18 +334,18 @@ export const getCategoryLabel = (cat: string) => {
 
 export const getLevelColor = (level: string) => {
   switch (level) {
-    case "Iniciante": return "bg-emerald-500/20 text-emerald-400";
-    case "Intermediário": return "bg-amber-500/20 text-amber-400";
-    case "Avançado": return "bg-red-500/20 text-red-400";
+    case "Iniciante": return "bg-emerald-500/15 text-emerald-700";
+    case "Intermediário": return "bg-amber-500/20 text-amber-700";
+    case "Avançado": return "bg-red-500/15 text-red-700";
     default: return "bg-muted text-muted-foreground";
   }
 };
 
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case "ativo": case "pago": return "bg-emerald-500/20 text-emerald-400";
-    case "pendente": return "bg-amber-500/20 text-amber-400";
-    case "inativo": case "falhou": return "bg-red-500/20 text-red-400";
+    case "ativo": case "pago": return "bg-emerald-500/15 text-emerald-700";
+    case "pendente": return "bg-amber-500/20 text-amber-700";
+    case "inativo": case "falhou": return "bg-red-500/15 text-red-700";
     default: return "bg-muted text-muted-foreground";
   }
 };

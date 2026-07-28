@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import AthleteCard from "@/components/AthleteCard";
-import StudentRanking from "@/components/StudentRanking";
+import TopicSections from "@/components/TopicSections";
 import StoreBanner from "@/components/StoreBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
@@ -156,10 +156,9 @@ const Index = () => {
         </FadeInSection>
       )}
 
-      {/* Ranking dos alunos (gamificação por faixas) */}
-      <FadeInSection delay={150}>
-        <StudentRanking />
-      </FadeInSection>
+      {/* Tópicos por posição (Passagem de Guarda, Finalizações, etc.) — geridos
+          no admin via Vídeos → Módulos, agrupados aqui por subcategoria. */}
+      <TopicSections />
 
       {/* Loja */}
       <FadeInSection delay={100}>

@@ -139,7 +139,8 @@ const AdminModules = () => {
         </span>
       </div>
       <p className="mt-1 text-[11px] text-muted-foreground">
-        Crie modalidades e organize as aulas em módulos dentro de cada uma. Aparecem no cadastro de aulas, nos planos e na busca.
+        Crie modalidades e organize as aulas em módulos (tópicos) dentro de cada uma — ex: Passagem de Guarda, Finalizações.
+        Cada módulo vira uma seção na Home (agrupada por tópico) e aparece no cadastro de aulas, nos planos e na busca.
       </p>
 
       {/* ── Modalidades ─────────────────────────────────────────── */}

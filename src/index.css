@@ -4,47 +4,49 @@
 
 @layer base {
   :root {
-    --background: 0 0% 7%;
-    --foreground: 30 20% 95%;
+    /* Tema claro — inspirado na loja rastahale.com.br: fundo claro, cartões
+       brancos, acento laranja da marca com toques reggae (verde/dourado). */
+    --background: 40 40% 98%;
+    --foreground: 24 12% 12%;
 
-    --card: 0 0% 11%;
-    --card-foreground: 30 20% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 12% 12%;
 
-    --popover: 0 0% 11%;
-    --popover-foreground: 30 20% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 12% 12%;
 
-    --primary: 25 95% 55%;
+    --primary: 22 92% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 30 20% 95%;
+    --secondary: 36 24% 95%;
+    --secondary-foreground: 24 12% 20%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 30 10% 55%;
+    --muted: 36 20% 95%;
+    --muted-foreground: 24 6% 42%;
 
-    --accent: 20 90% 48%;
+    --accent: 142 55% 36%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 78% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 25 95% 55%;
+    --border: 32 18% 90%;
+    --input: 32 18% 90%;
+    --ring: 22 92% 52%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 30 20% 95%;
-    --sidebar-primary: 25 95% 55%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 24 12% 12%;
+    --sidebar-primary: 22 92% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 30 20% 95%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 25 95% 55%;
+    --sidebar-accent: 36 20% 95%;
+    --sidebar-accent-foreground: 24 12% 20%;
+    --sidebar-border: 32 18% 90%;
+    --sidebar-ring: 22 92% 52%;
 
-    --gradient-sunset-from: 30 100% 85%;
-    --gradient-sunset-to: 25 95% 55%;
+    --gradient-sunset-from: 40 95% 90%;
+    --gradient-sunset-to: 22 92% 52%;
   }
 }
 

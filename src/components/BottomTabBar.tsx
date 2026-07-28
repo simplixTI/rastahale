@@ -1,4 +1,4 @@
-import { Home, Search, Users, Heart, BarChart3, User } from "lucide-react";
+import { Home, Search, Users, Heart, Trophy, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const tabs = [
   { path: "/buscar", icon: Search, label: "Buscar" },
   { path: "/professores", icon: Users, label: "Professores" },
   { path: "/favoritos", icon: Heart, label: "Favoritos" },
-  { path: "/progresso", icon: BarChart3, label: "Progresso" },
+  { path: "/progresso", icon: Trophy, label: "Ranking" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
 

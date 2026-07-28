@@ -1,5 +1,6 @@
 import { Flame, Clock, BookOpen } from "lucide-react";
 import MobileLayout from "@/components/MobileLayout";
+import StudentRanking from "@/components/StudentRanking";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useProfile } from "@/hooks/useProfile";
@@ -41,10 +42,19 @@ const ProgressPage = () => {
   return (
     <MobileLayout>
       <header className="px-4 pt-4">
-        <h1 className="text-xl font-bold text-foreground">Meu Progresso</h1>
+        <h1 className="text-xl font-bold text-foreground">Ranking & Progresso</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">Sua faixa, sua colocação e sua evolução</p>
       </header>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 px-4">
+      {/* Ranking dos alunos (gamificação por faixas) */}
+      <StudentRanking />
+
+      <div className="mt-8 flex items-center gap-1.5 px-4">
+        <Flame size={16} className="text-primary" />
+        <h2 className="text-base font-bold text-foreground">Meu Progresso</h2>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 px-4">
         {stats.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col items-center rounded-xl border border-border bg-card p-3">
             <Icon size={20} className="text-primary" />
