@@ -192,7 +192,7 @@ export default function PlanFormModal({ open, onOpenChange, plan, onSubmit, isPe
               <button
                 type="button"
                 onClick={addFeature}
-                className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+                className="rounded-2xl btn-press bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
               >
                 <Plus size={13} />
               </button>
@@ -221,14 +221,14 @@ export default function PlanFormModal({ open, onOpenChange, plan, onSubmit, isPe
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground"
+              className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+              className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
               {isPending ? "Salvando..." : isEdit ? "Salvar" : "Criar Plano"}
             </button>

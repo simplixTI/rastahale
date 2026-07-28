@@ -195,7 +195,7 @@ const AdminModules = () => {
             onKeyDown={(e) => { if (e.key === "Enter") handleAddModality(); if (e.key === "Escape") setAddModal(false); }}
             className={fieldCls} placeholder="Ex: MMA, Boxe, Muay Thai…" />
           <button onClick={handleAddModality} disabled={createModality.isPending}
-            className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
+            className="flex shrink-0 items-center gap-1 rounded-2xl btn-press bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
             {createModality.isPending ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Criar
           </button>
           <button onClick={() => setAddModal(false)} className="text-muted-foreground"><X size={16} /></button>
@@ -215,7 +215,7 @@ const AdminModules = () => {
           placeholder={activeMod ? `Novo módulo de ${activeMod.label}…` : "Crie uma modalidade primeiro"}
           disabled={!activeMod} className={cn(fieldCls, !activeMod && "opacity-50")} />
         <button onClick={handleAddModule} disabled={createModule.isPending || !activeMod}
-          className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
+          className="flex shrink-0 items-center gap-1 rounded-2xl btn-press bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
           {createModule.isPending ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
         </button>
       </div>
@@ -249,8 +249,8 @@ const AdminModules = () => {
               As aulas já cadastradas nele não são afetadas, mas ele deixa de aparecer no seletor.
             </p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setDelModule(null)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-              <button onClick={handleDeleteModule} disabled={deleteModule.isPending} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Remover</button>
+              <button onClick={() => setDelModule(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+              <button onClick={handleDeleteModule} disabled={deleteModule.isPending} className="rounded-2xl btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Remover</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -266,8 +266,8 @@ const AdminModules = () => {
               Os módulos e aulas ligados a ela deixam de aparecer agrupados. Você pode recriá-la depois.
             </p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setDelModal(null)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-              <button onClick={handleDeleteModality} disabled={deleteModality.isPending} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Remover</button>
+              <button onClick={() => setDelModal(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+              <button onClick={handleDeleteModality} disabled={deleteModality.isPending} className="rounded-2xl btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50">Remover</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -79,7 +79,7 @@ const AdminPlans = () => {
 
       <button
         onClick={() => setShowCreate(true)}
-        className="mt-4 flex w-full items-center justify-center gap-1 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground"
+        className="mt-4 flex w-full items-center justify-center gap-1 rounded-2xl btn-press bg-primary py-2.5 text-xs font-medium text-primary-foreground"
       >
         <Plus size={14} /> Criar Novo Plano
       </button>

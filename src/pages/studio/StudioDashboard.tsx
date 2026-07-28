@@ -200,8 +200,8 @@ function SessionFormModal({ open, onOpenChange, session, myVideos, onSave }: {
           </div>
         </div>
         <DialogFooter className="pt-2">
-          <button type="button" onClick={() => onOpenChange(false)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-          <button onClick={handleSave} className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+          <button type="button" onClick={() => onOpenChange(false)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+          <button onClick={handleSave} className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
             {session ? "Salvar" : "Criar Sessão"}
           </button>
         </DialogFooter>
@@ -438,8 +438,8 @@ const StudioDashboard = () => {
             <DialogHeader><DialogTitle className="text-sm font-bold text-foreground">Remover sessão?</DialogTitle></DialogHeader>
             <p className="text-xs text-muted-foreground">A sessão <span className="font-semibold text-foreground">"{delSess.title}"</span> será removida. Os vídeos não são afetados.</p>
             <DialogFooter className="pt-2">
-              <button onClick={() => setDelSess(null)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-              <button onClick={() => { remove(delSess.id); toast.success("Sessão removida", { duration: 1500 }); setDelSess(null); }} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
+              <button onClick={() => setDelSess(null)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+              <button onClick={() => { remove(delSess.id); toast.success("Sessão removida", { duration: 1500 }); setDelSess(null); }} className="rounded-2xl btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

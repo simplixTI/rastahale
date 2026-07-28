@@ -236,11 +236,11 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
           </div>
 
           <DialogFooter className="pt-1">
-            <button type="button" onClick={() => onOpenChange(false)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+            <button type="button" onClick={() => onOpenChange(false)} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
               Cancelar
             </button>
             <button type="submit" disabled={isPending || avatarUploading}
-              className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
+              className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
               {avatarUploading ? "Enviando…" : isPending ? "Salvando…" : isEdit ? "Salvar" : "Adicionar"}
             </button>
           </DialogFooter>
@@ -390,8 +390,8 @@ function ConfirmDelete({ name, onConfirm, onCancel }: { name: string; onConfirm:
           Os vídeos associados permanecerão sem instrutor. O acesso ao Studio será revogado.
         </p>
         <DialogFooter className="pt-2">
-          <button onClick={onCancel} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-          <button onClick={onConfirm} className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
+          <button onClick={onCancel} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+          <button onClick={onConfirm} className="rounded-2xl btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -455,7 +455,7 @@ const AdminInstructors = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">Instrutores</h2>
         <button onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
+          className="flex items-center gap-1 rounded-2xl btn-press bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
           <Plus size={12} /> Adicionar
         </button>
       </div>
@@ -495,7 +495,7 @@ const AdminInstructors = () => {
         <div className="mt-16 flex flex-col items-center gap-3 text-center">
           <Users2 size={36} className="text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Nenhum instrutor cadastrado</p>
-          <button onClick={() => setShowCreate(true)} className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+          <button onClick={() => setShowCreate(true)} className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
             Adicionar primeiro instrutor
           </button>
         </div>

@@ -140,7 +140,7 @@ const Login = () => {
           </div>
           <button
             onClick={handleInstall}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl btn-press bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Download size={15} />
             Instalar agora

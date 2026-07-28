@@ -254,7 +254,7 @@ const InstructorSection = () => {
               <button
                 onClick={handleSubmitComment}
                 disabled={commentText.trim().length < 10}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
+                className="flex w-full items-center justify-center gap-1.5 rounded-2xl btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               >
                 <Send size={12} /> Enviar comentário
               </button>

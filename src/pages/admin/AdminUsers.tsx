@@ -78,10 +78,10 @@ function EditUserModal({ user, onClose }: { user: AdminUser; onClose: () => void
             {errors.avatarUrl && <p className="mt-0.5 text-[10px] text-red-400">{errors.avatarUrl.message}</p>}
           </div>
           <DialogFooter className="pt-1">
-            <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+            <button type="button" onClick={onClose} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
               Cancelar
             </button>
-            <button type="submit" disabled={updateUser.isPending} className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
+            <button type="submit" disabled={updateUser.isPending} className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
               {updateUser.isPending ? "Salvando..." : "Salvar"}
             </button>
           </DialogFooter>
@@ -125,10 +125,10 @@ function EmailModal({ user, onClose }: { user: AdminUser; onClose: () => void })
             {errors.message && <p className="mt-0.5 text-[10px] text-red-400">{errors.message.message}</p>}
           </div>
           <DialogFooter className="pt-1">
-            <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+            <button type="button" onClick={onClose} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
               Cancelar
             </button>
-            <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
+            <button type="submit" className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground">
               Enviar
             </button>
           </DialogFooter>
@@ -201,13 +201,13 @@ function ChangePlanModal({ user, onClose }: { user: AdminUser; onClose: () => vo
           })}
         </div>
         <DialogFooter className="pt-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+          <button type="button" onClick={onClose} className="rounded-2xl btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={!selected || updatePlan.isPending}
-            className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40"
+            className="rounded-2xl btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40"
           >
             {updatePlan.isPending ? "Salvando..." : "Confirmar"}
           </button>

@@ -60,7 +60,7 @@ const VoucherModal = ({ open, onClose, prizeText, prizeCode }: Props) => {
               href={STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-semibold text-primary-foreground"
+              className="flex items-center justify-center gap-2 rounded-2xl btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground"
             >
               <ShoppingBag size={14} /> Ir para a loja
             </a>

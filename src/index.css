@@ -57,3 +57,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Feedback tátil moderno/minimalista para botões: leve brilho no hover e
+     "afundar" ao toque. Usa transição própria para animar transform/filter
+     mesmo em botões que já tenham transition-colors. */
+  .btn-press {
+    transition: transform 0.18s ease, filter 0.18s ease, background-color 0.18s ease, opacity 0.18s ease;
+  }
+  .btn-press:hover {
+    filter: brightness(1.08);
+  }
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+}
