@@ -65,7 +65,7 @@ const TopicSections = () => {
       {sections.map(({ topic, items }, i) => (
         <FadeIn key={topic} delay={i === 0 ? 0 : 80}>
           <section className="mt-6">
-            <h2 className="mb-3 px-4 text-base font-bold text-foreground">{topic}</h2>
+            <h2 className="mb-3 px-4 text-base font-bold tracking-tight text-foreground">{topic}</h2>
             <div
               className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
               style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}

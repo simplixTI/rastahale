@@ -44,7 +44,7 @@ const FadeInSection = ({ children, delay = 0 }: { children: ReactNode; delay?: n
 const Section = ({ title, children, delay = 0 }: { title: string; children: ReactNode; delay?: number }) => (
   <FadeInSection delay={delay}>
     <section className="mt-6">
-      <h2 className="mb-3 px-4 text-base font-bold text-foreground">{title}</h2>
+      <h2 className="mb-3 px-4 text-base font-bold tracking-tight text-foreground">{title}</h2>
       <div
         className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
         style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
@@ -62,6 +62,7 @@ const Index = () => {
   const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
   const { data: instructors = [] }            = useInstructors();
 
+  const firstName        = user?.name?.split(" ")[0] ?? "Atleta";
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
   // Aulas começadas e ainda não terminadas.
   const continueWatching = videos.filter(
@@ -90,9 +91,18 @@ const Index = () => {
   return (
     <MobileLayout>
       <FadeInSection>
-        <header className="flex items-center justify-between px-4 pt-4">
-          <img src={logo} alt="RastaHale" className="h-10 rounded-lg" />
-          <span className="text-xs font-medium text-muted-foreground">Olá, {user?.name?.split(" ")[0] ?? "Atleta"} 🤙</span>
+        <header className="flex items-center justify-between px-4 pt-6">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground">Bem-vindo de volta</p>
+            <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight text-foreground">
+              {firstName} <span className="align-middle">🤙</span>
+            </h1>
+          </div>
+          <img
+            src={logo}
+            alt="RastaHale"
+            className="h-11 w-11 shrink-0 rounded-2xl object-cover ring-1 ring-border"
+          />
         </header>
       </FadeInSection>
 
@@ -100,23 +110,27 @@ const Index = () => {
         <FadeInSection delay={100}>
           <button
             onClick={() => navigate(`/video/${featured.id}`)}
-            className="group relative mx-4 mt-4 overflow-hidden rounded-xl"
+            className="group relative mx-4 mt-5 block w-[calc(100%-2rem)] overflow-hidden rounded-3xl"
           >
             <img
               src={featured.thumbnail}
               alt={featured.title}
-              className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <span className="mb-1 inline-block rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground">
-                EM DESTAQUE
-              </span>
-              <h1 className="text-lg font-bold leading-tight text-primary-foreground">{featured.title}</h1>
-              <p className="mt-0.5 text-xs text-primary-foreground/70">{featured.duration}</p>
-            </div>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-primary p-3 shadow-lg">
-              <Play size={20} className="text-primary-foreground" fill="currentColor" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+
+            <span className="absolute left-4 top-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white backdrop-blur-md">
+              Em destaque
+            </span>
+
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-left">
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-bold leading-tight tracking-tight text-white">{featured.title}</h2>
+                <p className="mt-1 text-xs font-medium text-white/60">{featured.duration}</p>
+              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/15 backdrop-blur-md transition-all duration-300 group-hover:border-primary group-hover:bg-primary">
+                <Play size={18} className="ml-0.5 text-white" fill="currentColor" />
+              </div>
             </div>
           </button>
         </FadeInSection>
@@ -135,7 +149,7 @@ const Index = () => {
         <FadeInSection delay={100}>
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between px-4">
-              <h2 className="text-base font-bold text-foreground">Nossos Atletas</h2>
+              <h2 className="text-base font-bold tracking-tight text-foreground">Nossos Atletas</h2>
               <button
                 onClick={() => navigate("/professores")}
                 className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
