@@ -1,9 +1,9 @@
 import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getLevelColor } from "@/data/mockData";
 import { VideoWithProgress } from "@/hooks/useVideos";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { Pill, levelColor } from "@/components/Pill";
 
 interface VideoCardProps {
   video: VideoWithProgress;
@@ -49,9 +49,9 @@ const VideoCard = ({ video, size = "md" }: VideoCardProps) => {
       <p className="mt-2 line-clamp-2 text-xs font-semibold leading-tight text-foreground transition-colors duration-200 group-hover:text-primary">
         {video.title}
       </p>
-      <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold", getLevelColor(video.level))}>
+      <Pill variant="soft" color={levelColor(video.level)} className="mt-1.5">
         {video.level}
-      </span>
+      </Pill>
     </button>
   );
 };

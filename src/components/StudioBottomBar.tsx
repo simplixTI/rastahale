@@ -33,7 +33,7 @@ const StudioBottomBar = () => {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+              <Icon size={23} strokeWidth={active ? 2 : 1.5} />
               <span className={cn("font-medium", active && "font-semibold")}>{label}</span>
             </button>
           );
@@ -43,7 +43,7 @@ const StudioBottomBar = () => {
           onClick={async () => { await logout(); navigate("/login"); }}
           className="flex flex-col items-center gap-0.5 px-3 py-1 text-[10px] text-muted-foreground transition-colors hover:text-red-400"
         >
-          <LogOut size={22} strokeWidth={1.8} />
+          <LogOut size={23} strokeWidth={1.5} />
           <span className="font-medium">Sair</span>
         </button>
       </div>

@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
 import MobileLayout from "@/components/MobileLayout";
+import { Pill } from "@/components/Pill";
 import logo from "@/assets/logo.png";
 
 const Profile = () => {
@@ -41,9 +42,9 @@ const Profile = () => {
           className="h-20 w-20 rounded-full border-2 border-primary object-cover"
         />
         <h2 className="mt-3 text-lg font-bold text-foreground">{displayName}</h2>
-        <span className="mt-1 inline-block rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+        <Pill variant="soft" color="primary" className="mt-1.5">
           Plano {planName}
-        </span>
+        </Pill>
         {profile && (
           <p className="mt-1 text-[10px] text-muted-foreground">
             {profile.videosWatched} aulas · {profile.totalHours}h assistidas

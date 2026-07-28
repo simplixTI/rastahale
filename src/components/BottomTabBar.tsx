@@ -29,7 +29,7 @@ const BottomTabBar = () => {
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+              <Icon size={23} strokeWidth={isActive ? 2 : 1.5} />
               <span className={cn("max-w-full truncate font-medium", isActive && "font-semibold")}>{label}</span>
             </button>
           );

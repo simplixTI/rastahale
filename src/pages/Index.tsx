@@ -6,6 +6,7 @@ import VideoCard from "@/components/VideoCard";
 import AthleteCard from "@/components/AthleteCard";
 import TopicSections from "@/components/TopicSections";
 import StoreBanner from "@/components/StoreBanner";
+import { Pill } from "@/components/Pill";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -119,9 +120,9 @@ const Index = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
-            <span className="absolute left-4 top-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white backdrop-blur-md">
+            <Pill color="primary" className="absolute left-4 top-4 shadow-lg shadow-black/25">
               Em destaque
-            </span>
+            </Pill>
 
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-left">
               <div className="min-w-0">

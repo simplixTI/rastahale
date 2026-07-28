@@ -62,7 +62,7 @@ const AdminLayout = ({ children, title, showBack = false, backTo }: { children: 
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                <Icon size={21} strokeWidth={isActive ? 2 : 1.5} />
                 <span className={cn("font-medium", isActive && "font-semibold")}>{label}</span>
               </button>
             );
