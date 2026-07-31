@@ -137,6 +137,12 @@ const Index = () => {
         </FadeInSection>
       )}
 
+      {/* Loja — carrossel de fotos (gerido no admin em Painel → Banner da Loja).
+          Posicionado logo abaixo do destaque para ganhar visibilidade. */}
+      <FadeInSection delay={150}>
+        <StoreBanner />
+      </FadeInSection>
+
       {continueWatching.length > 0 && (
         <Section title="Continuar Assistindo" delay={200}>
           {continueWatching.map((v) => (
@@ -174,11 +180,6 @@ const Index = () => {
       {/* Tópicos por posição (Passagem de Guarda, Finalizações, etc.) — geridos
           no admin via Vídeos → Módulos, agrupados aqui por subcategoria. */}
       <TopicSections />
-
-      {/* Loja */}
-      <FadeInSection delay={100}>
-        <StoreBanner />
-      </FadeInSection>
 
     </MobileLayout>
   );

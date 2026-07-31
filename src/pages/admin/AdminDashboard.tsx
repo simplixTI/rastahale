@@ -1,4 +1,4 @@
-import { Users, DollarSign, Video, AlertCircle, TrendingUp } from "lucide-react";
+import { Users, DollarSign, Video, AlertCircle, TrendingUp, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminDashboard, useAdminPayments, useAdminUsers } from "@/hooks/useAdminData";
@@ -51,6 +51,12 @@ const AdminDashboard = () => {
           className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary"
         >
           <DollarSign size={16} /> Gerenciar Planos
+        </button>
+        <button
+          onClick={() => navigate("/admin/loja")}
+          className="col-span-2 flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary"
+        >
+          <ShoppingBag size={16} /> Banner da Loja (carrossel da Home)
         </button>
       </div>
 

@@ -274,3 +274,20 @@ insert into public.videos (id, title, description, thumbnail, duration, category
   ('v13', 'HIIT para Lutadores',              'Treino intervalado de alta intensidade focado em artes marciais.',                                                          'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=400&h=225&fit=crop',  '28:00', 'jiu-jitsu',  'Condicionamento',     'Intermediário','inst-1', true,  false, 0),
   ('v14', 'Defesa de Estrangulamento',         'Como escapar dos principais estrangulamentos.',                                                                            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=400&h=225&fit=crop',  '15:30', 'jiu-jitsu',  'Defesas',             'Avançado',     'inst-1', true,  true,  60)
 on conflict (id) do nothing;
+
+-- ============================================================
+-- Banners da Loja (carrossel na Home) — migração 012
+-- ============================================================
+create table if not exists public.store_banners (
+  id          uuid primary key default gen_random_uuid(),
+  image_url   text not null,
+  link_url    text,
+  sort_order  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.store_banners enable row level security;
+drop policy if exists "store_banners_read"  on public.store_banners;
+drop policy if exists "store_banners_write" on public.store_banners;
+create policy "store_banners_read"  on public.store_banners for select using (true);
+create policy "store_banners_write" on public.store_banners for all    using (public.is_admin());
