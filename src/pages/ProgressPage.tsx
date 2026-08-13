@@ -1,4 +1,5 @@
 import { Flame, Clock, BookOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
 import StudentRanking from "@/components/StudentRanking";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,14 +10,15 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 const badges = [
-  { emoji: "🥋", title: "Primeira aula de Jiu Jitsu", key: "jj" },
-  { emoji: "🤼", title: "Primeira aula de Luta Livre", key: "ll" },
-  { emoji: "🔟", title: "10 aulas concluídas", key: "ten" },
-  { emoji: "🏆", title: "Mestre do Tatame", key: "master" },
+  { emoji: "🥋", titleKey: "progress.badgeJiuJitsu",  key: "jj"     },
+  { emoji: "🤼", titleKey: "progress.badgeLutaLivre", key: "ll"     },
+  { emoji: "🔟", titleKey: "progress.badgeTen",       key: "ten"    },
+  { emoji: "🏆", titleKey: "progress.badgeMaster",    key: "master" },
 ];
 
 const ProgressPage = () => {
   const { user } = useAuth();
+  const { t }    = useTranslation();
   const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
   const { data: profile } = useProfile(user?.id ?? "");
   const { data: overallProgress = 0 } = useOverallProgress(user?.id ?? "");
@@ -34,16 +36,16 @@ const ProgressPage = () => {
   };
 
   const stats = [
-    { icon: BookOpen, label: "Aulas assistidas", value: `${watchedCount}` },
-    { icon: Clock, label: "Horas de treino", value: `${profile?.totalHours ?? 0}h` },
-    { icon: Flame, label: "Progresso geral", value: `${overallProgress}%` },
+    { icon: BookOpen, label: t("progress.statLessons"), value: `${watchedCount}` },
+    { icon: Clock,    label: t("progress.statHours"),   value: `${profile?.totalHours ?? 0}h` },
+    { icon: Flame,    label: t("progress.statOverall"), value: `${overallProgress}%` },
   ];
 
   return (
     <MobileLayout>
       <header className="px-4 pt-4">
-        <h1 className="text-xl font-bold text-foreground">Ranking & Progresso</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">Sua faixa, sua colocação e sua evolução</p>
+        <h1 className="text-xl font-bold text-foreground">{t("progress.title")}</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("progress.subtitle")}</p>
       </header>
 
       {/* Ranking dos alunos (gamificação por faixas) */}
@@ -51,7 +53,7 @@ const ProgressPage = () => {
 
       <div className="mt-8 flex items-center gap-1.5 px-4">
         <Flame size={16} className="text-primary" />
-        <h2 className="text-base font-bold text-foreground">Meu Progresso</h2>
+        <h2 className="text-base font-bold text-foreground">{t("progress.myProgress")}</h2>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 px-4">
@@ -65,7 +67,7 @@ const ProgressPage = () => {
       </div>
 
       <section className="mt-6 px-4">
-        <h2 className="text-sm font-bold text-foreground">Em andamento</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("progress.inProgress")}</h2>
         {isLoading ? (
           <div className="flex items-center justify-center h-24">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -86,12 +88,12 @@ const ProgressPage = () => {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-xs text-muted-foreground">Nenhuma aula em andamento</p>
+          <p className="mt-3 text-xs text-muted-foreground">{t("progress.noneInProgress")}</p>
         )}
       </section>
 
       <section className="mt-6 px-4">
-        <h2 className="text-sm font-bold text-foreground">Conquistas</h2>
+        <h2 className="text-sm font-bold text-foreground">{t("progress.achievements")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {badges.map((b) => (
             <div
@@ -104,7 +106,7 @@ const ProgressPage = () => {
               )}
             >
               <span className="text-2xl">{b.emoji}</span>
-              <span className="text-[11px] font-medium text-foreground leading-tight">{b.title}</span>
+              <span className="text-[11px] font-medium text-foreground leading-tight">{t(b.titleKey)}</span>
             </div>
           ))}
         </div>

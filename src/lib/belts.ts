@@ -9,6 +9,9 @@
 // nº de aulas e, quando o total_hours do perfil vem inflado, dominariam tudo.)
 
 export interface Belt {
+  /** chave de tradução (`belt.<key>`) — o app do aluno é multi-idioma */
+  key:   "white" | "blue" | "purple" | "brown" | "black";
+  /** nome em português — usado nas telas de admin, que seguem só em PT */
   name:  string;
   emoji: string;
   /** cor da faixa (hex) — usada no "pontinho" ao lado do nome */
@@ -19,11 +22,11 @@ export interface Belt {
 
 // Ordem crescente. A última faixa não tem teto.
 export const BELTS: Belt[] = [
-  { name: "Faixa Branca", emoji: "⚪", color: "#e5e7eb", min: 0   },
-  { name: "Faixa Azul",   emoji: "🔵", color: "#3b82f6", min: 50  },
-  { name: "Faixa Roxa",   emoji: "🟣", color: "#a855f7", min: 150 },
-  { name: "Faixa Marrom", emoji: "🟤", color: "#92400e", min: 300 },
-  { name: "Faixa Preta",  emoji: "⚫", color: "#111827", min: 500 },
+  { key: "white",  name: "Faixa Branca", emoji: "⚪", color: "#e5e7eb", min: 0   },
+  { key: "blue",   name: "Faixa Azul",   emoji: "🔵", color: "#3b82f6", min: 50  },
+  { key: "purple", name: "Faixa Roxa",   emoji: "🟣", color: "#a855f7", min: 150 },
+  { key: "brown",  name: "Faixa Marrom", emoji: "🟤", color: "#92400e", min: 300 },
+  { key: "black",  name: "Faixa Preta",  emoji: "⚫", color: "#111827", min: 500 },
 ];
 
 /** Pontos de um aluno a partir do número de aulas assistidas. */

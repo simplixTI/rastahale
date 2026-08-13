@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import logo from "@/assets/logo.png";
 import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
 
@@ -52,22 +54,31 @@ const playNetflixSound = () => {
   }
 };
 
+/** Evento `beforeinstallprompt` do Chrome — ainda não está no lib.dom padrão. */
+interface InstallPromptEvent extends Event {
+  prompt: () => void;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  // Guardamos a chave do erro, não o texto: assim a mensagem acompanha uma
+  // troca de idioma feita depois que o erro já apareceu.
+  const [errorKey, setErrorKey] = useState<"" | "errorCredentials" | "errorNetwork">("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as InstallPromptEvent);
       setShowInstallPopup(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
@@ -86,7 +97,7 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setErrorKey("");
     setIsLoading(true);
 
     try {
@@ -99,11 +110,11 @@ const Login = () => {
           navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
         }, 2200);
       } else {
-        setError("Email ou senha incorretos");
+        setErrorKey("errorCredentials");
         setIsLoading(false);
       }
     } catch {
-      setError("Não foi possível conectar. Verifique sua internet e tente novamente.");
+      setErrorKey("errorNetwork");
       setIsLoading(false);
     }
   };
@@ -134,8 +145,8 @@ const Login = () => {
               <Smartphone size={24} className="text-primary" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">Instalar RastaHale</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Acesse como app — rápido e sem browser</p>
+              <p className="text-sm font-semibold text-foreground">{t("login.installTitle")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("login.installSubtitle")}</p>
             </div>
           </div>
           <button
@@ -143,7 +154,7 @@ const Login = () => {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full btn-press bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Download size={15} />
-            Instalar agora
+            {t("login.installNow")}
           </button>
         </div>
       )}
@@ -155,20 +166,26 @@ const Login = () => {
           className="fixed bottom-6 right-5 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-lg transition-transform hover:scale-105"
         >
           <Download size={14} />
-          Instalar
+          {t("login.install")}
         </button>
       )}
       <div className="w-full max-w-[360px]">
+        {/* Seletor de idioma antes do formulário — quem não lê português
+            precisa poder trocar sem entrar no app. */}
         <div className="flex justify-center">
+          <LanguageSwitcher variant="compact" />
+        </div>
+
+        <div className="mt-5 flex justify-center">
           <img src={logo} alt="RastaHale" className="h-20 rounded-2xl" />
         </div>
 
-        <h1 className="mt-6 text-center text-2xl font-bold text-foreground">Entrar</h1>
-        <p className="mt-1 text-center text-sm text-muted-foreground">Acesse sua conta RastaHale</p>
+        <h1 className="mt-6 text-center text-2xl font-bold text-foreground">{t("login.title")}</h1>
+        <p className="mt-1 text-center text-sm text-muted-foreground">{t("login.subtitle")}</p>
 
         <form onSubmit={handleLogin} className="mt-8 space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email</label>
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("login.email")}</label>
             <input
               type="email"
               value={email}
@@ -180,7 +197,7 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Senha</label>
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("login.password")}</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -200,21 +217,21 @@ const Login = () => {
             </div>
           </div>
 
-          {error && <p className="text-center text-xs text-red-400">{error}</p>}
+          {errorKey && <p className="text-center text-xs text-red-400">{t(`login.${errorKey}`)}</p>}
 
           <button
             type="submit"
             disabled={isLoading}
             className="w-full rounded-full bg-primary py-3.5 text-sm font-bold tracking-tight text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-50"
           >
-            {isLoading ? "Entrando..." : "Entrar"}
+            {isLoading ? t("login.submitting") : t("login.submit")}
           </button>
         </form>
 
         {/* Test credentials */}
         <div className="mt-8 rounded-lg border border-border bg-card p-4">
           <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Credenciais de teste
+            {t("login.testCredentials")}
           </p>
           <div className="space-y-2">
             <button
@@ -222,7 +239,7 @@ const Login = () => {
               className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
             >
               <div>
-                <span className="font-semibold text-foreground">👤 Aluno</span>
+                <span className="font-semibold text-foreground">👤 {t("login.roleStudent")}</span>
                 <span className="ml-2 text-muted-foreground">aluno@rastahale.com</span>
               </div>
               <span className="text-muted-foreground">rasta123</span>
@@ -232,7 +249,7 @@ const Login = () => {
               className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
             >
               <div>
-                <span className="font-semibold text-foreground">🔑 Admin</span>
+                <span className="font-semibold text-foreground">🔑 {t("login.roleAdmin")}</span>
                 <span className="ml-2 text-muted-foreground">admin@rastahale.com</span>
               </div>
               <span className="text-muted-foreground">admin123</span>

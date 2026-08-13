@@ -1,0 +1,289 @@
+{
+  "common": {
+    "back": "Volver",
+    "close": "Cerrar",
+    "lessons_one": "{{count}} clase",
+    "lessons_other": "{{count}} clases",
+    "modules_one": "{{count}} módulo",
+    "modules_other": "{{count}} módulos",
+    "comments_one": "{{count}} comentario",
+    "comments_other": "{{count}} comentarios"
+  },
+  "lang": {
+    "pt": "Português",
+    "en": "English",
+    "es": "Español"
+  },
+  "level": {
+    "Iniciante": "Principiante",
+    "Intermediário": "Intermedio",
+    "Avançado": "Avanzado"
+  },
+  "belt": {
+    "white": "Cinturón Blanco",
+    "blue": "Cinturón Azul",
+    "purple": "Cinturón Morado",
+    "brown": "Cinturón Marrón",
+    "black": "Cinturón Negro"
+  },
+  "interval": {
+    "mensal": "por mes",
+    "trimestral": "por trimestre",
+    "anual": "por año",
+    "fallback": "por {{interval}}"
+  },
+  "payStatus": {
+    "pago": "Pagado",
+    "pendente": "Pendiente",
+    "falhou": "Fallido"
+  },
+  "duration": {
+    "minutes": "{{count}}min",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}min"
+  },
+  "nav": {
+    "home": "Inicio",
+    "search": "Buscar",
+    "teachers": "Profesores",
+    "favorites": "Favoritos",
+    "ranking": "Ranking",
+    "profile": "Perfil"
+  },
+  "login": {
+    "title": "Entrar",
+    "subtitle": "Accede a tu cuenta RastaHale",
+    "email": "Email",
+    "password": "Contraseña",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "errorCredentials": "Email o contraseña incorrectos",
+    "errorNetwork": "No se pudo conectar. Revisa tu internet e inténtalo de nuevo.",
+    "testCredentials": "Credenciales de prueba",
+    "roleStudent": "Alumno",
+    "roleAdmin": "Admin",
+    "installTitle": "Instalar RastaHale",
+    "installSubtitle": "Úsala como app — rápida y sin navegador",
+    "installNow": "Instalar ahora",
+    "install": "Instalar"
+  },
+  "home": {
+    "welcome": "Bienvenido de nuevo",
+    "fallbackName": "Atleta",
+    "featured": "Destacado",
+    "continueWatching": "Seguir viendo",
+    "ourAthletes": "Nuestros Atletas",
+    "seeAll": "Ver todos"
+  },
+  "store": {
+    "title": "Nuestra Tienda",
+    "fallbackDescription": "Productos oficiales RastaHale — rastahale.com.br",
+    "imageAlt": "Tienda RastaHale",
+    "goToPhoto": "Ir a la foto {{number}}"
+  },
+  "search": {
+    "title": "Explorar",
+    "placeholder": "Buscar clases, técnicas...",
+    "category": "Categoría",
+    "level": "Nivel",
+    "allCategories": "Todas",
+    "allLevels": "Todos",
+    "empty": "No se encontraron resultados"
+  },
+  "favorites": {
+    "title": "Favoritos",
+    "saved_one": "{{count}} clase guardada",
+    "saved_other": "{{count}} clases guardadas",
+    "empty": "Aún no hay favoritos"
+  },
+  "progress": {
+    "title": "Ranking y Progreso",
+    "subtitle": "Tu cinturón, tu posición y tu evolución",
+    "myProgress": "Mi Progreso",
+    "statLessons": "Clases vistas",
+    "statHours": "Horas de entrenamiento",
+    "statOverall": "Progreso general",
+    "inProgress": "En curso",
+    "noneInProgress": "Ninguna clase en curso",
+    "achievements": "Logros",
+    "badgeJiuJitsu": "Primera clase de Jiu Jitsu",
+    "badgeLutaLivre": "Primera clase de Luta Livre",
+    "badgeTen": "10 clases completadas",
+    "badgeMaster": "Maestro del Tatami"
+  },
+  "ranking": {
+    "title": "Ranking de Alumnos",
+    "you": "(tú)",
+    "pts": "pts",
+    "place": "{{position}}º lugar · {{points}} pts",
+    "ordinal": "{{position}}º",
+    "towards": "Rumbo a {{belt}}",
+    "pointsToNext": "faltan {{count}} pts",
+    "topReached": "¡Llegaste a la cima — Cinturón Negro!",
+    "challengeTitle": "Desafío de la temporada",
+    "challengePrize": "1º lugar gana: {{prize}}",
+    "defaultPrize": "un premio especial",
+    "ended": "finalizado"
+  },
+  "voucher": {
+    "title": "¡Ganaste la temporada! 🎉",
+    "subtitle": "Quedaste 1º en el ranking de alumnos. Aquí está tu premio:",
+    "defaultPrize": "Vale RastaHale",
+    "goToStore": "Ir a la tienda",
+    "copied": "¡Código copiado!",
+    "copyError": "No se pudo copiar"
+  },
+  "profile": {
+    "title": "Perfil",
+    "plan": "Plan {{name}}",
+    "stats": "{{videos}} clases · {{hours}}h vistas",
+    "editProfile": "Editar Perfil",
+    "myPlan": "Mi Plan",
+    "settings": "Configuración",
+    "installApp": "Instalar App",
+    "logout": "Salir"
+  },
+  "editProfile": {
+    "title": "Editar Perfil",
+    "avatarAlt": "Foto de perfil",
+    "tapCamera": "Toca la cámara para cambiarla",
+    "name": "Nombre",
+    "namePlaceholder": "Tu nombre",
+    "email": "Email",
+    "emailLocked": "El email no se puede cambiar",
+    "save": "Guardar cambios",
+    "saved": "¡Guardado!"
+  },
+  "settings": {
+    "title": "Configuración",
+    "notifications": "Notificaciones",
+    "newLessons": "Clases nuevas",
+    "newLessonsDesc": "Avísame cuando se publiquen videos nuevos",
+    "weeklyProgress": "Progreso semanal",
+    "weeklyProgressDesc": "Resumen de tu progreso todos los lunes",
+    "promos": "Promociones y ofertas",
+    "promosDesc": "Descuentos y novedades de los planes",
+    "playback": "Reproducción",
+    "autoplay": "Reproducción automática",
+    "autoplayDesc": "Iniciar el siguiente video automáticamente",
+    "hd": "Calidad HD",
+    "hdDesc": "Preferir mayor resolución (consume más datos)",
+    "language": "Idioma",
+    "languageDesc": "Elige el idioma de la aplicación",
+    "about": "Acerca de",
+    "version": "Versión de la app",
+    "support": "Soporte",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos de Uso"
+  },
+  "plan": {
+    "title": "Mi Plan",
+    "current": "Plan Actual",
+    "active": "Activo",
+    "cancelled": "Cancelado",
+    "cancelNotice": "Tu acceso continúa hasta el final del período pagado.",
+    "nextBilling": "Próximo cobro",
+    "amount": "Importe",
+    "included": "Incluido en el plan",
+    "change": "Cambiar Plan",
+    "cancel": "Cancelar Suscripción",
+    "reactivate": "Reactivar Suscripción",
+    "history": "Historial de pagos",
+    "choose": "Elegir Plan",
+    "currentBadge": "Plan actual",
+    "confirmChange": "Confirmar cambio",
+    "cancelTitle": "¿Cancelar suscripción?",
+    "cancelDesc": "Perderás el acceso al contenido al final del período pagado. Puedes revertirlo reactivando tu suscripción.",
+    "cancelConfirm": "Cancelar plan"
+  },
+  "video": {
+    "notFound": "Video no encontrado",
+    "noUrl": "URL del video no configurada",
+    "noSupport": "Tu navegador no admite la reproducción de video.",
+    "favorited": "En favoritos",
+    "favorite": "Añadir a favoritos",
+    "watched": "Visto",
+    "markWatched": "Marcar como visto",
+    "progress": "Progreso",
+    "viewSection": "Ver página →",
+    "about": "Sobre esta clase",
+    "related": "Videos Relacionados"
+  },
+  "instructors": {
+    "title": "Profesores",
+    "subtitle": "Explora las clases y módulos de cada profesor",
+    "empty": "Ningún profesor registrado"
+  },
+  "instructorSection": {
+    "notFound": "Instructor no encontrado",
+    "noLessons": "Aún no hay clases disponibles",
+    "modules": "Módulos",
+    "emptyModule": "Aún no hay clases en este módulo.",
+    "allLessons": "Todas las clases",
+    "commentsTitle": "Lo que dicen los alumnos",
+    "leaveComment": "Deja tu comentario",
+    "commentPlaceholder": "¿Qué te parecieron las clases de este profesor? (mín. 10 caracteres)",
+    "sendComment": "Enviar comentario",
+    "alreadyCommented": "✓ Ya comentaste sobre este profesor",
+    "noComments": "Aún no hay comentarios.",
+    "beFirst": "¡Sé el primero en comentar!",
+    "loginToComment": "Inicia sesión para comentar",
+    "minChars": "Escribe al menos 10 caracteres",
+    "oneCommentOnly": "Ya dejaste un comentario para este instructor",
+    "commentSent": "¡Comentario enviado!",
+    "commentRemoved": "Reseña eliminada"
+  },
+  "athlete": {
+    "notFound": "Atleta no encontrado",
+    "fullProfile": "Ver perfil completo",
+    "modules": "Módulos",
+    "noModules": "Aún no hay módulos disponibles"
+  },
+  "moduleLessons": {
+    "with": "con {{name}}",
+    "empty": "Ninguna clase en este módulo"
+  },
+  "install": {
+    "installedTitle": "¡App ya instalada!",
+    "installedDesc": "RastaHale Academy ya está instalada en tu dispositivo. Puedes abrirla desde la pantalla de inicio.",
+    "goToApp": "Ir a la app",
+    "title": "Instalar App",
+    "appSubtitle": "Jiu-Jitsu y Luta Livre",
+    "free": "Gratis · Sin tienda de apps",
+    "benefitFast": "Acceso rápido",
+    "benefitOffline": "Funciona sin conexión",
+    "benefitNotifications": "Notificaciones",
+    "installNow": "Instalar ahora",
+    "tapToInstall": "Toca para instalar directamente en tu dispositivo",
+    "instructions": "Instrucciones de instalación",
+    "tabAndroid": "Android",
+    "tabIos": "iPhone / iPad",
+    "androidBrowsers": "Chrome · Samsung Internet · Edge",
+    "iosBrowser": "Safari (obligatorio en iPhone)",
+    "android1Title": "Ábrela en el navegador",
+    "android1Desc": "Entra en rastahale.simplix.digital desde Chrome o el navegador predeterminado de tu Android.",
+    "android2Title": "Toca los \"3 puntos\"",
+    "android2Desc": "Toca el icono de menú (⋮) en la esquina superior derecha del navegador.",
+    "android3Title": "\"Añadir a pantalla de inicio\"",
+    "android3Desc": "Elige \"Añadir a pantalla de inicio\" o \"Instalar app\" en el menú.",
+    "android4Title": "Confirma la instalación",
+    "android4Desc": "Toca \"Añadir\" en la ventana de confirmación. El icono de la app aparecerá en tu pantalla de inicio.",
+    "ios1Title": "Ábrela en Safari",
+    "ios1Desc": "Entra en rastahale.simplix.digital. La instalación solo funciona en Safari — no en Chrome ni otros navegadores del iPhone.",
+    "ios2Title": "Toca \"Compartir\"",
+    "ios2Desc": "Toca el icono de compartir (□ con una flecha hacia arriba) en la barra inferior de Safari.",
+    "ios3Title": "\"Añadir a pantalla de inicio\"",
+    "ios3Desc": "Desplaza la lista de opciones y toca \"Añadir a pantalla de inicio\" (el icono con un +).",
+    "ios4Title": "Confirma el nombre e instala",
+    "ios4Desc": "Toca \"Añadir\" en la esquina superior derecha. La app aparecerá en tu pantalla de inicio como un icono nativo.",
+    "tipTitle": "💡 Consejo",
+    "tipDesc": "En Chrome puede aparecer automáticamente un banner de instalación en la parte inferior de la pantalla. ¡Tócalo para instalar aún más rápido!",
+    "whySafariTitle": "ℹ️ ¿Por qué solo en Safari?",
+    "whySafariDesc": "Apple restringe la instalación de PWAs a Safari. Abre el enlace en Safari y sigue los pasos de arriba.",
+    "footer": "RastaHale Academy · Jiu-Jitsu y Luta Livre"
+  },
+  "notFound": {
+    "message": "¡Ups! Página no encontrada",
+    "home": "Volver al inicio"
+  }
+}

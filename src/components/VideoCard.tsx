@@ -1,6 +1,7 @@
 import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VideoWithProgress } from "@/hooks/useVideos";
+import { useLabels } from "@/i18n/labels";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Pill, levelColor } from "@/components/Pill";
@@ -12,6 +13,7 @@ interface VideoCardProps {
 
 const VideoCard = ({ video, size = "md" }: VideoCardProps) => {
   const navigate = useNavigate();
+  const labels   = useLabels();
   const w = size === "sm" ? "min-w-[144px] w-36" : "min-w-[176px] w-44";
 
   return (
@@ -50,7 +52,7 @@ const VideoCard = ({ video, size = "md" }: VideoCardProps) => {
         {video.title}
       </p>
       <Pill variant="soft" color={levelColor(video.level)} className="mt-1.5">
-        {video.level}
+        {labels.level(video.level)}
       </Pill>
     </button>
   );

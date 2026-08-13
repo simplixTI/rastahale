@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Trophy, Copy, Check, ShoppingBag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -15,16 +16,17 @@ interface Props {
 /** Aviso comemorativo mostrado ao aluno que venceu a temporada. */
 const VoucherModal = ({ open, onClose, prizeText, prizeCode }: Props) => {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
 
   function copyCode() {
     if (!prizeCode) return;
     try {
       navigator.clipboard.writeText(prizeCode);
       setCopied(true);
-      toast.success("Código copiado!");
+      toast.success(t("voucher.copied"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Não foi possível copiar");
+      toast.error(t("voucher.copyError"));
     }
   }
 
@@ -36,14 +38,14 @@ const VoucherModal = ({ open, onClose, prizeText, prizeCode }: Props) => {
             <Trophy size={32} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Você venceu a temporada! 🎉</h2>
+            <h2 className="text-lg font-bold text-foreground">{t("voucher.title")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Ficou em 1º lugar no ranking dos alunos. Aqui está o seu prêmio:
+              {t("voucher.subtitle")}
             </p>
           </div>
 
           <div className="w-full rounded-xl border border-primary/30 bg-primary/5 p-3">
-            <p className="text-sm font-bold text-foreground">{prizeText || "Voucher RastaHale"}</p>
+            <p className="text-sm font-bold text-foreground">{prizeText || t("voucher.defaultPrize")}</p>
             {prizeCode && (
               <button
                 onClick={copyCode}
@@ -62,10 +64,10 @@ const VoucherModal = ({ open, onClose, prizeText, prizeCode }: Props) => {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 rounded-full btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground"
             >
-              <ShoppingBag size={14} /> Ir para a loja
+              <ShoppingBag size={14} /> {t("voucher.goToStore")}
             </a>
             <button onClick={onClose} className="py-1 text-[11px] text-muted-foreground">
-              Fechar
+              {t("common.close")}
             </button>
           </div>
         </div>

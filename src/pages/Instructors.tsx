@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { BookOpen, ChevronRight, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -8,6 +9,7 @@ import { useVideos } from "@/hooks/useVideos";
 const Instructors = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
   const { data: instructors = [], isLoading } = useInstructors();
   const { data: videos = [] }                  = useVideos(user?.id ?? "");
 
@@ -20,10 +22,10 @@ const Instructors = () => {
     <MobileLayout>
       <header className="flex items-center gap-2 px-4 pt-4">
         <Users size={20} className="text-primary" />
-        <h1 className="text-xl font-bold text-foreground">Professores</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("instructors.title")}</h1>
       </header>
       <p className="px-4 mt-1 text-xs text-muted-foreground">
-        Explore as aulas e módulos de cada professor
+        {t("instructors.subtitle")}
       </p>
 
       {isLoading ? (
@@ -33,7 +35,7 @@ const Instructors = () => {
       ) : cards.length === 0 ? (
         <div className="mt-16 text-center">
           <Users size={32} className="mx-auto text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">Nenhum professor cadastrado</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("instructors.empty")}</p>
         </div>
       ) : (
         <div className="mt-4 space-y-2 px-4">
@@ -53,7 +55,7 @@ const Instructors = () => {
                 {inst.bio && <p className="text-[11px] text-muted-foreground truncate">{inst.bio}</p>}
                 <div className="mt-1 flex items-center gap-3">
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <BookOpen size={11} className="text-primary" /> {inst.videoCount} aula{inst.videoCount !== 1 ? "s" : ""}
+                    <BookOpen size={11} className="text-primary" /> {t("common.lessons", { count: inst.videoCount })}
                   </span>
                 </div>
               </div>

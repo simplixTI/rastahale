@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { ArrowLeft, Camera, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
@@ -33,6 +34,7 @@ function resizeImageToSquare(file: File, size = 200): Promise<string> {
 const EditProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
   const { data: profile } = useProfile(user?.id ?? "");
   const { override, updateOverride } = useProfileOverride();
   const updateProfile = useUpdateProfile();
@@ -83,7 +85,7 @@ const EditProfile = () => {
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">Editar Perfil</h1>
+        <h1 className="text-lg font-bold text-foreground">{t("editProfile.title")}</h1>
       </div>
 
       {/* Avatar */}
@@ -91,7 +93,7 @@ const EditProfile = () => {
         <div className="relative">
           <img
             src={avatarPreview}
-            alt="Foto de perfil"
+            alt={t("editProfile.avatarAlt")}
             className="h-28 w-28 rounded-full border-2 border-primary object-cover"
           />
           <button
@@ -101,7 +103,7 @@ const EditProfile = () => {
             <Camera size={16} className="text-primary-foreground" />
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">Toque na câmera para alterar</p>
+        <p className="text-xs text-muted-foreground">{t("editProfile.tapCamera")}</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -114,25 +116,25 @@ const EditProfile = () => {
       {/* Form */}
       <div className="mt-8 px-4 space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Nome</label>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("editProfile.name")}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Seu nome"
+            placeholder={t("editProfile.namePlaceholder")}
             className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email</label>
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("editProfile.email")}</label>
           <input
             type="email"
             value={user?.email ?? ""}
             disabled
             className="w-full rounded-lg border border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground cursor-not-allowed"
           />
-          <p className="mt-1 text-[10px] text-muted-foreground">Email não pode ser alterado</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">{t("editProfile.emailLocked")}</p>
         </div>
 
         <button
@@ -148,12 +150,12 @@ const EditProfile = () => {
           {saved ? (
             <>
               <Check size={16} />
-              Salvo!
+              {t("editProfile.saved")}
             </>
           ) : isSaving ? (
             <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
           ) : (
-            "Salvar alterações"
+            t("editProfile.save")
           )}
         </button>
       </div>

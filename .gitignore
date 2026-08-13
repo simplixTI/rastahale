@@ -36,3 +36,6 @@ supabase/.temp/
 
 .vercel
 .env*
+
+# Artefatos locais do Playwright MCP (snapshots/screenshots de teste)
+.playwright-mcp/

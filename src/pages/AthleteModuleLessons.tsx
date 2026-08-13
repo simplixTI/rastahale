@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, Clock, Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
-import { formatMinutes, totalMinutes } from "@/lib/duration";
+import { useLabels } from "@/i18n/labels";
+import { totalMinutes } from "@/lib/duration";
 import { getLevelColor } from "@/data/mockData";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -12,6 +14,8 @@ const AthleteModuleLessons = () => {
   const { id, modulo } = useParams<{ id: string; modulo: string }>();
   const navigate       = useNavigate();
   const { user }       = useAuth();
+  const { t }          = useTranslation();
+  const labels         = useLabels();
 
   const moduleName = decodeURIComponent(modulo ?? "");
 
@@ -42,7 +46,7 @@ const AthleteModuleLessons = () => {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-foreground">{moduleName}</h1>
           {instructor && (
-            <p className="truncate text-[11px] text-muted-foreground">com {instructor.name}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{t("moduleLessons.with", { name: instructor.name })}</p>
           )}
         </div>
       </header>
@@ -50,12 +54,12 @@ const AthleteModuleLessons = () => {
       <div className="mt-2 flex items-center gap-4 px-4 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1">
           <BookOpen size={11} className="text-primary" />
-          {videos.length} aula{videos.length !== 1 ? "s" : ""}
+          {t("common.lessons", { count: videos.length })}
         </span>
         {minutes > 0 && (
           <span className="flex items-center gap-1">
             <Clock size={11} className="text-primary" />
-            {formatMinutes(minutes)}
+            {labels.duration(minutes)}
           </span>
         )}
       </div>
@@ -65,7 +69,7 @@ const AthleteModuleLessons = () => {
         {videos.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-2 text-center">
             <Play size={32} className="text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Nenhuma aula neste módulo</p>
+            <p className="text-sm text-muted-foreground">{t("moduleLessons.empty")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -100,7 +104,7 @@ const AthleteModuleLessons = () => {
                       getLevelColor(v.level)
                     )}
                   >
-                    {v.level}
+                    {labels.level(v.level)}
                   </span>
                 </div>
               </button>

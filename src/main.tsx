@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import "./i18n"; // registra i18next antes de qualquer componente renderizar
 import "./index.css";
 import "./App.css";
 

@@ -1,40 +1,29 @@
 import { useState } from "react";
 import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, usePlans, useUserPayments, useUpdatePlanName } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
+import { useLabels } from "@/i18n/labels";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-function getNextBillingDate(lastDateStr: string, interval: string): string {
+/** Data da próxima cobrança a partir do último pagamento e do intervalo. */
+function nextBillingDate(lastDateStr: string, interval: string): Date {
   const date = new Date(lastDateStr + "T00:00:00");
   if (interval === "mensal") date.setMonth(date.getMonth() + 1);
   else if (interval === "trimestral") date.setMonth(date.getMonth() + 3);
   else if (interval === "anual") date.setFullYear(date.getFullYear() + 1);
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return date;
 }
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "short", year: "numeric",
-  });
-}
-
-const intervalLabel: Record<string, string> = {
-  mensal: "por mês",
-  trimestral: "por trimestre",
-  anual: "por ano",
-};
 
 const MyPlan = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
+  const labels   = useLabels();
   const { data: profile } = useProfile(user?.id ?? "");
   const { data: plans = [], isLoading: plansLoading } = usePlans();
   const { data: userPayments = [] } = useUserPayments(user?.id ?? "");
@@ -54,7 +43,7 @@ const MyPlan = () => {
 
   const lastPayment = userPayments[0];
   const nextBilling = lastPayment && plan
-    ? getNextBillingDate(lastPayment.date, plan.interval)
+    ? labels.longDate(nextBillingDate(lastPayment.date, plan.interval))
     : "—";
 
   const isPremium = plan?.name?.toLowerCase().includes("premium") ?? false;
@@ -100,7 +89,7 @@ const MyPlan = () => {
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-lg font-bold text-foreground">Meu Plano</h1>
+        <h1 className="text-lg font-bold text-foreground">{t("plan.title")}</h1>
       </div>
 
       <div className="px-4 mt-4 space-y-4">
@@ -113,7 +102,7 @@ const MyPlan = () => {
             <div>
               <div className="flex items-center gap-2">
                 {isPremium ? <Crown size={18} className="text-primary" /> : <Zap size={18} className="text-primary" />}
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">Plano Atual</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary">{t("plan.current")}</span>
               </div>
               <h2 className="mt-1 text-2xl font-bold text-foreground">{plan.name}</h2>
             </div>
@@ -121,18 +110,18 @@ const MyPlan = () => {
               "rounded-full px-3 py-1 text-xs font-semibold",
               isCancelled ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
             )}>
-              {isCancelled ? "Cancelado" : "Ativo"}
+              {isCancelled ? t("plan.cancelled") : t("plan.active")}
             </span>
           </div>
 
           <div className="mt-4 flex items-end gap-1">
-            <span className="text-3xl font-bold text-foreground">{formatCurrency(plan.price)}</span>
-            <span className="mb-1 text-sm text-muted-foreground">{intervalLabel[plan.interval] ?? `por ${plan.interval}`}</span>
+            <span className="text-3xl font-bold text-foreground">{labels.currency(plan.price)}</span>
+            <span className="mb-1 text-sm text-muted-foreground">{labels.interval(plan.interval)}</span>
           </div>
 
           {isCancelled && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Seu acesso continua até o fim do período pago.
+              {t("plan.cancelNotice")}
             </p>
           )}
         </div>
@@ -144,12 +133,12 @@ const MyPlan = () => {
               <Calendar size={18} className="text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Próxima cobrança</p>
+              <p className="text-xs text-muted-foreground">{t("plan.nextBilling")}</p>
               <p className="text-sm font-semibold text-foreground">{nextBilling}</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-xs text-muted-foreground">Valor</p>
-              <p className="text-sm font-semibold text-foreground">{formatCurrency(plan.price)}</p>
+              <p className="text-xs text-muted-foreground">{t("plan.amount")}</p>
+              <p className="text-sm font-semibold text-foreground">{labels.currency(plan.price)}</p>
             </div>
           </div>
         )}
@@ -158,7 +147,7 @@ const MyPlan = () => {
         {plan.features?.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Incluído no plano
+              {t("plan.included")}
             </p>
             <ul className="space-y-2.5">
               {plan.features.map((feature: string) => (
@@ -178,7 +167,7 @@ const MyPlan = () => {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
           >
             <RefreshCw size={15} />
-            Trocar Plano
+            {t("plan.change")}
           </button>
 
           {!isCancelled && (
@@ -187,7 +176,7 @@ const MyPlan = () => {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
               <XCircle size={15} />
-              Cancelar Assinatura
+              {t("plan.cancel")}
             </button>
           )}
 
@@ -197,7 +186,7 @@ const MyPlan = () => {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 py-3 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
             >
               <RefreshCw size={15} />
-              Reativar Assinatura
+              {t("plan.reactivate")}
             </button>
           )}
         </div>
@@ -206,7 +195,7 @@ const MyPlan = () => {
         {userPayments.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Histórico de pagamentos
+              {t("plan.history")}
             </p>
             <ul className="space-y-3">
               {userPayments.slice(0, 4).map((payment) => (
@@ -217,17 +206,17 @@ const MyPlan = () => {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{payment.plan_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(payment.date)} · {payment.method}
+                      {labels.shortDate(payment.date)} · {payment.method}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">{formatCurrency(payment.amount)}</p>
+                    <p className="text-sm font-semibold text-foreground">{labels.currency(payment.amount)}</p>
                     <span className={cn(
                       "text-[10px] font-medium",
                       payment.status === "pago" ? "text-emerald-400" :
                       payment.status === "pendente" ? "text-amber-400" : "text-red-400"
                     )}>
-                      {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      {labels.payStatus(payment.status)}
                     </span>
                   </div>
                 </li>
@@ -241,7 +230,7 @@ const MyPlan = () => {
       <Sheet open={showChangePlan} onOpenChange={setShowChangePlan}>
         <SheetContent side="bottom" className="bg-background border-border rounded-t-2xl px-4 pb-8">
           <SheetHeader className="mb-4">
-            <SheetTitle className="text-foreground text-left">Escolher Plano</SheetTitle>
+            <SheetTitle className="text-foreground text-left">{t("plan.choose")}</SheetTitle>
           </SheetHeader>
 
           <div className="space-y-3">
@@ -266,11 +255,11 @@ const MyPlan = () => {
                     <div>
                       <p className="text-sm font-bold text-foreground">{p.name}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatCurrency(p.price)} {intervalLabel[p.interval] ?? `por ${p.interval}`}
+                        {labels.currency(p.price)} {labels.interval(p.interval)}
                       </p>
                     </div>
                     {isCurrentPlan ? (
-                      <span className="text-[10px] font-semibold text-muted-foreground">Plano atual</span>
+                      <span className="text-[10px] font-semibold text-muted-foreground">{t("plan.currentBadge")}</span>
                     ) : isSelected ? (
                       <div className="rounded-full bg-primary p-1">
                         <Check size={12} className="text-primary-foreground" />
@@ -302,7 +291,7 @@ const MyPlan = () => {
             {changing ? (
               <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
             ) : (
-              "Confirmar troca"
+              t("plan.confirmChange")
             )}
           </button>
         </SheetContent>
@@ -312,9 +301,9 @@ const MyPlan = () => {
       <Dialog open={showCancel} onOpenChange={setShowCancel}>
         <DialogContent className="bg-background border-border max-w-[360px] mx-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Cancelar assinatura?</DialogTitle>
+            <DialogTitle className="text-foreground">{t("plan.cancelTitle")}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Você perderá acesso ao conteúdo ao fim do período pago. Esta ação pode ser revertida reativando sua assinatura.
+              {t("plan.cancelDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 mt-2">
@@ -322,7 +311,7 @@ const MyPlan = () => {
               onClick={() => setShowCancel(false)}
               className="flex-1 rounded-xl border border-border bg-card py-2.5 text-sm font-medium text-foreground"
             >
-              Voltar
+              {t("common.back")}
             </button>
             <button
               onClick={handleCancelPlan}
@@ -332,7 +321,7 @@ const MyPlan = () => {
               {cancelling ? (
                 <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
               ) : (
-                "Cancelar plano"
+                t("plan.cancelConfirm")
               )}
             </button>
           </div>

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Heart, CheckCircle, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideoById, useVideos } from "@/hooks/useVideos";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useToggleFavorite, useUpdateProgress } from "@/hooks/useProgress";
 import VideoCard from "@/components/VideoCard";
+import { useLabels } from "@/i18n/labels";
 import { getLevelColor, getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -107,6 +109,7 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
   startAt: number; onProgress: (pct: number) => void;
 }) {
   const [playing, setPlaying] = useState(false);
+  const { t }      = useTranslation();
   const videoRef   = useRef<HTMLVideoElement>(null);
   const lastSentAt = useRef(0);
   const seeked     = useRef(false);
@@ -117,7 +120,7 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
         <img src={thumbnail} alt={title} className="h-full w-full object-cover opacity-60" />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <VideoIcon size={36} className="text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">URL do vídeo não configurada</p>
+          <p className="text-xs text-muted-foreground">{t("video.noUrl")}</p>
         </div>
       </div>
     );
@@ -181,7 +184,7 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
         onPause={report}
         onEnded={() => onProgress(100)}
       >
-        Seu navegador não suporta reprodução de vídeo.
+        {t("video.noSupport")}
       </video>
     </div>
   );
@@ -191,6 +194,8 @@ const VideoDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
+  const labels   = useLabels();
 
   const { data: video, isLoading } = useVideoById(id ?? "", user?.id ?? "");
   const { data: instructor }       = useInstructor(video?.instructorId ?? "");
@@ -227,7 +232,7 @@ const VideoDetail = () => {
   if (!video) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground">Vídeo não encontrado</p>
+        <p className="text-muted-foreground">{t("video.notFound")}</p>
       </div>
     );
   }
@@ -289,7 +294,7 @@ const VideoDetail = () => {
               <span>·</span>
               <span>{video.duration}</span>
               <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", getLevelColor(video.level))}>
-                {video.level}
+                {labels.level(video.level)}
               </span>
             </div>
           </div>
@@ -306,7 +311,7 @@ const VideoDetail = () => {
             )}
           >
             <Heart size={16} fill={isFav ? "currentColor" : "none"} />
-            {isFav ? "Favoritado" : "Favoritar"}
+            {isFav ? t("video.favorited") : t("video.favorite")}
           </button>
           <button
             onClick={handleToggleWatched}
@@ -317,7 +322,7 @@ const VideoDetail = () => {
             )}
           >
             <CheckCircle size={16} />
-            {isWatched ? "Assistido" : "Marcar assistido"}
+            {isWatched ? t("video.watched") : t("video.markWatched")}
           </button>
         </div>
 
@@ -325,7 +330,7 @@ const VideoDetail = () => {
         {video.progress !== undefined && video.progress > 0 && video.progress < 100 && (
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Progresso</span>
+              <span>{t("video.progress")}</span>
               <span>{video.progress}%</span>
             </div>
             <Progress value={video.progress} className="mt-1 h-2" />
@@ -343,20 +348,20 @@ const VideoDetail = () => {
               <p className="text-sm font-semibold text-foreground">{instructor.name}</p>
               <p className="text-xs text-muted-foreground truncate">{instructor.bio}</p>
             </div>
-            <span className="text-[10px] font-semibold text-primary flex-shrink-0">Ver sessão →</span>
+            <span className="text-[10px] font-semibold text-primary flex-shrink-0">{t("video.viewSection")}</span>
           </button>
         )}
 
         {/* Description */}
         <div className="mt-4">
-          <h3 className="text-sm font-semibold text-foreground">Sobre esta aula</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("video.about")}</h3>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{video.description}</p>
         </div>
 
         {/* Related */}
         {related.length > 0 && (
           <div className="mt-6">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Vídeos Relacionados</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{t("video.related")}</h3>
             <div className="flex gap-3 overflow-x-auto pb-2">
               {related.map((v) => (
                 <VideoCard key={v.id} video={v} size="sm" />

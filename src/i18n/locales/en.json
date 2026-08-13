@@ -1,0 +1,289 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "lessons_one": "{{count}} lesson",
+    "lessons_other": "{{count}} lessons",
+    "modules_one": "{{count}} module",
+    "modules_other": "{{count}} modules",
+    "comments_one": "{{count}} comment",
+    "comments_other": "{{count}} comments"
+  },
+  "lang": {
+    "pt": "Português",
+    "en": "English",
+    "es": "Español"
+  },
+  "level": {
+    "Iniciante": "Beginner",
+    "Intermediário": "Intermediate",
+    "Avançado": "Advanced"
+  },
+  "belt": {
+    "white": "White Belt",
+    "blue": "Blue Belt",
+    "purple": "Purple Belt",
+    "brown": "Brown Belt",
+    "black": "Black Belt"
+  },
+  "interval": {
+    "mensal": "per month",
+    "trimestral": "per quarter",
+    "anual": "per year",
+    "fallback": "per {{interval}}"
+  },
+  "payStatus": {
+    "pago": "Paid",
+    "pendente": "Pending",
+    "falhou": "Failed"
+  },
+  "duration": {
+    "minutes": "{{count}}min",
+    "hours": "{{count}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}min"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "teachers": "Teachers",
+    "favorites": "Favorites",
+    "ranking": "Ranking",
+    "profile": "Profile"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Access your RastaHale account",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "errorCredentials": "Incorrect email or password",
+    "errorNetwork": "Couldn't connect. Check your internet and try again.",
+    "testCredentials": "Test credentials",
+    "roleStudent": "Student",
+    "roleAdmin": "Admin",
+    "installTitle": "Install RastaHale",
+    "installSubtitle": "Use it as an app — fast, no browser",
+    "installNow": "Install now",
+    "install": "Install"
+  },
+  "home": {
+    "welcome": "Welcome back",
+    "fallbackName": "Athlete",
+    "featured": "Featured",
+    "continueWatching": "Continue Watching",
+    "ourAthletes": "Our Athletes",
+    "seeAll": "See all"
+  },
+  "store": {
+    "title": "Our Store",
+    "fallbackDescription": "Official RastaHale gear — rastahale.com.br",
+    "imageAlt": "RastaHale Store",
+    "goToPhoto": "Go to photo {{number}}"
+  },
+  "search": {
+    "title": "Explore",
+    "placeholder": "Search lessons, techniques...",
+    "category": "Category",
+    "level": "Level",
+    "allCategories": "All",
+    "allLevels": "All",
+    "empty": "No results found"
+  },
+  "favorites": {
+    "title": "Favorites",
+    "saved_one": "{{count}} saved lesson",
+    "saved_other": "{{count}} saved lessons",
+    "empty": "No favorites yet"
+  },
+  "progress": {
+    "title": "Ranking & Progress",
+    "subtitle": "Your belt, your standing and your evolution",
+    "myProgress": "My Progress",
+    "statLessons": "Lessons watched",
+    "statHours": "Training hours",
+    "statOverall": "Overall progress",
+    "inProgress": "In progress",
+    "noneInProgress": "No lesson in progress",
+    "achievements": "Achievements",
+    "badgeJiuJitsu": "First Jiu Jitsu lesson",
+    "badgeLutaLivre": "First Luta Livre lesson",
+    "badgeTen": "10 lessons completed",
+    "badgeMaster": "Master of the Mat"
+  },
+  "ranking": {
+    "title": "Student Ranking",
+    "you": "(you)",
+    "pts": "pts",
+    "place": "#{{position}} · {{points}} pts",
+    "ordinal": "#{{position}}",
+    "towards": "Towards {{belt}}",
+    "pointsToNext": "{{count}} pts to go",
+    "topReached": "You've reached the top — Black Belt!",
+    "challengeTitle": "Season challenge",
+    "challengePrize": "1st place wins: {{prize}}",
+    "defaultPrize": "a special prize",
+    "ended": "ended"
+  },
+  "voucher": {
+    "title": "You won the season! 🎉",
+    "subtitle": "You finished 1st in the student ranking. Here's your prize:",
+    "defaultPrize": "RastaHale Voucher",
+    "goToStore": "Go to the store",
+    "copied": "Code copied!",
+    "copyError": "Couldn't copy"
+  },
+  "profile": {
+    "title": "Profile",
+    "plan": "{{name}} plan",
+    "stats": "{{videos}} lessons · {{hours}}h watched",
+    "editProfile": "Edit Profile",
+    "myPlan": "My Plan",
+    "settings": "Settings",
+    "installApp": "Install App",
+    "logout": "Log out"
+  },
+  "editProfile": {
+    "title": "Edit Profile",
+    "avatarAlt": "Profile photo",
+    "tapCamera": "Tap the camera to change it",
+    "name": "Name",
+    "namePlaceholder": "Your name",
+    "email": "Email",
+    "emailLocked": "Email can't be changed",
+    "save": "Save changes",
+    "saved": "Saved!"
+  },
+  "settings": {
+    "title": "Settings",
+    "notifications": "Notifications",
+    "newLessons": "New lessons",
+    "newLessonsDesc": "Notify me when new videos are published",
+    "weeklyProgress": "Weekly progress",
+    "weeklyProgressDesc": "A summary of your progress every Monday",
+    "promos": "Promos and offers",
+    "promosDesc": "Discounts and plan news",
+    "playback": "Playback",
+    "autoplay": "Autoplay",
+    "autoplayDesc": "Start the next video automatically",
+    "hd": "HD quality",
+    "hdDesc": "Prefer higher resolution (uses more data)",
+    "language": "Language",
+    "languageDesc": "Choose the app language",
+    "about": "About",
+    "version": "App version",
+    "support": "Support",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use"
+  },
+  "plan": {
+    "title": "My Plan",
+    "current": "Current Plan",
+    "active": "Active",
+    "cancelled": "Cancelled",
+    "cancelNotice": "Your access continues until the end of the paid period.",
+    "nextBilling": "Next billing",
+    "amount": "Amount",
+    "included": "Included in the plan",
+    "change": "Change Plan",
+    "cancel": "Cancel Subscription",
+    "reactivate": "Reactivate Subscription",
+    "history": "Payment history",
+    "choose": "Choose Plan",
+    "currentBadge": "Current plan",
+    "confirmChange": "Confirm change",
+    "cancelTitle": "Cancel subscription?",
+    "cancelDesc": "You'll lose access to the content at the end of the paid period. This can be undone by reactivating your subscription.",
+    "cancelConfirm": "Cancel plan"
+  },
+  "video": {
+    "notFound": "Video not found",
+    "noUrl": "Video URL not configured",
+    "noSupport": "Your browser doesn't support video playback.",
+    "favorited": "Favorited",
+    "favorite": "Favorite",
+    "watched": "Watched",
+    "markWatched": "Mark as watched",
+    "progress": "Progress",
+    "viewSection": "View page →",
+    "about": "About this lesson",
+    "related": "Related Videos"
+  },
+  "instructors": {
+    "title": "Teachers",
+    "subtitle": "Explore each teacher's lessons and modules",
+    "empty": "No teachers registered"
+  },
+  "instructorSection": {
+    "notFound": "Instructor not found",
+    "noLessons": "No lessons available yet",
+    "modules": "Modules",
+    "emptyModule": "No lessons in this module yet.",
+    "allLessons": "All lessons",
+    "commentsTitle": "What students say",
+    "leaveComment": "Leave your comment",
+    "commentPlaceholder": "What did you think of this teacher's lessons? (min. 10 characters)",
+    "sendComment": "Send comment",
+    "alreadyCommented": "✓ You've already commented on this teacher",
+    "noComments": "No comments yet.",
+    "beFirst": "Be the first to comment!",
+    "loginToComment": "Sign in to comment",
+    "minChars": "Write at least 10 characters",
+    "oneCommentOnly": "You've already left a comment for this instructor",
+    "commentSent": "Comment sent!",
+    "commentRemoved": "Review removed"
+  },
+  "athlete": {
+    "notFound": "Athlete not found",
+    "fullProfile": "View full profile",
+    "modules": "Modules",
+    "noModules": "No modules available yet"
+  },
+  "moduleLessons": {
+    "with": "with {{name}}",
+    "empty": "No lessons in this module"
+  },
+  "install": {
+    "installedTitle": "App already installed!",
+    "installedDesc": "RastaHale Academy is already installed on your device. You can open it from your home screen.",
+    "goToApp": "Go to the app",
+    "title": "Install App",
+    "appSubtitle": "Jiu-Jitsu and Luta Livre",
+    "free": "Free · No app store",
+    "benefitFast": "Quick access",
+    "benefitOffline": "Works offline",
+    "benefitNotifications": "Notifications",
+    "installNow": "Install now",
+    "tapToInstall": "Tap to install straight onto your device",
+    "instructions": "Installation instructions",
+    "tabAndroid": "Android",
+    "tabIos": "iPhone / iPad",
+    "androidBrowsers": "Chrome · Samsung Internet · Edge",
+    "iosBrowser": "Safari (required on iPhone)",
+    "android1Title": "Open it in your browser",
+    "android1Desc": "Go to rastahale.simplix.digital in Chrome or your Android's default browser.",
+    "android2Title": "Tap the \"3 dots\"",
+    "android2Desc": "Tap the menu icon (⋮) in the top right corner of the browser.",
+    "android3Title": "\"Add to home screen\"",
+    "android3Desc": "Pick \"Add to home screen\" or \"Install app\" from the menu.",
+    "android4Title": "Confirm the installation",
+    "android4Desc": "Tap \"Add\" in the confirmation window. The app icon will show up on your home screen.",
+    "ios1Title": "Open it in Safari",
+    "ios1Desc": "Go to rastahale.simplix.digital. Installing only works in Safari — not in Chrome or other browsers on iPhone.",
+    "ios2Title": "Tap \"Share\"",
+    "ios2Desc": "Tap the share icon (□ with an up arrow) in Safari's bottom bar.",
+    "ios3Title": "\"Add to Home Screen\"",
+    "ios3Desc": "Scroll the list of options and tap \"Add to Home Screen\" (the icon with a +).",
+    "ios4Title": "Confirm the name and install",
+    "ios4Desc": "Tap \"Add\" in the top right corner. The app will show up on your home screen as a native icon.",
+    "tipTitle": "💡 Tip",
+    "tipDesc": "In Chrome an install banner may pop up automatically at the bottom of the screen. Tap it to install even faster!",
+    "whySafariTitle": "ℹ️ Why only in Safari?",
+    "whySafariDesc": "Apple restricts PWA installation to Safari. Open the link in Safari and follow the steps above.",
+    "footer": "RastaHale Academy · Jiu-Jitsu and Luta Livre"
+  },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "home": "Return to Home"
+  }
+}

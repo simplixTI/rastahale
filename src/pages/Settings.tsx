@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, Bell, Moon, Globe, Shield, Info } from "lucide-react";
+import { ArrowLeft, Bell, Moon, Globe, Shield, Info, Languages } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { cn } from "@/lib/utils";
 
 interface ToggleItemProps {
@@ -47,6 +49,7 @@ function loadSettings() {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const saved = loadSettings();
 
   const [notifAulas,    setNotifAulas]    = useState(saved.notifAulas    ?? true);
@@ -71,32 +74,44 @@ const Settings = () => {
         <button onClick={() => navigate(-1)} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold text-foreground">Configurações</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("settings.title")}</h1>
       </header>
 
       <div className="mt-6 space-y-4 px-4 pb-10">
+        {/* Idioma */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <Languages size={16} className="text-primary" />
+            <p className="text-sm font-semibold text-foreground">{t("settings.language")}</p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="mb-2.5 text-xs text-muted-foreground">{t("settings.languageDesc")}</p>
+            <LanguageSwitcher />
+          </div>
+        </div>
+
         {/* Notificações */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Bell size={16} className="text-primary" />
-            <p className="text-sm font-semibold text-foreground">Notificações</p>
+            <p className="text-sm font-semibold text-foreground">{t("settings.notifications")}</p>
           </div>
           <div className="divide-y divide-border/60 px-4">
             <ToggleItem
-              label="Novas aulas"
-              description="Avise quando novos vídeos forem publicados"
+              label={t("settings.newLessons")}
+              description={t("settings.newLessonsDesc")}
               checked={notifAulas}
               onChange={toggle(setNotifAulas, "notifAulas")}
             />
             <ToggleItem
-              label="Progresso semanal"
-              description="Resumo do seu progresso toda segunda-feira"
+              label={t("settings.weeklyProgress")}
+              description={t("settings.weeklyProgressDesc")}
               checked={notifProgress}
               onChange={toggle(setNotifProgress, "notifProgress")}
             />
             <ToggleItem
-              label="Promoções e ofertas"
-              description="Descontos e novidades dos planos"
+              label={t("settings.promos")}
+              description={t("settings.promosDesc")}
               checked={notifPromo}
               onChange={toggle(setNotifPromo, "notifPromo")}
             />
@@ -107,18 +122,18 @@ const Settings = () => {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Moon size={16} className="text-primary" />
-            <p className="text-sm font-semibold text-foreground">Reprodução</p>
+            <p className="text-sm font-semibold text-foreground">{t("settings.playback")}</p>
           </div>
           <div className="divide-y divide-border/60 px-4">
             <ToggleItem
-              label="Autoplay"
-              description="Iniciar próximo vídeo automaticamente"
+              label={t("settings.autoplay")}
+              description={t("settings.autoplayDesc")}
               checked={autoplay}
               onChange={toggle(setAutoplay, "autoplay")}
             />
             <ToggleItem
-              label="Qualidade HD"
-              description="Preferir resolução mais alta (consome mais dados)"
+              label={t("settings.hd")}
+              description={t("settings.hdDesc")}
               checked={qualidadeHD}
               onChange={toggle(setQualidadeHD, "qualidadeHD")}
             />
@@ -129,12 +144,12 @@ const Settings = () => {
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <Info size={16} className="text-primary" />
-            <p className="text-sm font-semibold text-foreground">Sobre</p>
+            <p className="text-sm font-semibold text-foreground">{t("settings.about")}</p>
           </div>
           <div className="divide-y divide-border/60 px-4">
             {[
-              { label: "Versão do app", value: "1.0.0" },
-              { label: "Suporte",       value: "contato@rastahale.com" },
+              { label: t("settings.version"), value: "1.0.0" },
+              { label: t("settings.support"), value: "contato@rastahale.com" },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between py-3">
                 <p className="text-sm text-foreground">{item.label}</p>
@@ -144,13 +159,13 @@ const Settings = () => {
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2">
                 <Shield size={14} className="text-muted-foreground" />
-                <p className="text-sm text-foreground">Política de Privacidade</p>
+                <p className="text-sm text-foreground">{t("settings.privacy")}</p>
               </div>
             </div>
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2">
                 <Globe size={14} className="text-muted-foreground" />
-                <p className="text-sm text-foreground">Termos de Uso</p>
+                <p className="text-sm text-foreground">{t("settings.terms")}</p>
               </div>
             </div>
           </div>

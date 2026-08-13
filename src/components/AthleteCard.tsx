@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BookOpen } from "lucide-react";
 
 export interface AthleteCardData {
@@ -11,6 +12,7 @@ export interface AthleteCardData {
 
 const AthleteCard = ({ athlete }: { athlete: AthleteCardData }) => {
   const navigate = useNavigate();
+  const { t }    = useTranslation();
 
   return (
     <button
@@ -33,7 +35,7 @@ const AthleteCard = ({ athlete }: { athlete: AthleteCardData }) => {
           )}
           <span className="mt-1.5 flex items-center gap-1 text-[10px] font-medium text-primary-foreground/90">
             <BookOpen size={10} className="text-primary" />
-            {athlete.videoCount} aula{athlete.videoCount !== 1 ? "s" : ""}
+            {t("common.lessons", { count: athlete.videoCount })}
           </span>
         </div>
       </div>

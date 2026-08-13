@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, ReactNode } from "react";
 import { Play, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import AthleteCard from "@/components/AthleteCard";
@@ -60,10 +61,11 @@ const Section = ({ title, children, delay = 0 }: { title: string; children: Reac
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
   const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
   const { data: instructors = [] }            = useInstructors();
 
-  const firstName        = user?.name?.split(" ")[0] ?? "Atleta";
+  const firstName        = user?.name?.split(" ")[0] ?? t("home.fallbackName");
   const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
   // Aulas começadas e ainda não terminadas.
   const continueWatching = videos.filter(
@@ -94,7 +96,7 @@ const Index = () => {
       <FadeInSection>
         <header className="flex items-center justify-between px-4 pt-6">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Bem-vindo de volta</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("home.welcome")}</p>
             <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight text-foreground">
               {firstName} <span className="align-middle">🤙</span>
             </h1>
@@ -121,7 +123,7 @@ const Index = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
             <Pill color="primary" className="absolute left-4 top-4 shadow-lg shadow-black/25">
-              Em destaque
+              {t("home.featured")}
             </Pill>
 
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-left">
@@ -144,7 +146,7 @@ const Index = () => {
       </FadeInSection>
 
       {continueWatching.length > 0 && (
-        <Section title="Continuar Assistindo" delay={200}>
+        <Section title={t("home.continueWatching")} delay={200}>
           {continueWatching.map((v) => (
             <VideoCard key={v.id} video={v} size="sm" />
           ))}
@@ -156,12 +158,12 @@ const Index = () => {
         <FadeInSection delay={100}>
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between px-4">
-              <h2 className="text-base font-bold tracking-tight text-foreground">Nossos Atletas</h2>
+              <h2 className="text-base font-bold tracking-tight text-foreground">{t("home.ourAthletes")}</h2>
               <button
                 onClick={() => navigate("/professores")}
                 className="flex items-center gap-0.5 text-[11px] font-semibold text-primary"
               >
-                Ver todos <ChevronRight size={12} />
+                {t("home.seeAll")} <ChevronRight size={12} />
               </button>
             </div>
             <div

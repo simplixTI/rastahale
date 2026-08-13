@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trophy, Flame, BookOpen, Gift, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentRanking, type RankedStudent } from "@/hooks/useStudentRanking";
 import { seasonHasEnded } from "@/hooks/useSeason";
@@ -8,17 +9,18 @@ import { cn } from "@/lib/utils";
 
 const VOUCHER_ACK_KEY = "rasta_voucher_ack";
 
-function positionLabel(pos: number): string {
+/** Medalha para o pódio; da 4ª posição em diante, o número no formato do idioma. */
+function positionLabel(pos: number, ordinal: (n: number) => string): string {
   if (pos === 1) return "🥇";
   if (pos === 2) return "🥈";
   if (pos === 3) return "🥉";
-  return `${pos}º`;
+  return ordinal(pos);
 }
 
 /** Tempo restante até a data final, em formato curto. */
-function timeLeft(iso: string): string {
+function timeLeft(iso: string, endedLabel: string): string {
   const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "encerrado";
+  if (ms <= 0) return endedLabel;
   const days  = Math.floor(ms / 86_400_000);
   const hours = Math.floor((ms % 86_400_000) / 3_600_000);
   if (days > 0) return `${days}d ${hours}h`;
@@ -44,6 +46,7 @@ function Avatar({ student }: { student: RankedStudent }) {
 }
 
 function RankRow({ student, isMe }: { student: RankedStudent; isMe: boolean }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -52,22 +55,22 @@ function RankRow({ student, isMe }: { student: RankedStudent; isMe: boolean }) {
       )}
     >
       <span className="w-6 flex-shrink-0 text-center text-sm font-bold text-muted-foreground">
-        {positionLabel(student.position)}
+        {positionLabel(student.position, (n) => t("ranking.ordinal", { position: n }))}
       </span>
       <Avatar student={student} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-bold text-foreground">
           {student.name}
-          {isMe && <span className="ml-1 text-[10px] font-semibold text-primary">(você)</span>}
+          {isMe && <span className="ml-1 text-[10px] font-semibold text-primary">{t("ranking.you")}</span>}
         </p>
         <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
           <span aria-hidden="true">{student.belt.belt.emoji}</span>
-          {student.belt.belt.name}
+          {t(`belt.${student.belt.belt.key}`)}
         </p>
       </div>
       <div className="flex-shrink-0 text-right">
         <p className="text-sm font-bold text-foreground">{student.points}</p>
-        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">pts</p>
+        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{t("ranking.pts")}</p>
       </div>
     </div>
   );
@@ -76,6 +79,7 @@ function RankRow({ student, isMe }: { student: RankedStudent; isMe: boolean }) {
 /** Card pessoal: faixa atual do aluno e progresso até a próxima. */
 function MyBeltCard({ me }: { me: RankedStudent }) {
   const { belt, next, pointsToNext, progressPct } = me.belt;
+  const { t } = useTranslation();
   return (
     <div className="mb-3 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-4">
       <div className="flex items-center gap-3">
@@ -86,9 +90,9 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
           {belt.emoji}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground">{belt.name}</p>
+          <p className="text-sm font-bold text-foreground">{t(`belt.${belt.key}`)}</p>
           <p className="text-[11px] text-muted-foreground">
-            {me.position}º lugar · {me.points} pts
+            {t("ranking.place", { position: me.position, points: me.points })}
           </p>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -101,8 +105,8 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
       {next ? (
         <div className="mt-3">
           <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>Rumo a {next.name}</span>
-            <span className="font-semibold text-foreground">faltam {pointsToNext} pts</span>
+            <span>{t("ranking.towards", { belt: t(`belt.${next.key}`) })}</span>
+            <span className="font-semibold text-foreground">{t("ranking.pointsToNext", { count: pointsToNext })}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-secondary">
             <div
@@ -113,7 +117,7 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
         </div>
       ) : (
         <p className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-amber-400">
-          <Flame size={12} /> Você chegou ao topo — Faixa Preta!
+          <Flame size={12} /> {t("ranking.topReached")}
         </p>
       )}
     </div>
@@ -122,6 +126,7 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
 
 /** Banner do desafio: prêmio + contagem regressiva até a data final. */
 function ChallengeBanner({ endsAt, prizeText }: { endsAt: string; prizeText: string }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-3 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
       <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
@@ -129,14 +134,14 @@ function ChallengeBanner({ endsAt, prizeText }: { endsAt: string; prizeText: str
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-bold text-foreground">
-          Desafio da temporada
+          {t("ranking.challengeTitle")}
         </p>
         <p className="truncate text-[11px] text-muted-foreground">
-          1º lugar ganha: {prizeText || "um prêmio especial"}
+          {t("ranking.challengePrize", { prize: prizeText || t("ranking.defaultPrize") })}
         </p>
       </div>
       <div className="flex flex-shrink-0 items-center gap-1 rounded-full bg-background/60 px-2 py-1 text-[10px] font-semibold text-amber-400">
-        <Clock size={11} /> {timeLeft(endsAt)}
+        <Clock size={11} /> {timeLeft(endsAt, t("ranking.ended"))}
       </div>
     </div>
   );
@@ -144,6 +149,7 @@ function ChallengeBanner({ endsAt, prizeText }: { endsAt: string; prizeText: str
 
 const StudentRanking = () => {
   const { user }                       = useAuth();
+  const { t }                          = useTranslation();
   const { ranking, season, isLoading } = useStudentRanking();
   const [showVoucher, setShowVoucher]  = useState(false);
 
@@ -174,7 +180,7 @@ const StudentRanking = () => {
     <section className="mt-6 px-4">
       <div className="mb-3 flex items-center gap-1.5">
         <Trophy size={16} className="text-amber-400" />
-        <h2 className="text-base font-bold text-foreground">Ranking dos Alunos</h2>
+        <h2 className="text-base font-bold text-foreground">{t("ranking.title")}</h2>
       </div>
 
       {scheduled && season && (

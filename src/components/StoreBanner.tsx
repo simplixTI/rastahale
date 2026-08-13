@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShoppingBag, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useStoreBanners } from "@/hooks/useStoreBanners";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,7 @@ const ROTATE_MS = 10_000; // troca a cada 10 segundos
 
 /** Card simples (fallback) quando ainda não há fotos cadastradas. */
 function FallbackCard() {
+  const { t } = useTranslation();
   return (
     <a
       href={STORE_URL}
@@ -19,8 +21,8 @@ function FallbackCard() {
         <ShoppingBag size={20} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-foreground">Nossa Loja</p>
-        <p className="text-[11px] text-muted-foreground">Produtos oficiais RastaHale — rastahale.com.br</p>
+        <p className="text-sm font-bold text-foreground">{t("store.title")}</p>
+        <p className="text-[11px] text-muted-foreground">{t("store.fallbackDescription")}</p>
       </div>
       <ExternalLink size={16} className="flex-shrink-0 text-muted-foreground" />
     </a>
@@ -29,6 +31,7 @@ function FallbackCard() {
 
 const StoreBanner = () => {
   const { data: banners = [], isLoading } = useStoreBanners();
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
 
   // Garante que o índice fique válido se a quantidade de fotos mudar.
@@ -47,7 +50,7 @@ const StoreBanner = () => {
     <section className="mt-6 px-4">
       <div className="mb-3 flex items-center gap-1.5">
         <ShoppingBag size={16} className="text-primary" />
-        <h2 className="text-base font-bold tracking-tight text-foreground">Nossa Loja</h2>
+        <h2 className="text-base font-bold tracking-tight text-foreground">{t("store.title")}</h2>
       </div>
 
       {isLoading || banners.length === 0 ? (
@@ -69,7 +72,7 @@ const StoreBanner = () => {
               >
                 <img
                   src={b.imageUrl}
-                  alt="Loja RastaHale"
+                  alt={t("store.imageAlt")}
                   className="aspect-[16/9] w-full object-cover"
                   loading="lazy"
                 />
@@ -84,7 +87,7 @@ const StoreBanner = () => {
                 <button
                   key={b.id}
                   onClick={() => setIndex(i)}
-                  aria-label={`Ir para foto ${i + 1}`}
+                  aria-label={t("store.goToPhoto", { number: i + 1 })}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
                     i === index ? "w-5 bg-primary" : "w-1.5 bg-white/60"

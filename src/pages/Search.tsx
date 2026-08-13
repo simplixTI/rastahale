@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useModalities } from "@/hooks/useModalities";
+import { useLabels } from "@/i18n/labels";
 import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +14,8 @@ const levels = ["all", "Iniciante", "Intermediário", "Avançado"] as const;
 
 const Search = () => {
   const { user } = useAuth();
+  const { t }    = useTranslation();
+  const labels   = useLabels();
   const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
   const { data: modalities = [] } = useModalities();
   // Chips de modalidade: "all" + modalidades cadastradas.
@@ -33,14 +37,14 @@ const Search = () => {
   return (
     <MobileLayout>
       <header className="px-4 pt-4">
-        <h1 className="text-xl font-bold text-foreground">Explorar</h1>
+        <h1 className="text-xl font-bold text-foreground">{t("search.title")}</h1>
         <div className="mt-3 flex gap-2">
           <div className="relative flex-1">
             <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar aulas, técnicas..."
+              placeholder={t("search.placeholder")}
               className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -58,7 +62,7 @@ const Search = () => {
         {showFilters && (
           <div className="mt-3 space-y-3 rounded-lg border border-border bg-card p-3">
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Categoria</p>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("search.category")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map((c) => (
                   <button
@@ -69,13 +73,13 @@ const Search = () => {
                       category === c ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                     )}
                   >
-                    {c === "all" ? "Todas" : getCategoryLabel(c)}
+                    {c === "all" ? t("search.allCategories") : getCategoryLabel(c)}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nível</p>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("search.level")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {levels.map((l) => (
                   <button
@@ -86,7 +90,7 @@ const Search = () => {
                       level === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                     )}
                   >
-                    {l === "all" ? "Todos" : l}
+                    {l === "all" ? t("search.allLevels") : labels.level(l)}
                   </button>
                 ))}
               </div>
@@ -109,7 +113,7 @@ const Search = () => {
 
       {!isLoading && filtered.length === 0 && (
         <div className="mt-16 text-center">
-          <p className="text-sm text-muted-foreground">Nenhum resultado encontrado</p>
+          <p className="text-sm text-muted-foreground">{t("search.empty")}</p>
         </div>
       )}
     </MobileLayout>

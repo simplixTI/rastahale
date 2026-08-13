@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructorComments } from "@/hooks/useInstructorComments";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
 import VideoCard from "@/components/VideoCard";
+import { useLabels } from "@/i18n/labels";
+import { currentLocale } from "@/i18n";
 import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +21,7 @@ function CommentCard({ comment, canDelete, onDelete }: {
   canDelete: boolean; onDelete: () => void;
 }) {
   const date = (() => {
-    try { return new Date(comment.createdAt).toLocaleDateString("pt-BR"); } catch { return ""; }
+    try { return new Date(comment.createdAt).toLocaleDateString(currentLocale()); } catch { return ""; }
   })();
 
   return (
@@ -50,6 +53,8 @@ const InstructorSection = () => {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
+  const labels   = useLabels();
 
   const { data: instructor,  isLoading: loadInst } = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid } = useVideos(user?.id ?? "");
@@ -76,12 +81,12 @@ const InstructorSection = () => {
   const myComment  = user ? userComment(user.id) : undefined;
 
   function handleSubmitComment() {
-    if (!user) { toast.error("Faça login para comentar"); return; }
-    if (commentText.trim().length < 10) { toast.error("Escreva pelo menos 10 caracteres"); return; }
-    if (myComment) { toast.error("Você já deixou um comentário para este instrutor"); return; }
+    if (!user) { toast.error(t("instructorSection.loginToComment")); return; }
+    if (commentText.trim().length < 10) { toast.error(t("instructorSection.minChars")); return; }
+    if (myComment) { toast.error(t("instructorSection.oneCommentOnly")); return; }
     addComment(user.id, user.name, commentText);
     setCommentText("");
-    toast.success("Comentário enviado!");
+    toast.success(t("instructorSection.commentSent"));
   }
 
   if (loadInst || loadVid) {
@@ -95,8 +100,8 @@ const InstructorSection = () => {
   if (!instructor) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-        <p className="text-sm text-muted-foreground">Instrutor não encontrado</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-primary">Voltar</button>
+        <p className="text-sm text-muted-foreground">{t("instructorSection.notFound")}</p>
+        <button onClick={() => navigate(-1)} className="text-xs text-primary">{t("common.back")}</button>
       </div>
     );
   }
@@ -125,18 +130,18 @@ const InstructorSection = () => {
             <div className="flex items-center gap-4 flex-wrap justify-center">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <BookOpen size={12} className="text-primary" />
-                <span>{videos.length} aula{videos.length !== 1 ? "s" : ""}</span>
+                <span>{t("common.lessons", { count: videos.length })}</span>
               </div>
               {totalMinutes > 0 && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock size={12} className="text-primary" />
-                  <span>{totalHours > 0 ? `${totalHours}h ` : ""}{remainMin}min</span>
+                  <span>{labels.duration(totalHours * 60 + remainMin)}</span>
                 </div>
               )}
               {comments.length > 0 && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <MessageCircle size={12} className="text-primary" />
-                  <span>{comments.length} comentário{comments.length !== 1 ? "s" : ""}</span>
+                  <span>{t("common.comments", { count: comments.length })}</span>
                 </div>
               )}
             </div>
@@ -149,14 +154,14 @@ const InstructorSection = () => {
         {videos.length === 0 ? (
           <div className="mt-16 flex flex-col items-center gap-2 text-center">
             <Play size={32} className="text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Nenhuma aula disponível ainda</p>
+            <p className="text-sm text-muted-foreground">{t("instructorSection.noLessons")}</p>
           </div>
         ) : (
           Object.entries(grouped).map(([cat, catVids]) => (
             <div key={cat} className="mt-6">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-bold text-foreground">{cat}</h2>
-                <span className="text-[10px] text-muted-foreground">{catVids.length} aula{catVids.length !== 1 ? "s" : ""}</span>
+                <span className="text-[10px] text-muted-foreground">{t("common.lessons", { count: catVids.length })}</span>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {catVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}
@@ -170,7 +175,7 @@ const InstructorSection = () => {
           <div className="mt-8">
             <div className="mb-3 flex items-center gap-2">
               <LayoutList size={16} className="text-primary" />
-              <h2 className="text-sm font-bold text-foreground">Módulos</h2>
+              <h2 className="text-sm font-bold text-foreground">{t("instructorSection.modules")}</h2>
             </div>
             <div className="space-y-4">
               {sessions.map((s) => {
@@ -186,7 +191,7 @@ const InstructorSection = () => {
                         {modVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}
                       </div>
                     ) : (
-                      <p className="mt-2 text-[10px] text-muted-foreground">Nenhuma aula neste módulo ainda.</p>
+                      <p className="mt-2 text-[10px] text-muted-foreground">{t("instructorSection.emptyModule")}</p>
                     )}
                   </div>
                 );
@@ -198,7 +203,7 @@ const InstructorSection = () => {
         {/* lista completa */}
         {videos.length > 0 && (
           <div className="mt-8">
-            <h2 className="mb-3 text-sm font-bold text-foreground">Todas as aulas</h2>
+            <h2 className="mb-3 text-sm font-bold text-foreground">{t("instructorSection.allLessons")}</h2>
             <div className="space-y-2">
               {videos.map((v) => (
                 <button key={v.id} onClick={() => navigate(`/video/${v.id}`)}
@@ -216,7 +221,7 @@ const InstructorSection = () => {
                     <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",
                       v.level === "Iniciante" ? "bg-emerald-500/20 text-emerald-400" :
                       v.level === "Intermediário" ? "bg-amber-500/20 text-amber-400" : "bg-red-500/20 text-red-400"
-                    )}>{v.level}</span>
+                    )}>{labels.level(v.level)}</span>
                   </div>
                 </button>
               ))}
@@ -229,7 +234,7 @@ const InstructorSection = () => {
           <div className="mb-4 flex items-center gap-2">
             <MessageCircle size={16} className="text-primary" />
             <h2 className="text-sm font-bold text-foreground">
-              O que os alunos dizem
+              {t("instructorSection.commentsTitle")}
             </h2>
             {comments.length > 0 && (
               <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
@@ -241,13 +246,13 @@ const InstructorSection = () => {
           {/* formulário — só para quem ainda não comentou */}
           {!myComment && user?.role !== "instructor" && (
             <div className="mb-4 rounded-xl border border-border bg-card p-4 space-y-3">
-              <p className="text-xs font-semibold text-foreground">Deixe seu comentário</p>
+              <p className="text-xs font-semibold text-foreground">{t("instructorSection.leaveComment")}</p>
 
               <textarea
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 rows={3}
-                placeholder="O que você achou das aulas deste professor? (mín. 10 caracteres)"
+                placeholder={t("instructorSection.commentPlaceholder")}
                 className="w-full resize-none rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
 
@@ -256,14 +261,14 @@ const InstructorSection = () => {
                 disabled={commentText.trim().length < 10}
                 className="flex w-full items-center justify-center gap-1.5 rounded-full btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               >
-                <Send size={12} /> Enviar comentário
+                <Send size={12} /> {t("instructorSection.sendComment")}
               </button>
             </div>
           )}
 
           {myComment && (
             <div className="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-              <p className="text-[10px] text-primary font-semibold">✓ Você já comentou sobre este professor</p>
+              <p className="text-[10px] text-primary font-semibold">{t("instructorSection.alreadyCommented")}</p>
             </div>
           )}
 
@@ -271,8 +276,8 @@ const InstructorSection = () => {
           {comments.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <MessageCircle size={28} className="text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Nenhum comentário ainda.</p>
-              <p className="text-xs text-muted-foreground">Seja o primeiro a comentar!</p>
+              <p className="text-sm text-muted-foreground">{t("instructorSection.noComments")}</p>
+              <p className="text-xs text-muted-foreground">{t("instructorSection.beFirst")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -281,7 +286,7 @@ const InstructorSection = () => {
                   key={c.id}
                   comment={c}
                   canDelete={user?.id === c.userId}
-                  onDelete={() => { removeComment(c.id); toast.success("Avaliação removida"); }}
+                  onDelete={() => { removeComment(c.id); toast.success(t("instructorSection.commentRemoved")); }}
                 />
               ))}
             </div>

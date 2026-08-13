@@ -1,15 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, ChevronRight, Clock, LayoutList } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
-import { formatMinutes, totalMinutes } from "@/lib/duration";
+import { useLabels } from "@/i18n/labels";
+import { currentLocale } from "@/i18n";
+import { totalMinutes } from "@/lib/duration";
 import { getCategoryLabel } from "@/data/mockData";
 
 const AthleteModules = () => {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t }    = useTranslation();
+  const labels   = useLabels();
 
   const { data: instructor, isLoading: loadInst }     = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid }  = useVideos(user?.id ?? "");
@@ -23,7 +28,7 @@ const AthleteModules = () => {
       acc[v.subcategory].videos.push(v);
       return acc;
     }, {})
-  ).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  ).sort((a, b) => a.name.localeCompare(b.name, currentLocale()));
 
   if (loadInst || loadVid) {
     return (
@@ -36,8 +41,8 @@ const AthleteModules = () => {
   if (!instructor) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-        <p className="text-sm text-muted-foreground">Atleta não encontrado</p>
-        <button onClick={() => navigate(-1)} className="text-xs text-primary">Voltar</button>
+        <p className="text-sm text-muted-foreground">{t("athlete.notFound")}</p>
+        <button onClick={() => navigate(-1)} className="text-xs text-primary">{t("common.back")}</button>
       </div>
     );
   }
@@ -74,11 +79,11 @@ const AthleteModules = () => {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <BookOpen size={12} className="text-primary" />
-                {videos.length} aula{videos.length !== 1 ? "s" : ""}
+                {t("common.lessons", { count: videos.length })}
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <LayoutList size={12} className="text-primary" />
-                {modules.length} módulo{modules.length !== 1 ? "s" : ""}
+                {t("common.modules", { count: modules.length })}
               </span>
             </div>
 
@@ -86,7 +91,7 @@ const AthleteModules = () => {
               onClick={() => navigate(`/instrutor/${instructor.id}`)}
               className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
             >
-              Ver perfil completo
+              {t("athlete.fullProfile")}
             </button>
           </div>
         </div>
@@ -96,13 +101,13 @@ const AthleteModules = () => {
       <div className="px-4">
         <div className="mb-3 flex items-center gap-2">
           <LayoutList size={16} className="text-primary" />
-          <h2 className="text-sm font-bold text-foreground">Módulos</h2>
+          <h2 className="text-sm font-bold text-foreground">{t("athlete.modules")}</h2>
         </div>
 
         {modules.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-2 text-center">
             <LayoutList size={32} className="text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Nenhum módulo disponível ainda</p>
+            <p className="text-sm text-muted-foreground">{t("athlete.noModules")}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -130,12 +135,12 @@ const AthleteModules = () => {
                     <div className="mt-1 flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <BookOpen size={10} className="text-primary" />
-                        {mod.videos.length} aula{mod.videos.length !== 1 ? "s" : ""}
+                        {t("common.lessons", { count: mod.videos.length })}
                       </span>
                       {minutes > 0 && (
                         <span className="flex items-center gap-1">
                           <Clock size={10} className="text-primary" />
-                          {formatMinutes(minutes)}
+                          {labels.duration(minutes)}
                         </span>
                       )}
                     </div>

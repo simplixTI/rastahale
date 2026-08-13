@@ -3,6 +3,7 @@ import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useModules, moduleNames } from "@/hooks/useModules";
+import { currentLocale } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 /** Anima a entrada da seção ao entrar na viewport (mesmo padrão da Home). */
@@ -50,7 +51,7 @@ const TopicSections = () => {
   const ordered = moduleNames(modules);
   const extras = Array.from(new Set(videos.map((v) => v.subcategory)))
     .filter((s) => s && !ordered.includes(s))
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    .sort((a, b) => a.localeCompare(b, currentLocale()));
   const topics = [...ordered, ...extras];
 
   // Mantém só os tópicos que têm ao menos um vídeo.
