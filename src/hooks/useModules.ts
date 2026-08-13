@@ -46,7 +46,7 @@ export function useModules() {
       }
       return [...mockModules];
     },
-    staleTime: 0,
+
   });
 }
 

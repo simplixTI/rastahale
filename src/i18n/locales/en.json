@@ -48,7 +48,8 @@
     "teachers": "Teachers",
     "favorites": "Favorites",
     "ranking": "Ranking",
-    "profile": "Profile"
+    "profile": "Profile",
+    "bottomNavigation": "Main navigation"
   },
   "login": {
     "title": "Sign in",
@@ -59,13 +60,23 @@
     "submitting": "Signing in...",
     "errorCredentials": "Incorrect email or password",
     "errorNetwork": "Couldn't connect. Check your internet and try again.",
+    "errorPopupClosed": "Google sign-in cancelled.",
+    "errorProvider": "Could not sign in with Google.",
+    "errorTooManyRequests": "Too many attempts. Please try again later.",
+    "errorEmailNotConfirmed": "Email not confirmed. Check your inbox.",
     "testCredentials": "Test credentials",
     "roleStudent": "Student",
     "roleAdmin": "Admin",
     "installTitle": "Install RastaHale",
     "installSubtitle": "Use it as an app — fast, no browser",
     "installNow": "Install now",
-    "install": "Install"
+    "install": "Install",
+    "closeInstall": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "google": "Sign in with Google",
+    "or": "or",
+    "notConfigured": "App not configured yet. Add Supabase/Firebase keys to .env or enable mock mode."
   },
   "home": {
     "welcome": "Welcome back",

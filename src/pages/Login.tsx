@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { authProvider, isMockModeEnabled, isFirebaseConfigured, isAnyAuthConfigured, AuthError } from "@/lib/auth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import logo from "@/assets/logo.png";
 import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
 
+const prefersReducedMotion = () => {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+};
+
 // Netflix "ta-dum" style sound — short base64 encoded sine wave burst
 const playNetflixSound = () => {
+  if (prefersReducedMotion()) return;
   try {
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
@@ -60,20 +67,40 @@ interface InstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+type ErrorKey =
+  | ""
+  | "errorCredentials"
+  | "errorNetwork"
+  | "errorPopupClosed"
+  | "errorProvider"
+  | "errorTooManyRequests"
+  | "errorEmailNotConfirmed";
+
+const isDevOrMock =
+  import.meta.env.DEV || isMockModeEnabled;
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   // Guardamos a chave do erro, não o texto: assim a mensagem acompanha uma
   // troca de idioma feita depois que o erro já apareceu.
-  const [errorKey, setErrorKey] = useState<"" | "errorCredentials" | "errorNetwork">("");
+  const [errorKey, setErrorKey] = useState<ErrorKey>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   const { t } = useTranslation();
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -95,6 +122,34 @@ const Login = () => {
     setShowInstallPopup(false);
   };
 
+  const finishLogin = (role: "user" | "admin" | "instructor") => {
+    setShowSplash(true);
+    playNetflixSound();
+    redirectTimeoutRef.current = setTimeout(() => {
+      navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
+    }, 2200);
+  };
+
+  const mapError = (err: unknown): ErrorKey => {
+    if (err instanceof AuthError) {
+      switch (err.type) {
+        case "popup_closed":
+          return "errorPopupClosed";
+        case "too_many_requests":
+          return "errorTooManyRequests";
+        case "email_not_confirmed":
+          return "errorEmailNotConfirmed";
+        case "network_error":
+          return "errorNetwork";
+        case "provider_error":
+          return "errorProvider";
+        default:
+          return "errorCredentials";
+      }
+    }
+    return "errorNetwork";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorKey("");
@@ -103,19 +158,31 @@ const Login = () => {
     try {
       const role = await login(email, password);
       if (role) {
-        setShowSplash(true);
-        playNetflixSound();
-        // Show splash then redirect
-        setTimeout(() => {
-          navigate(role === "admin" ? "/admin" : role === "instructor" ? "/studio" : "/");
-        }, 2200);
+        finishLogin(role);
       } else {
         setErrorKey("errorCredentials");
-        setIsLoading(false);
       }
-    } catch {
-      setErrorKey("errorNetwork");
+    } catch (err) {
+      setErrorKey(mapError(err));
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorKey("");
+    setIsGoogleLoading(true);
+    try {
+      const { user } = await authProvider.signInWithGoogle();
+      if (user?.role) {
+        finishLogin(user.role);
+      } else {
+        setErrorKey("errorProvider");
+      }
+    } catch (err) {
+      setErrorKey(mapError(err));
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -136,6 +203,7 @@ const Login = () => {
         <div className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-3rem)] max-w-[360px] -translate-x-1/2 rounded-2xl border border-border bg-card p-4 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
           <button
             onClick={() => setShowInstallPopup(false)}
+            aria-label={t("login.closeInstall")}
             className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
           >
             <X size={16} />
@@ -183,6 +251,12 @@ const Login = () => {
         <h1 className="mt-6 text-center text-2xl font-bold text-foreground">{t("login.title")}</h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">{t("login.subtitle")}</p>
 
+        {!isAnyAuthConfigured && !isMockModeEnabled && (
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-center text-xs text-amber-200">
+            {t("login.notConfigured")}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="mt-8 space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("login.email")}</label>
@@ -210,6 +284,8 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? t("login.hidePassword") : t("login.showPassword")}
+                aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -228,34 +304,78 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Test credentials */}
-        <div className="mt-8 rounded-lg border border-border bg-card p-4">
-          <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("login.testCredentials")}
-          </p>
-          <div className="space-y-2">
-            <button
-              onClick={() => { setEmail("aluno@rastahale.com"); setPassword("rasta123"); }}
-              className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
-            >
-              <div>
-                <span className="font-semibold text-foreground">👤 {t("login.roleStudent")}</span>
-                <span className="ml-2 text-muted-foreground">aluno@rastahale.com</span>
+        {!isMockModeEnabled && isFirebaseConfigured && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
               </div>
-              <span className="text-muted-foreground">rasta123</span>
-            </button>
+              <span className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">{t("login.or")}</span>
+              </span>
+            </div>
+
             <button
-              onClick={() => { setEmail("admin@rastahale.com"); setPassword("admin123"); }}
-              className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading || isLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card py-3 text-sm font-bold text-foreground shadow-sm transition-all hover:bg-accent active:scale-[0.99] disabled:opacity-50"
             >
-              <div>
-                <span className="font-semibold text-foreground">🔑 {t("login.roleAdmin")}</span>
-                <span className="ml-2 text-muted-foreground">admin@rastahale.com</span>
-              </div>
-              <span className="text-muted-foreground">admin123</span>
+              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              {isGoogleLoading ? t("login.submitting") : t("login.google")}
             </button>
+          </>
+        )}
+
+        {/* Test credentials — apenas em dev ou modo mock explícito */}
+        {isDevOrMock && (
+          <div className="mt-8 rounded-lg border border-border bg-card p-4">
+            <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("login.testCredentials")}
+            </p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => { setEmail("aluno@rastahale.com"); setPassword("rasta123"); }}
+                className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
+              >
+                <div>
+                  <span className="font-semibold text-foreground">👤 {t("login.roleStudent")}</span>
+                  <span className="ml-2 text-muted-foreground">aluno@rastahale.com</span>
+                </div>
+                <span className="text-muted-foreground">rasta123</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail("admin@rastahale.com"); setPassword("admin123"); }}
+                className="flex w-full items-center justify-between rounded-md bg-secondary px-3 py-2 text-left text-xs"
+              >
+                <div>
+                  <span className="font-semibold text-foreground">🔑 {t("login.roleAdmin")}</span>
+                  <span className="ml-2 text-muted-foreground">admin@rastahale.com</span>
+                </div>
+                <span className="text-muted-foreground">admin123</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

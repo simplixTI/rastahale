@@ -48,7 +48,8 @@
     "teachers": "Professores",
     "favorites": "Favoritos",
     "ranking": "Ranking",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "bottomNavigation": "Navegação principal"
   },
   "login": {
     "title": "Entrar",
@@ -59,13 +60,23 @@
     "submitting": "Entrando...",
     "errorCredentials": "Email ou senha incorretos",
     "errorNetwork": "Não foi possível conectar. Verifique sua internet e tente novamente.",
+    "errorPopupClosed": "Login com Google cancelado.",
+    "errorProvider": "Não foi possível fazer login com Google.",
+    "errorTooManyRequests": "Muitas tentativas. Tente novamente mais tarde.",
+    "errorEmailNotConfirmed": "Email não confirmado. Verifique sua caixa de entrada.",
     "testCredentials": "Credenciais de teste",
     "roleStudent": "Aluno",
     "roleAdmin": "Admin",
     "installTitle": "Instalar RastaHale",
     "installSubtitle": "Acesse como app — rápido e sem browser",
     "installNow": "Instalar agora",
-    "install": "Instalar"
+    "install": "Instalar",
+    "closeInstall": "Fechar",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
+    "google": "Entrar com Google",
+    "or": "ou",
+    "notConfigured": "App ainda não configurado. Adicione as chaves do Supabase/Firebase ao .env ou ative o modo mock."
   },
   "home": {
     "welcome": "Bem-vindo de volta",

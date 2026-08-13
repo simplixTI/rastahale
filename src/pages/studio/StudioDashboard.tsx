@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, BookOpen, Eye, EyeOff, Upload, Edit2, Image,
@@ -135,9 +135,14 @@ function SessionFormModal({ open, onOpenChange, session, myVideos, onSave }: {
   const [selected, setSelected] = useState<string[]>(session?.videoIds ?? []);
   const [search,   setSearch]   = useState("");
 
-  useState(() => {
-    if (open) { setTitle(session?.title ?? ""); setDesc(session?.description ?? ""); setSelected(session?.videoIds ?? []); setSearch(""); }
-  });
+  useEffect(() => {
+    if (open) {
+      setTitle(session?.title ?? "");
+      setDesc(session?.description ?? "");
+      setSelected(session?.videoIds ?? []);
+      setSearch("");
+    }
+  }, [open, session?.title, session?.description, session?.videoIds]);
 
   const filtered = myVideos.filter((v) => !search || v.title.toLowerCase().includes(search.toLowerCase()));
 

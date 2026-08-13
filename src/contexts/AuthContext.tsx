@@ -1,20 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { Session } from "@supabase/supabase-js";
-import { TEST_USER, TEST_ADMIN, instructors as mockInstructors } from "@/data/mockData";
-
-export type UserRole = "user" | "admin" | "instructor";
-
-interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-}
+import { authProvider, isMockModeEnabled } from "@/lib/auth";
+import type { AuthSession, AuthUser, UserRole, AuthError } from "@/lib/auth";
 
 interface AuthCtx {
   user: AuthUser | null;
-  session: Session | null;
+  session: AuthSession;
   loading: boolean;
   login: (email: string, password: string) => Promise<UserRole | null>;
   logout: () => Promise<void>;
@@ -30,15 +20,36 @@ const AuthContext = createContext<AuthCtx>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const MOCK_CREDS: Record<string, { password: string; id: string; name: string; role: UserRole }> = {
-  [TEST_USER.email]:  { password: TEST_USER.password,  id: "u1",      name: TEST_USER.name,  role: "user"  },
-  [TEST_ADMIN.email]: { password: TEST_ADMIN.password, id: "u-admin", name: TEST_ADMIN.name, role: "admin" },
+let onSessionExpired: (() => void) | null = null;
+export const registerSessionExpiredCallback = (cb: () => void) => {
+  onSessionExpired = cb;
 };
 
 const AUTH_KEY = "rasta_auth_user";
 
-// Evita que uma chamada de rede travada (Supabase lento/instável) prenda a UI
-// para sempre — usado no login e na restauração de sessão.
+function persistUser(authUser: AuthUser) {
+  try {
+    sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
+  } catch { /* ignore */ }
+}
+
+function clearPersistedUser() {
+  try {
+    sessionStorage.removeItem(AUTH_KEY);
+  } catch { /* ignore */ }
+}
+
+function restoreLocalUser(): AuthUser | null {
+  try {
+    const raw = sessionStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AuthUser;
+    if (parsed.id && parsed.email && parsed.name && parsed.role) return parsed;
+  } catch { /* ignore */ }
+  return null;
+}
+
+// Timeout defensivo para não prender a UI se o provider travar.
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
@@ -46,188 +57,90 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-let onSessionExpired: (() => void) | null = null;
-export const registerSessionExpiredCallback = (cb: () => void) => {
-  onSessionExpired = cb;
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser]       = useState<AuthUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<AuthSession>(null);
   const [loading, setLoading] = useState(true);
 
-  // Persiste o usuário logado (mock OU real) em sessionStorage. O ID salvo é o
-  // que os hooks usam em isMockMode(): UUID real => Supabase, id curto => mock.
-  const persist = (authUser: AuthUser) => {
-    sessionStorage.setItem(AUTH_KEY, JSON.stringify(authUser));
-    setUser(authUser);
-  };
-
   useEffect(() => {
-    // Restaura sessão salva na aba (vale para modo demo e para usuário real).
-    try {
-      const saved = sessionStorage.getItem(AUTH_KEY);
-      if (saved) setUser(JSON.parse(saved));
-    } catch { /* ignorar */ }
-
-    // Sem Supabase configurado: modo demo (mock). Não assina eventos de auth.
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
-    }
-
     let active = true;
     let settled = false;
-    // Falha de segurança: se o Supabase não responder (rede lenta, incidente
-    // na plataforma etc.), libera a UI em vez de travar o app para sempre.
+
     const releaseLoading = () => {
-      if (!settled) { settled = true; setLoading(false); }
+      if (!settled) {
+        settled = true;
+        setLoading(false);
+      }
     };
+
     const timeoutId = setTimeout(releaseLoading, 8000);
 
-    const buildUser = async (u: NonNullable<Session["user"]>): Promise<AuthUser> => {
-      const { data: profile } = await supabase
-        .from("profiles").select("name, role").eq("id", u.id).single();
-      return {
-        id:    u.id,
-        email: u.email ?? "",
-        name:  profile?.name ?? u.user_metadata?.name ?? "",
-        role:  profile?.role ?? u.user_metadata?.role ?? "user",
-      };
-    };
+    withTimeout(authProvider.getSession(), 10000)
+      .then(({ user: restoredUser, session: restoredSession }) => {
+        if (!active) return;
+        // Se o provider não retornou usuário (ex: instrutor sem sessão Supabase),
+        // tenta restaurar do sessionStorage como fallback local.
+        const localUser = restoredUser ? null : restoreLocalUser();
+        setUser(restoredUser ?? localUser);
+        setSession(restoredSession);
+        if (!restoredUser && !localUser) clearPersistedUser();
+        releaseLoading();
+      })
+      .catch(() => {
+        if (!active) return;
+        const localUser = restoreLocalUser();
+        setUser(localUser);
+        setSession(null);
+        releaseLoading();
+      });
 
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+    const unsubscribe = authProvider.onAuthStateChange(({ user: changedUser, session: changedSession, event }) => {
       if (!active) return;
-      setSession(s);
-      if (s?.user) persist(await buildUser(s.user));
+      setUser(changedUser);
+      setSession(changedSession);
       releaseLoading();
-    }).catch(() => releaseLoading());
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-      if (!active) return;
-      setSession(s);
-      if (s?.user) {
-        // NÃO chamar supabase.from()/await DENTRO deste callback: o Supabase o
-        // invoca segurando o lock interno de auth; um await que precise do token
-        // (ex: buscar profiles) tenta readquirir o mesmo lock e DEADLOCKA — o
-        // signInWithPassword fica pendurado, estoura o timeout do login e o app
-        // mostra "não foi possível conectar" (era o motivo do login não entrar).
-        // setTimeout(0) roda buildUser DEPOIS do lock ser liberado.
-        const su = s.user;
-        setTimeout(async () => {
-          if (!active) return;
-          persist(await buildUser(su));
-        }, 0);
-      } else {
-        // Sem sessão do Supabase. NÃO derrubar um login local de instrutor: ele
-        // não é usuário do Supabase Auth (vive só no sessionStorage), então o
-        // INITIAL_SESSION nulo no load NÃO deve deslogá-lo. Só limpamos em
-        // logout explícito / sessão revogada (SIGNED_OUT).
-        if (event === "SIGNED_OUT") {
-          setUser(null);
-          sessionStorage.removeItem(AUTH_KEY);
-          onSessionExpired?.();
-        }
+      if ((event === "SIGNED_OUT" || event === "USER_DELETED") && !changedUser) {
+        onSessionExpired?.();
       }
-      releaseLoading();
     });
 
-    return () => { active = false; clearTimeout(timeoutId); subscription.unsubscribe(); };
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<UserRole | null> => {
-    const key = email.toLowerCase().trim();
-
-    // Modo demo (sem Supabase): credenciais mock locais (admin / aluno / instrutor).
-    if (!isSupabaseConfigured) {
-      const mock = MOCK_CREDS[key];
-      if (mock && mock.password === password) {
-        persist({ id: mock.id, email, name: mock.name, role: mock.role });
-        return mock.role;
-      }
-      const inst = mockInstructors.find(
-        (i) => i.loginEmail?.toLowerCase().trim() === key && i.loginPassword === password
-      );
-      if (inst) {
-        persist({ id: inst.id, email: inst.loginEmail!, name: inst.name, role: "instructor" });
-        return "instructor";
-      }
-      return null;
-    }
-
-    // Supabase configurado: autenticação real (papel vem de profiles.role).
     try {
-      const { data, error } = await withTimeout(
-        supabase.auth.signInWithPassword({ email, password }), 10000
-      );
-      if (!error && data.user) {
-        const { data: profile } = await withTimeout(
-          supabase.from("profiles").select("name, role").eq("id", data.user.id).single(),
-          10000
-        );
-        const role: UserRole = profile?.role ?? data.user.user_metadata?.role ?? "user";
-        persist({
-          id:    data.user.id,
-          email: data.user.email ?? "",
-          name:  profile?.name ?? data.user.user_metadata?.name ?? "",
-          role,
-        });
-        return role;
-      }
-
-      // Não é usuário do Supabase Auth: pode ser um INSTRUTOR. As credenciais do
-      // instrutor ficam na tabela `instructors` (definidas pelo admin) — não há
-      // usuário de Auth para eles. Valida email + senha direto na tabela. O
-      // filtro por login_password roda no servidor, então a senha não volta ao
-      // cliente. Se as colunas de login não existirem (migração 007), a query
-      // retorna erro e tratamos como "sem match".
-      // Cast: login_email/login_password não estão no tipo gerado do banco.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const instQuery: any = supabase.from("instructors");
-      const { data: inst } = await withTimeout(
-        instQuery
-          .select("id, name, login_email")
-          .eq("login_email", key)
-          .eq("login_password", password)
-          .maybeSingle(),
+      const { user: loggedUser, session: loggedSession } = await withTimeout(
+        authProvider.signInWithEmailPassword(email, password),
         10000
       );
-      if (inst?.id) {
-        persist({ id: inst.id, email: inst.login_email ?? key, name: inst.name, role: "instructor" });
-        return "instructor";
+      if (loggedUser) {
+        setUser(loggedUser);
+        setSession(loggedSession);
+        // Instrutores não geram sessão Supabase; persistimos localmente.
+        if (!loggedSession) persistUser(loggedUser);
+        return loggedUser.role;
       }
       return null;
-    } catch {
-      // Timeout ou falha de rede — não é credencial errada, quem chama deve
-      // distinguir isso de "email ou senha incorretos" (ver Login.tsx).
-      throw new Error("connection");
+    } catch (err) {
+      // Em modo mock, credenciais erradas retornam null sem throw.
+      // Em modo Supabase, erros específicos são propagados.
+      if (isMockModeEnabled) return null;
+      throw err;
     }
   };
 
   const logout = async () => {
-    sessionStorage.removeItem(AUTH_KEY);
     setUser(null);
     setSession(null);
-
-    // Tenta revogar a sessão no servidor, mas NÃO depende disso: em rede
-    // lenta/instável o signOut() lança "Failed to fetch" ANTES de limpar o
-    // token do localStorage. Se o token sobrevive, o próximo load restaura uma
-    // sessão morta e joga /login → /admin, impedindo trocar de conta / relogar.
+    clearPersistedUser();
     try {
-      await withTimeout(supabase.auth.signOut({ scope: "local" }), 4000);
-    } catch { /* ignorar — a limpeza abaixo garante o logout local */ }
-
-    // Garantia de logout local: remove o token persistido do Supabase mesmo
-    // que o signOut acima tenha falhado por rede. Sem isso, o app "não sai"
-    // da conta e não loga em outra. O token vive em sessionStorage (ver
-    // supabase.ts), mas limpamos ambos por segurança (config antiga usava
-    // localStorage e pode haver token residual).
-    for (const store of [sessionStorage, localStorage]) {
-      try {
-        for (const k of Object.keys(store)) {
-          if (k.startsWith("sb-") && k.includes("auth-token")) store.removeItem(k);
-        }
-      } catch { /* ignorar */ }
+      await withTimeout(authProvider.signOut(), 4000);
+    } catch {
+      // Limpou o estado local; provider pode falhar por rede.
     }
   };
 
@@ -237,3 +150,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+export type { AuthUser, AuthSession, UserRole, AuthError };

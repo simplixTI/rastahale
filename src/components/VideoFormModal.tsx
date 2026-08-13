@@ -284,7 +284,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             }
       );
     }
-  }, [open, video, reset]);
+  }, [open, video, reset, instructors]);
 
   const unlockByProgress = watch("unlockByProgress");
   const thumbValue       = watch("thumbnail");

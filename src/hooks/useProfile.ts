@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { mockUsers, mockPayments, mockPlans, videos as mockVideos } from "@/data/mockData";
+import { mockUsers, mockPayments, mockPlans, videos as mockVideos, instructors as mockInstructors } from "@/data/mockData";
+import type { UserRole } from "@/lib/auth";
 
 export interface UserPayment {
   id: string;
@@ -20,7 +21,7 @@ export interface Profile {
   avatarUrl: string;
   planName: string;
   status: "ativo" | "inativo" | "pendente";
-  role: "user" | "admin";
+  role: UserRole;
   joinDate: string;
   lastAccess: string;
   videosWatched: number;
@@ -56,6 +57,25 @@ const ADMIN_PROFILE: Profile = {
 
 function buildMockProfile(userId: string): Profile {
   if (userId === "u-admin") return ADMIN_PROFILE;
+
+  // Instrutores em modo mock têm id começando com "inst-".
+  const instructor = mockInstructors.find((i) => i.id === userId);
+  if (instructor) {
+    return {
+      id:            instructor.id,
+      email:         instructor.loginEmail ?? "",
+      name:          instructor.name,
+      avatarUrl:     instructor.avatar,
+      planName:      "Instructor",
+      status:        "ativo",
+      role:          "instructor",
+      joinDate:      "2024-01-01",
+      lastAccess:    new Date().toISOString().split("T")[0],
+      videosWatched: 0,
+      totalHours:    0,
+    };
+  }
+
   const mockUser  = mockUsers.find((u) => u.id === userId) ?? mockUsers[0];
   const store     = loadProgressStore();
   const watched   = mockVideos.filter((v) => store[v.id]?.watched ?? v.watched ?? false).length;
@@ -75,8 +95,8 @@ function buildMockProfile(userId: string): Profile {
     role:          "user",
     joinDate:      mockUser.joinDate,
     lastAccess:    mockUser.lastAccess,
-    videosWatched: watched || mockUser.videosWatched,
-    totalHours:    Number(totalHours.toFixed(1)) || mockUser.totalHours,
+    videosWatched: Number.isFinite(watched) ? watched : mockUser.videosWatched,
+    totalHours:    Number.isFinite(Number(totalHours.toFixed(1))) ? Number(totalHours.toFixed(1)) : mockUser.totalHours,
   };
 }
 
@@ -111,7 +131,7 @@ export function useProfile(userId: string) {
       return buildMockProfile(userId);
     },
     enabled:   !!userId,
-    staleTime: 0,
+
   });
 }
 
@@ -174,7 +194,7 @@ export function useUserPayments(userId: string) {
         .sort((a, b) => b.date.localeCompare(a.date));
     },
     enabled:   !!userId,
-    staleTime: 0,
+
   });
 }
 

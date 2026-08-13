@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { instructors as mockInstructors } from "@/data/mockData";
@@ -31,9 +32,7 @@ export function useInstructors() {
 }
 
 export function useInstructor(id: string) {
-  const query = useInstructors();
-  return {
-    ...query,
-    data: query.data?.find((i) => i.id === id),
-  };
+  const { data, isLoading, isError, error, isFetching } = useInstructors();
+  const instructor = useMemo(() => data?.find((i) => i.id === id), [data, id]);
+  return { data: instructor, isLoading, isError, error, isFetching };
 }

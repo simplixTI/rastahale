@@ -37,7 +37,7 @@ export function useModalities() {
       }
       return [...mockModalities];
     },
-    staleTime: 0,
+
   });
 }
 

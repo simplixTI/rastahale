@@ -38,7 +38,7 @@ export function useStoreBanners() {
       }
       return [...mockBanners];
     },
-    staleTime: 0,
+
   });
 }
 

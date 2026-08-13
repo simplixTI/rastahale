@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
@@ -55,7 +56,7 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
     vids = data;
   } catch { return []; }
 
-  let progressMap: Record<string, { progress: number; watched: boolean; is_favorite: boolean }> = {};
+  const progressMap: Record<string, { progress: number; watched: boolean; is_favorite: boolean }> = {};
 
   if (isSupabaseUser(userId)) {
     try {
@@ -141,22 +142,18 @@ export function useVideos(userId: string) {
       return buildMockVideoList(userId);
     },
     enabled:   !!userId,
-    staleTime: 0,
+
   });
 }
 
 export function useFavoriteVideos(userId: string) {
-  const query = useVideos(userId);
-  return {
-    ...query,
-    data: query.data?.filter((v) => v.isFavorite) ?? [],
-  };
+  const { data, isLoading, isError, error, isFetching } = useVideos(userId);
+  const favorites = useMemo(() => data?.filter((v) => v.isFavorite) ?? [], [data]);
+  return { data: favorites, isLoading, isError, error, isFetching };
 }
 
 export function useVideoById(videoId: string, userId: string) {
-  const query = useVideos(userId);
-  return {
-    ...query,
-    data: query.data?.find((v) => v.id === videoId),
-  };
+  const { data, isLoading, isError, error, isFetching } = useVideos(userId);
+  const video = useMemo(() => data?.find((v) => v.id === videoId), [data, videoId]);
+  return { data: video, isLoading, isError, error, isFetching };
 }

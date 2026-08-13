@@ -107,7 +107,7 @@ export function useAdminUsers() {
       }
       return mockUsers.map(toProfile);
     },
-    staleTime: 0,
+
   });
 }
 
@@ -192,7 +192,7 @@ export function useAdminPayments() {
       }
       return mockPayments.map(toPayment);
     },
-    staleTime: 0,
+
   });
 }
 
@@ -244,7 +244,7 @@ export function useAdminVideos() {
       }
       return mockVideos.map((v) => ({ ...v, videoUrl: v.videoUrl ?? null }));
     },
-    staleTime: 0,
+
   });
 }
 
@@ -430,7 +430,7 @@ export function useAdminPlans() {
       }
       return mockPlans.map(toPlan);
     },
-    staleTime: 0,
+
   });
 }
 
@@ -544,7 +544,7 @@ export function useAdminDashboard() {
         revenue:         mockPayments.filter((p) => p.status === "pago").reduce((s, p) => s + p.amount, 0),
       };
     },
-    staleTime: 0,
+
   });
 }
 
@@ -576,7 +576,7 @@ export function useAdminInstructors() {
       }
       return mockInstructors.map((i) => ({ ...i }));
     },
-    staleTime: 0,
+
   });
 }
 

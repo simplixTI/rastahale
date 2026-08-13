@@ -38,6 +38,7 @@ import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
 import Settings from "./pages/Settings";
 import BottomTabBar from "./components/BottomTabBar";
+import { LoadingScreen } from "./components/LoadingScreen";
 import Install from "./pages/Install";
 
 const queryClient = new QueryClient({
@@ -63,7 +64,7 @@ const ProtectedRoute = ({ children, adminOnly = false, instructorOnly = false }:
   children: React.ReactNode; adminOnly?: boolean; instructorOnly?: boolean;
 }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly      && user.role !== "admin")      return <Navigate to="/" replace />;
   if (instructorOnly && user.role !== "instructor") return <Navigate to="/" replace />;
@@ -90,7 +91,7 @@ const AppRoutes = () => {
     });
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <LoadingScreen />;
   return (
     <>
       <Routes>
