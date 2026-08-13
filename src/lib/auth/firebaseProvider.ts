@@ -3,7 +3,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { auth } from "./firebase";
+import { getFirebaseAuth, isFirebaseConfigured } from "./firebase";
 import { AuthError } from "./types";
 
 const provider = new GoogleAuthProvider();
@@ -15,7 +15,7 @@ export async function signInWithGoogleFirebase(): Promise<{
   photoUrl: string | null;
 }> {
   try {
-    const result = await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(getFirebaseAuth(), provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     const idToken = credential?.idToken;
     if (!idToken) {
@@ -44,8 +44,10 @@ export async function signInWithGoogleFirebase(): Promise<{
 }
 
 export async function signOutFirebase(): Promise<void> {
+  // Sem Firebase configurado não há sessão dele para encerrar.
+  if (!isFirebaseConfigured) return;
   try {
-    await firebaseSignOut(auth);
+    await firebaseSignOut(getFirebaseAuth());
   } catch {
     // Ignora — logout local já limpa tokens.
   }
