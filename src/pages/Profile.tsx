@@ -2,6 +2,7 @@ import { ChevronRight, User, CreditCard, Settings, LogOut, Download } from "luci
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
 import MobileLayout from "@/components/MobileLayout";
@@ -20,7 +21,7 @@ const Profile = () => {
     navigate("/login");
   };
 
-  const avatarSrc = override.avatarUrl ?? profile?.avatarUrl ?? "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=120&h=120&fit=crop";
+  const avatarSrc = resolveAvatarUrl(override.avatarUrl, profile?.avatarUrl);
   const displayName = override.name ?? profile?.name ?? user?.name ?? t("home.fallbackName");
   const planName = profile?.planName ?? "—";
 
@@ -40,6 +41,7 @@ const Profile = () => {
       <div className="mt-6 flex flex-col items-center">
         <img
           src={avatarSrc}
+          onError={handleAvatarError}
           alt="Avatar"
           className="h-20 w-20 rounded-full border-2 border-primary object-cover"
         />

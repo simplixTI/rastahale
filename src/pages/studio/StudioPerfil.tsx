@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { ChevronRight, User, Settings, LogOut, Video as VideoIcon, LayoutList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +16,7 @@ const StudioPerfil = () => {
   const { sessions }             = useStudioSessions(user?.id ?? "");
 
   const myVideos = allVideos.filter((v) => v.instructorId === user?.id);
-  const avatarSrc = instructor?.avatar ?? "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=120&h=120&fit=crop";
+  const avatarSrc = resolveAvatarUrl(instructor?.avatar);
 
   const menuItems = [
     { icon: User,     label: "Editar Perfil",   sub: "Nome, foto e bio",    onClick: () => navigate("/studio/perfil/editar")        },
@@ -32,6 +33,7 @@ const StudioPerfil = () => {
       <div className="mt-6 flex flex-col items-center">
         <img
           src={avatarSrc}
+          onError={handleAvatarError}
           alt={instructor?.name ?? user?.name}
           className="h-20 w-20 rounded-full border-2 border-primary object-cover"
         />

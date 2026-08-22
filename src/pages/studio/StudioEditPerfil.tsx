@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Camera, Check, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -108,7 +109,8 @@ const StudioEditPerfil = () => {
       <div className="mt-8 flex flex-col items-center gap-3">
         <div className="relative">
           <img
-            src={avatar || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=200&h=200&fit=crop"}
+            src={resolveAvatarUrl(avatar)}
+            onError={handleAvatarError}
             alt="Foto de perfil"
             className="h-28 w-28 rounded-full border-2 border-primary object-cover"
           />

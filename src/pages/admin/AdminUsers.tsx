@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -312,7 +313,8 @@ const AdminUsers = () => {
                   className="flex w-full items-center gap-3 p-3 text-left"
                 >
                   <img
-                    src={u.avatar_url || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=50&h=50&fit=crop"}
+                    src={resolveAvatarUrl(u.avatar_url)}
+                    onError={handleAvatarError}
                     alt={u.name}
                     className="h-11 w-11 rounded-full object-cover border border-border"
                   />

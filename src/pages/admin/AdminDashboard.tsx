@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { Users, DollarSign, Video, AlertCircle, TrendingUp, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
@@ -86,7 +87,8 @@ const AdminDashboard = () => {
               {i + 1}
             </span>
             <img
-              src={u.avatar_url || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=40&h=40&fit=crop"}
+              src={resolveAvatarUrl(u.avatar_url)}
+              onError={handleAvatarError}
               alt={u.name}
               className="h-8 w-8 rounded-full object-cover"
             />

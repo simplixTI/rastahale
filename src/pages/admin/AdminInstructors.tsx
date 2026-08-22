@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError } from "@/lib/avatar";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -287,7 +288,8 @@ function InstructorCard({ instructor, videoCount, onEdit, onDelete }: {
       <div className="flex items-center gap-3 p-4">
         <div className="relative flex-shrink-0">
           <img
-            src={instructor.avatar || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=80&h=80&fit=crop"}
+            src={resolveAvatarUrl(instructor.avatar)}
+            onError={handleAvatarError}
             alt={instructor.name}
             className="h-16 w-16 rounded-full object-cover border-2 border-border"
           />

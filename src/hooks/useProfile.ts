@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR } from "@/lib/avatar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { mockUsers, mockPayments, mockPlans, videos as mockVideos, instructors as mockInstructors } from "@/data/mockData";
@@ -45,7 +46,7 @@ const ADMIN_PROFILE: Profile = {
   id:            "u-admin",
   email:         "admin@rastahale.com",
   name:          "Admin RastaHale",
-  avatarUrl:     "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
+  avatarUrl:     DEFAULT_AVATAR,
   planName:      "Admin",
   status:        "ativo",
   role:          "admin",

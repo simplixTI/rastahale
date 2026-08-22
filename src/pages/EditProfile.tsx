@@ -1,3 +1,4 @@
+import { resolveAvatarUrl, handleAvatarError, DEFAULT_AVATAR } from "@/lib/avatar";
 import { useState, useRef } from "react";
 import { ArrowLeft, Camera, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -40,10 +41,7 @@ const EditProfile = () => {
   const updateProfile = useUpdateProfile();
 
   const currentName = override.name ?? profile?.name ?? user?.name ?? "";
-  const currentAvatar =
-    override.avatarUrl ??
-    profile?.avatarUrl ??
-    "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=200&h=200&fit=crop";
+  const currentAvatar = resolveAvatarUrl(override.avatarUrl, profile?.avatarUrl);
 
   const [name, setName] = useState(currentName);
   const [avatarPreview, setAvatarPreview] = useState<string>(currentAvatar);
@@ -66,8 +64,12 @@ const EditProfile = () => {
     if (!name.trim() || !user) return;
     setIsSaving(true);
     try {
-      await updateProfile.mutateAsync({ userId: user.id, name: name.trim(), avatarUrl: avatarPreview });
-      updateOverride({ name: name.trim(), avatarUrl: avatarPreview });
+      // O placeholder é só exibição: gravá-lo no banco marcaria o usuário como
+      // "tem avatar" e o congelaria como foto de verdade. Quem não escolheu
+      // foto continua salvando vazio, então o fallback segue valendo.
+      const avatarToSave = avatarPreview === DEFAULT_AVATAR ? "" : avatarPreview;
+      await updateProfile.mutateAsync({ userId: user.id, name: name.trim(), avatarUrl: avatarToSave });
+      updateOverride({ name: name.trim(), avatarUrl: avatarToSave });
       setSaved(true);
       setTimeout(() => navigate("/perfil"), 800);
     } finally {
@@ -93,6 +95,7 @@ const EditProfile = () => {
         <div className="relative">
           <img
             src={avatarPreview}
+            onError={handleAvatarError}
             alt={t("editProfile.avatarAlt")}
             className="h-28 w-28 rounded-full border-2 border-primary object-cover"
           />
