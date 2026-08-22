@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mesmo valor da variavel de fundo do index.css (hsl 0 0% 7%). Usado como
+         fundo da janela: em WebViews antigos (abaixo da versao 140) o Capacitor
+         posiciona a WebView dentro da area segura com padding nativo, e a faixa
+         sob as barras de sistema mostra ESTE fundo. Sem isso o tema DayNight
+         pinta de branco e o app escuro ganha tarjas claras em cima e embaixo. -->
+    <color name="rastahaleBackground">#0A0A0A</color>
+</resources>

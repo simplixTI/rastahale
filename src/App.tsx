@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth, registerSessionExpiredCallback } from "@/contexts/AuthContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { ProfileOverrideProvider } from "@/contexts/ProfileContext";
+import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Favorites from "./pages/Favorites";
@@ -79,6 +80,9 @@ const AppRoutes = () => {
   const isStudio   = location.pathname.startsWith("/studio");
   const isLogin    = location.pathname === "/login";
   const showTabBar = !isAdmin && !isLogin && !isStudio;
+
+  // Botão voltar do Android navega no histórico em vez de fechar o app.
+  useAndroidBackButton();
 
   // Redireciona ao login quando a sessão expira.
   // Usa ref para evitar stale closure sem re-registrar a cada render.

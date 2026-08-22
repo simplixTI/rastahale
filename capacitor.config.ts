@@ -11,6 +11,16 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
   },
 
+  plugins: {
+    SystemBars: {
+      // "DARK" = barras com CONTEUDO claro (icones brancos), para fundo escuro.
+      // Ver SystemBars.java: setAppearanceLightStatusBars(!style.equals("DARK")).
+      // Sem isto o padrao segue o tema do sistema e, no modo claro, os icones
+      // ficam escuros e some tudo contra o fundo preto do app.
+      style: "DARK",
+    },
+  },
+
   server: {
     // Serve os assets como https://localhost em vez de file://. Isso mantém o
     // WebView num contexto seguro, que é o que sessionStorage/localStorage e a
