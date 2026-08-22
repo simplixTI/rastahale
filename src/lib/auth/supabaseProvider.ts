@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { AuthProvider, AuthSession, AuthUser, UserRole } from "./types";
 import { AuthError } from "./types";
 
@@ -24,7 +25,10 @@ function mapSupabaseError(error: { message?: string; status?: number; code?: str
   return new AuthError(msg, "unknown");
 }
 
-async function buildUser(u: NonNullable<AuthSession["session"]["user"]>): Promise<AuthUser> {
+// AuthSession é uma união (supabase | firebase | null); indexá-la por
+// ["session"]["user"] não resolvia e o parâmetro caía em erro de tipo.
+// O que esta função recebe é sempre o usuário do Supabase.
+async function buildUser(u: SupabaseUser): Promise<AuthUser> {
   const { data: profile } = await supabase
     .from("profiles")
     .select("name, role, avatar_url")

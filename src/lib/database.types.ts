@@ -10,9 +10,14 @@ export interface Database {
           avatar_url: string;
           bio: string;
           created_at: string;
+          // Adicionadas pela migration 007. Sem elas declaradas, o login de
+          // instrutor precisava de um cast `any` para compilar.
+          login_email: string | null;
+          login_password: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["instructors"]["Row"], "created_at">;
         Update: Partial<Database["public"]["Tables"]["instructors"]["Insert"]>;
+        Relationships: [];
       };
       videos: {
         Row: {
@@ -31,8 +36,20 @@ export interface Database {
           required_progress: number;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["videos"]["Row"], "created_at">;
-        Update: Partial<Database["public"]["Tables"]["videos"]["Insert"]>;
+        // Obrigatórios pelo schema: id, title, duration, category, subcategory,
+        // level. Os demais são nullable ou têm default (migration 001).
+        Insert: Pick<
+          Database["public"]["Tables"]["videos"]["Row"],
+          "id" | "title" | "duration" | "category" | "subcategory" | "level"
+        > &
+          Partial<
+            Omit<
+              Database["public"]["Tables"]["videos"]["Row"],
+              "id" | "title" | "duration" | "category" | "subcategory" | "level"
+            >
+          >;
+        Update: Partial<Database["public"]["Tables"]["videos"]["Row"]>;
+        Relationships: [];
       };
       plans: {
         Row: {
@@ -48,6 +65,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["plans"]["Row"], "created_at">;
         Update: Partial<Database["public"]["Tables"]["plans"]["Insert"]>;
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -63,8 +81,13 @@ export interface Database {
           videos_watched: number;
           total_hours: number;
         };
-        Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], never>;
-        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        // Só id, email e name são obrigatórios; o resto tem default no banco
+        // (migration 001). Exigir tudo fazia o insert de um perfil novo, que
+        // manda apenas esses três campos, não compilar.
+        Insert: Pick<Database["public"]["Tables"]["profiles"]["Row"], "id" | "email" | "name"> &
+          Partial<Omit<Database["public"]["Tables"]["profiles"]["Row"], "id" | "email" | "name">>;
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
       };
       payments: {
         Row: {
@@ -80,6 +103,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "created_at">;
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+        Relationships: [];
       };
       user_progress: {
         Row: {
@@ -91,8 +115,80 @@ export interface Database {
           is_favorite: boolean;
           last_watched_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["user_progress"]["Row"], "id">;
-        Update: Partial<Database["public"]["Tables"]["user_progress"]["Insert"]>;
+        // progress, watched, is_favorite e last_watched_at têm default no banco:
+        // marcar um vídeo como favorito não precisa enviar progresso, e vice-versa.
+        Insert: Pick<Database["public"]["Tables"]["user_progress"]["Row"], "user_id" | "video_id"> &
+          Partial<Omit<Database["public"]["Tables"]["user_progress"]["Row"], "user_id" | "video_id">>;
+        Update: Partial<Database["public"]["Tables"]["user_progress"]["Row"]>;
+        Relationships: [];
+      };
+      // Tabelas abaixo derivadas das migrations 008 a 012. Sem elas, o cliente
+      // tipado do Supabase resolvia .from("modules") e afins como `never`, e o
+      // erro cascateava por todos os hooks que as consultam.
+      modules: {
+        Row: {
+          id: string;
+          name: string;
+          category: "jiu-jitsu" | "luta-livre";
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["modules"]["Row"], "created_at">;
+        Update: Partial<Database["public"]["Tables"]["modules"]["Insert"]>;
+        Relationships: [];
+      };
+      modalities: {
+        Row: {
+          id: string;
+          label: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["modalities"]["Row"], "created_at">;
+        Update: Partial<Database["public"]["Tables"]["modalities"]["Insert"]>;
+        Relationships: [];
+      };
+      seasons: {
+        Row: {
+          id: string;
+          ends_at: string | null;
+          prize_text: string;
+          prize_code: string;
+          started_at: string;
+          baselines: Json;
+          winner_id: string | null;
+          winner_name: string | null;
+          awarded_at: string | null;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["seasons"]["Row"]> & { id: string };
+        Update: Partial<Database["public"]["Tables"]["seasons"]["Row"]>;
+        Relationships: [];
+      };
+      store_banners: {
+        Row: {
+          id: string;
+          image_url: string;
+          link_url: string | null;
+          sort_order: number;
+          created_at: string;
+        };
+        // id e created_at têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["store_banners"]["Row"], "id" | "created_at"> & {
+          id?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["store_banners"]["Insert"]>;
+        Relationships: [];
+      };
+    };
+    Views: {
+      // View da migration 011: projeção de profiles com role = 'user'.
+      leaderboard: {
+        Row: {
+          id: string;
+          name: string;
+          avatar_url: string | null;
+          videos_watched: number;
+        };
+        Relationships: [];
       };
     };
     Functions: {
