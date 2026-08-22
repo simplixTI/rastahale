@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <!-- Nome sob o icone na tela inicial. Curto de proposito: launchers truncam
+         com reticencias por volta de 12 caracteres. O nome completo fica na
+         ficha da Play Store e em title_activity_main. -->
+    <string name="app_name">RastaHale</string>
+    <string name="title_activity_main">RastaHale Academy</string>
+    <string name="package_name">com.rastahale.academy</string>
+    <string name="custom_url_scheme">com.rastahale.academy</string>
+</resources>

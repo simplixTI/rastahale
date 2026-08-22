@@ -56,6 +56,37 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Empurra todo o app para baixo da barra de status. Aplicado uma vez aqui em
+     vez de página a página porque a maioria das telas monta o próprio container
+     raiz em vez de usar o MobileLayout. Elementos `fixed` (barras inferiores)
+     não são afetados, pois se posicionam pela viewport; os headers `sticky`
+     usam .top-safe para não deslizar sob a barra ao rolar.
+     Na web o valor é 0, então o layout continua idêntico. */
+  #root {
+    padding-top: max(env(safe-area-inset-top), var(--safe-area-inset-top, 0px));
+  }
+}
+
+@layer utilities {
+  /* Safe areas (recortes e barras de sistema do Android/iOS).
+     Duas fontes, porque o Capacitor usa uma ou outra conforme o WebView:
+     - env(safe-area-inset-*): quando o Capacitor repassa os insets ao WebView
+       (WebView recente + viewport-fit=cover, que já está no index.html);
+     - var(--safe-area-inset-*): variáveis que o Capacitor injeta no
+       documentElement quando o repasse não está disponível.
+     O max() pega a que estiver valendo. Na web ambas dão 0, então nada muda. */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), var(--safe-area-inset-top, 0px));
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--safe-area-inset-bottom, 0px));
+  }
+  /* Para barras fixas/sticky no topo: desloca o ponto de fixação para baixo da
+     barra de status, senão o conteúdo desliza por baixo dela ao rolar. */
+  .top-safe {
+    top: max(env(safe-area-inset-top), var(--safe-area-inset-top, 0px));
+  }
 }
 
 @layer components {

@@ -5,7 +5,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // android/ é o projeto nativo gerado pelo Capacitor. Contém artefatos de build
+  // (native-bridge.js e o dist/ copiado) que não são código-fonte deste repo.
+  { ignores: ["dist", "android"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

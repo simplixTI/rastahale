@@ -292,7 +292,7 @@ const StudioDashboard = () => {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
       {/* header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
+      <header className="top-safe sticky z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={logo} alt="RastaHale" className="h-8 rounded-lg" />
