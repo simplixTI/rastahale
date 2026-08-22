@@ -176,3 +176,45 @@ Antes de enviar, decida uma das saídas:
    para conteúdo digital como aulas em vídeo.
 
 Publicar sem resolver isso é o risco mais alto deste projeto na loja.
+
+---
+
+## 9. Testar no emulador
+
+O emulador exige um hypervisor. Foi habilitado nesta máquina com (PowerShell
+como administrador, seguido de reinicialização):
+
+```powershell
+DISM /Online /Enable-Feature /FeatureName:HypervisorPlatform /All /NoRestart
+```
+
+AVD já criado: `rastahale_test` (Android 16 / API 36, x86_64).
+
+```bash
+# subir o emulador
+"$ANDROID_HOME/emulator/emulator.exe" -avd rastahale_test -no-snapshot -no-boot-anim -gpu swiftshader_indirect &
+
+# esperar o boot terminar
+adb wait-for-device
+until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
+
+# instalar e abrir (o AAB não instala direto; use o APK)
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+adb shell monkey -p com.rastahale.academy -c android.intent.category.LAUNCHER 1
+
+# screenshot e erros
+adb exec-out screencap -p > tela.png
+adb logcat -d | grep -iE "chromium|AndroidRuntime|FATAL"
+```
+
+Para digitar nos campos, prefira `input keyevent 61` (TAB) a tocar por
+coordenadas: o teclado empurra o layout e um toque calculado na tela anterior
+cai no campo errado.
+
+### O que já foi validado em Android 16
+
+Login com Supabase real, navegação entre abas, catálogo com thumbnails, safe
+areas, barras de sistema, botão voltar. Sem exceções no logcat.
+
+O jank que aparece como `FrameTracker: Missed SF frame` vem da renderização por
+software do emulador (`swiftshader`) e não representa aparelho real.
