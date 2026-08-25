@@ -94,7 +94,7 @@ const Install = () => {
 
       {/* hero */}
       <div className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 flex items-center gap-4">
-        <img src={logo} alt="RastaHale" className="h-16 w-16 rounded-2xl shadow-lg flex-shrink-0" />
+        <img src={logo} alt="RastaHale" className="h-16 w-16 rounded-2xl shadow-lg flex-shrink-0 object-contain" />
         <div>
           <p className="text-base font-bold text-foreground">RastaHale Academy</p>
           <p className="text-xs text-muted-foreground mt-0.5">{t("install.appSubtitle")}</p>
