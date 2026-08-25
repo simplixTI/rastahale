@@ -31,6 +31,9 @@ export interface AuthProvider {
   /** Autentica com Google (Firebase) ou outro OAuth. */
   signInWithGoogle(): Promise<{ user: AuthUser | null; session: AuthSession }>;
 
+  /** Autentica com Apple (obrigatório na App Store junto ao Google). */
+  signInWithApple(): Promise<{ user: AuthUser | null; session: AuthSession }>;
+
   /** Encerra a sessão no provider. */
   signOut(): Promise<void>;
 

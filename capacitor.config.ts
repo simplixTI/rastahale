@@ -13,11 +13,10 @@ const config: CapacitorConfig = {
 
   plugins: {
     SystemBars: {
-      // "DARK" = barras com CONTEUDO claro (icones brancos), para fundo escuro.
-      // Ver SystemBars.java: setAppearanceLightStatusBars(!style.equals("DARK")).
-      // Sem isto o padrao segue o tema do sistema e, no modo claro, os icones
-      // ficam escuros e some tudo contra o fundo preto do app.
-      style: "DARK",
+      // "LIGHT" = barras com CONTEUDO escuro (icones pretos), para fundo claro —
+      // tema padrao do app agora e o claro. Ao trocar de tema em runtime, o
+      // useTheme chama SystemBars.setStyle() e sobrepoe este default.
+      style: "LIGHT",
     },
   },
 

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { Capacitor, SystemBars, SystemBarsStyle } from "@capacitor/core";
 
 // Tema claro/escuro. O escuro é o tema base (variáveis em :root no index.css);
 // o claro é aplicado adicionando a classe `light` no <html>.
@@ -14,6 +15,12 @@ function systemTheme(): "dark" | "light" {
 function applyTheme(theme: Theme): "dark" | "light" {
   const resolved = theme === "system" ? systemTheme() : theme;
   document.documentElement.classList.toggle("light", resolved === "light");
+  // Barra de status acompanha o tema: conteúdo escuro no claro, claro no escuro.
+  if (Capacitor.isNativePlatform()) {
+    SystemBars.setStyle({
+      style: resolved === "light" ? SystemBarsStyle.Light : SystemBarsStyle.Dark,
+    }).catch(() => { /* plataforma sem suporte */ });
+  }
   return resolved;
 }
 

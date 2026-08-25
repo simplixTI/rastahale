@@ -75,6 +75,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "google": "Sign in with Google",
+    "apple": "Sign in with Apple",
     "or": "or",
     "notConfigured": "App not configured yet. Add Supabase/Firebase keys to .env or enable mock mode."
   },
@@ -190,6 +191,7 @@
     "version": "App version",
     "support": "Support",
     "privacy": "Privacy Policy",
+    "deleteAccount": "Delete my account",
     "terms": "Terms of Use"
   },
   "plan": {

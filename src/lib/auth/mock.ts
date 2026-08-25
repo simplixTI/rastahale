@@ -102,6 +102,11 @@ export const mockAuthProvider: AuthProvider = {
     return { user: null, session: null };
   },
 
+  async signInWithApple() {
+    // Modo demo não suporta Apple.
+    return { user: null, session: null };
+  },
+
   async signOut() {
     clear();
   },

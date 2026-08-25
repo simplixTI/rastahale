@@ -75,6 +75,7 @@
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "google": "Entrar con Google",
+    "apple": "Entrar con Apple",
     "or": "o",
     "notConfigured": "App aún no configurada. Agrega las claves de Supabase/Firebase al .env o activa el modo mock."
   },
@@ -190,6 +191,7 @@
     "version": "Versión de la app",
     "support": "Soporte",
     "privacy": "Política de Privacidad",
+    "deleteAccount": "Eliminar mi cuenta",
     "terms": "Términos de Uso"
   },
   "plan": {

@@ -231,6 +231,18 @@ const Settings = () => {
                 <p className="text-sm text-foreground">{t("settings.terms")}</p>
               </div>
             </div>
+            {/* Exigência da App Store (5.1.1): app com criação de conta precisa
+                deixar o usuário iniciar a exclusão de dentro do app. */}
+            <button
+              type="button"
+              onClick={() => navigate("/excluir-conta")}
+              className="flex w-full items-center justify-between py-3"
+            >
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-destructive" />
+                <p className="text-sm text-destructive">{t("settings.deleteAccount")}</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>

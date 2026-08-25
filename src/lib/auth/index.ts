@@ -3,6 +3,7 @@ import { mockAuthProvider } from "./mock";
 import { supabaseAuthProvider } from "./supabaseProvider";
 import { isFirebaseConfigured } from "./firebase";
 import { signInWithGoogleFirebase, signOutFirebase } from "./firebaseProvider";
+import { signInWithAppleFirebase } from "./appleProvider";
 import type { AuthProvider, AuthSession, AuthUser } from "./types";
 import { AuthError } from "./types";
 import { buildUser, ensureProfile } from "./supabaseProvider";
@@ -48,6 +49,41 @@ const hybridProvider: AuthProvider = {
 
     if (!data.user || !data.session) {
       throw new AuthError("Sessão não criada após login Google.", "provider_error");
+    }
+
+    await ensureProfile(data.user.id, email, name);
+    if (photoUrl) {
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: photoUrl })
+        .eq("id", data.user.id)
+        .is("avatar_url", null);
+    }
+
+    const user = await buildUser(data.user);
+    return { user, session: { provider: "supabase", session: data.session } as AuthSession };
+  },
+
+  async signInWithApple() {
+    const { idToken, email, name, photoUrl } = await signInWithAppleFirebase();
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: idToken,
+    });
+
+    if (error) {
+      if (error.message?.toLowerCase().includes("provider")) {
+        throw new AuthError(
+          "Login com Apple não configurado no Supabase. Verifique o provider Apple nas configurações do projeto.",
+          "provider_error"
+        );
+      }
+      throw new AuthError(error.message || "Falha ao vincular Apple ao Supabase.", "provider_error");
+    }
+
+    if (!data.user || !data.session) {
+      throw new AuthError("Sessão não criada após login Apple.", "provider_error");
     }
 
     await ensureProfile(data.user.id, email, name);
