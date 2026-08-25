@@ -41,6 +41,7 @@ import BottomTabBar from "./components/BottomTabBar";
 import { LoadingScreen } from "./components/LoadingScreen";
 import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import DeleteAccount from "./pages/DeleteAccount";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -129,6 +130,7 @@ const AppRoutes = () => {
         <Route path="/studio/perfil/configuracoes" element={<ProtectedRoute instructorOnly><StudioConfiguracoes /></ProtectedRoute>} />
         <Route path="/instalar" element={<Install />} />
         <Route path="/privacidade" element={<PrivacyPolicy />} />
+        <Route path="/excluir-conta" element={<DeleteAccount />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar  && <BottomTabBar />}

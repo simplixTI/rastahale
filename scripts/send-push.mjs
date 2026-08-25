@@ -67,7 +67,7 @@ async function main() {
     tokens: rows.map((r) => r.token),
     notification: { title, body },
     webpush: {
-      notification: { title, body, icon: "/icon-192.png" },
+      notification: { title, body, icon: "/web-app-manifest-192x192.png" },
       fcmOptions: { link: clickUrl },
     },
     data: { url: clickUrl },
