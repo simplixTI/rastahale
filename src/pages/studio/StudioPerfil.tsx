@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
 import { useAdminVideos } from "@/hooks/useAdminData";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 const StudioPerfil = () => {
   const { user, logout } = useAuth();
@@ -104,7 +104,7 @@ const StudioPerfil = () => {
         </button>
 
         <div className="mt-8 flex justify-center">
-          <img src={logo} alt="RastaHale" className="h-8 rounded opacity-50" />
+          <Logo className="h-8 rounded opacity-50" />
         </div>
       </div>
     </div>

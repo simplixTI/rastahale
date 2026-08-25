@@ -7,7 +7,7 @@ import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions
 import { getLevelColor } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 // ── SessionFormModal ──────────────────────────────────────────────────────────
 
@@ -242,7 +242,7 @@ const StudioSessoes = () => {
       <header className="top-safe sticky z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="RastaHale" className="h-8 rounded-lg" />
+            <Logo className="h-8 rounded-lg" />
             <div>
               <p className="text-xs font-bold text-foreground leading-none">Sessões</p>
               <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{user?.name}</p>

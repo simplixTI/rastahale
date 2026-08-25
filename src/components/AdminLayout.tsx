@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, CreditCard, Video, DollarSign, LogOut, ChevronLeft, UserCircle2, Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 const navItems = [
   { path: "/admin",               icon: LayoutDashboard, label: "Painel"      },
@@ -34,7 +34,7 @@ const AdminLayout = ({ children, title, showBack = false, backTo }: { children: 
                 <ChevronLeft size={20} />
               </button>
             )}
-            <img src={logo} alt="RastaHale" className="h-8 rounded-lg" />
+            <Logo className="h-8 rounded-lg" />
             <span className="text-sm font-bold text-foreground">{title}</span>
           </div>
           <button

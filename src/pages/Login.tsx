@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { authProvider, isMockModeEnabled, isFirebaseConfigured, isAnyAuthConfigured, AuthError } from "@/lib/auth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
 
 const prefersReducedMotion = () => {
@@ -190,7 +190,7 @@ const Login = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse">
-          <img src={logo} alt="RastaHale" className="h-24 rounded-2xl shadow-2xl" />
+          <Logo className="h-24 rounded-2xl shadow-2xl" />
         </div>
       </div>
     );
@@ -245,7 +245,7 @@ const Login = () => {
         </div>
 
         <div className="mt-5 flex justify-center">
-          <img src={logo} alt="RastaHale" className="h-20 rounded-2xl" />
+          <Logo className="h-20 rounded-2xl" />
         </div>
 
         <h1 className="mt-6 text-center text-2xl font-bold text-foreground">{t("login.title")}</h1>

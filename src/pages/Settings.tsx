@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Bell, Moon, Globe, Shield, Info, Languages } from "lucide-react";
+import { ArrowLeft, Bell, Moon, Sun, Smartphone, Globe, Shield, Info, Languages } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import MobileLayout from "@/components/MobileLayout";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { enablePushNotifications, disablePushNotifications } from "@/lib/push";
+import { useTheme, type Theme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 
 interface ToggleItemProps {
@@ -54,6 +55,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const saved = loadSettings();
 
   const [notifAulas,    setNotifAulas]    = useState(saved.notifAulas    ?? true);
@@ -112,6 +114,38 @@ const Settings = () => {
           <div className="px-4 py-3">
             <p className="mb-2.5 text-xs text-muted-foreground">{t("settings.languageDesc")}</p>
             <LanguageSwitcher />
+          </div>
+        </div>
+
+        {/* Aparência */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <Sun size={16} className="text-primary" />
+            <p className="text-sm font-semibold text-foreground">{t("settings.appearance")}</p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="mb-2.5 text-xs text-muted-foreground">{t("settings.appearanceDesc")}</p>
+            <div className="flex gap-2">
+              {([
+                { value: "dark",   label: t("settings.themeDark"),   Icon: Moon },
+                { value: "light",  label: t("settings.themeLight"),  Icon: Sun },
+                { value: "system", label: t("settings.themeSystem"), Icon: Smartphone },
+              ] as { value: Theme; label: string; Icon: typeof Moon }[]).map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => setTheme(value)}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-colors",
+                    theme === value
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <Icon size={14} />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

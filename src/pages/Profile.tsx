@@ -7,7 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
 import MobileLayout from "@/components/MobileLayout";
 import { Pill } from "@/components/Pill";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -80,7 +80,7 @@ const Profile = () => {
         </button>
 
         <div className="mt-8 flex justify-center">
-          <img src={logo} alt="RastaHale" className="h-8 rounded opacity-50" />
+          <Logo className="h-8 rounded opacity-50" />
         </div>
       </div>
     </MobileLayout>

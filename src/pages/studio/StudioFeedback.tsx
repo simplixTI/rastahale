@@ -1,7 +1,7 @@
 import { MessageCircle, Inbox } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructorComments } from "@/hooks/useInstructorComments";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 const StudioFeedback = () => {
   const { user }     = useAuth();
@@ -12,7 +12,7 @@ const StudioFeedback = () => {
       {/* header */}
       <header className="top-safe sticky z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="RastaHale" className="h-8 rounded-lg" />
+          <Logo className="h-8 rounded-lg" />
           <div>
             <p className="text-xs font-bold text-foreground leading-none">Feedback dos alunos</p>
             <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{user?.name}</p>

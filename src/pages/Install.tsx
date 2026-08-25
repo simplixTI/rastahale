@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 // ── Step ──────────────────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ const Install = () => {
 
       {/* hero */}
       <div className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 flex items-center gap-4">
-        <img src={logo} alt="RastaHale" className="h-16 w-16 rounded-2xl shadow-lg flex-shrink-0 object-contain" />
+        <Logo className="h-16 w-16 rounded-2xl shadow-lg flex-shrink-0 object-contain" />
         <div>
           <p className="text-base font-bold text-foreground">RastaHale Academy</p>
           <p className="text-xs text-muted-foreground mt-0.5">{t("install.appSubtitle")}</p>
@@ -231,7 +231,7 @@ const Install = () => {
 
       {/* rodapé */}
       <div className="mx-4 mt-6 flex flex-col items-center gap-2 text-center">
-        <img src={logo} alt="RastaHale" className="h-8 rounded-lg opacity-40" />
+        <Logo className="h-8 rounded-lg opacity-40" />
         <p className="text-[10px] text-muted-foreground">
           {t("install.footer")}
         </p>

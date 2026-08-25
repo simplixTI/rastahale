@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
 import { useInstructors } from "@/hooks/useInstructors";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
+import Logo from "@/components/Logo";
 
 const FadeInSection = ({ children, delay = 0 }: { children: ReactNode; delay?: number }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -101,11 +101,7 @@ const Index = () => {
               {firstName} <span className="align-middle">🤙</span>
             </h1>
           </div>
-          <img
-            src={logo}
-            alt="RastaHale"
-            className="h-11 w-auto shrink-0 object-contain"
-          />
+          <Logo className="h-11 w-auto shrink-0 object-contain" />
         </header>
       </FadeInSection>
 
