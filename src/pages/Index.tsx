@@ -104,7 +104,7 @@ const Index = () => {
           <img
             src={logo}
             alt="RastaHale"
-            className="h-11 w-11 shrink-0 rounded-2xl object-cover ring-1 ring-border"
+            className="h-11 w-auto shrink-0 object-contain"
           />
         </header>
       </FadeInSection>
