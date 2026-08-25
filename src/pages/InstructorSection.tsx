@@ -80,13 +80,17 @@ const InstructorSection = () => {
 
   const myComment  = user ? userComment(user.id) : undefined;
 
-  function handleSubmitComment() {
+  async function handleSubmitComment() {
     if (!user) { toast.error(t("instructorSection.loginToComment")); return; }
     if (commentText.trim().length < 10) { toast.error(t("instructorSection.minChars")); return; }
     if (myComment) { toast.error(t("instructorSection.oneCommentOnly")); return; }
-    addComment(user.id, user.name, commentText);
-    setCommentText("");
-    toast.success(t("instructorSection.commentSent"));
+    try {
+      await addComment(user.id, user.name, commentText);
+      setCommentText("");
+      toast.success(t("instructorSection.commentSent"));
+    } catch {
+      toast.error(t("instructorSection.commentError"));
+    }
   }
 
   if (loadInst || loadVid) {
@@ -286,7 +290,14 @@ const InstructorSection = () => {
                   key={c.id}
                   comment={c}
                   canDelete={user?.id === c.userId}
-                  onDelete={() => { removeComment(c.id); toast.success(t("instructorSection.commentRemoved")); }}
+                  onDelete={async () => {
+                    try {
+                      await removeComment(c.id);
+                      toast.success(t("instructorSection.commentRemoved"));
+                    } catch {
+                      toast.error(t("instructorSection.commentError"));
+                    }
+                  }}
                 />
               ))}
             </div>

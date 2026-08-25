@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { AuthError } from "./types";
 
@@ -18,6 +18,18 @@ export const isFirebaseConfigured =
 
 let cachedAuth: Auth | null = null;
 
+// App Firebase compartilhado (auth + messaging). Mesmo motivo do init
+// preguiçoso abaixo: sem as env vars, inicializar no import derruba o app.
+export function getFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured) {
+    throw new AuthError(
+      "Firebase não configurado neste ambiente.",
+      "provider_error"
+    );
+  }
+  return getApps().length ? getApp() : initializeApp(firebaseConfig);
+}
+
 // Inicialização preguiçosa e guardada: chamar getAuth() no topo do módulo faz o
 // Firebase lançar auth/invalid-api-key durante o import quando o .env não tem as
 // chaves. Como este módulo entra na cadeia de import do AuthContext, esse throw
@@ -30,8 +42,7 @@ export function getFirebaseAuth(): Auth {
     );
   }
   if (!cachedAuth) {
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-    cachedAuth = getAuth(app);
+    cachedAuth = getAuth(getFirebaseApp());
   }
   return cachedAuth;
 }

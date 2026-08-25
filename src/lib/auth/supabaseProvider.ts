@@ -3,13 +3,6 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { AuthProvider, AuthSession, AuthUser, UserRole } from "./types";
 import { AuthError } from "./types";
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
-  ]);
-}
-
 function mapSupabaseError(error: { message?: string; status?: number; code?: string }): AuthError {
   const msg = error.message || "Falha na autenticação";
   const status = error.status;
@@ -35,11 +28,29 @@ async function buildUser(u: SupabaseUser): Promise<AuthUser> {
     .eq("id", u.id)
     .single();
 
+  let role = (profile?.role ?? u.user_metadata?.role ?? "user") as UserRole;
+
+  // Instrutor é um usuário real do Supabase Auth vinculado à tabela
+  // `instructors` pela coluna user_id (migration 015). Se o perfil ainda não
+  // marcou o papel, verificamos o vínculo. O try/catch degrada graciosamente
+  // caso a migration 015 (coluna user_id) ainda não tenha sido aplicada.
+  if (role === "user") {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const instQuery: any = supabase.from("instructors");
+      const { data: inst } = await instQuery
+        .select("id")
+        .eq("user_id", u.id)
+        .maybeSingle();
+      if (inst?.id) role = "instructor";
+    } catch { /* coluna user_id ausente — ignora */ }
+  }
+
   return {
     id: u.id,
     email: u.email ?? "",
     name: profile?.name ?? u.user_metadata?.name ?? "",
-    role: (profile?.role ?? u.user_metadata?.role ?? "user") as UserRole,
+    role,
     avatarUrl: profile?.avatar_url ?? u.user_metadata?.avatar_url ?? null,
   };
 }
@@ -74,40 +85,18 @@ export const supabaseAuthProvider: AuthProvider = {
   },
 
   async signInWithEmailPassword(email: string, password: string) {
-    const key = email.toLowerCase().trim();
+    // Instrutores também são usuários reais do Supabase Auth (migration 015):
+    // o papel "instructor" é resolvido em buildUser via instructors.user_id.
+    // A comparação antiga de `login_password` em plaintext com a anon key foi
+    // removida — a coluna deixou de existir e a senha nunca trafega na query.
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (!error && data.user) {
+    if (error) throw mapSupabaseError(error);
+
+    if (data.user) {
       const user = await buildUser(data.user);
       return { user, session: { provider: "supabase", session: data.session } };
     }
-
-    // Se não é usuário do Supabase Auth, pode ser um instrutor. As credenciais de
-    // instrutor ficam na tabela `instructors`. A senha é verificada no servidor.
-    // TODO: migrar instrutores para usuários reais do Supabase Auth e remover isto.
-    if (error && (error.status === 400 || error.message?.toLowerCase().includes("invalid"))) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const instQuery: any = supabase.from("instructors");
-      const { data: inst } = await withTimeout(
-        instQuery
-          .select("id, name, login_email")
-          .eq("login_email", key)
-          .eq("login_password", password)
-          .maybeSingle(),
-        10000
-      );
-      if (inst?.id) {
-        const user: AuthUser = {
-          id: inst.id,
-          email: inst.login_email ?? key,
-          name: inst.name,
-          role: "instructor",
-        };
-        return { user, session: null };
-      }
-    }
-
-    if (error) throw mapSupabaseError(error);
     return { user: null, session: null };
   },
 

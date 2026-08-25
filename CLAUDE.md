@@ -4,17 +4,18 @@
 
 **RastaHale Academy** é uma plataforma mobile-first de streaming educacional para artes marciais — Jiu-Jitsu Brasileiro e Luta Livre. Funciona como um Netflix de aulas, com catálogo de vídeos categorizados por modalidade e nível técnico (Iniciante, Intermediário, Avançado).
 
-**Dois perfis de acesso:**
+**Três perfis de acesso:**
 - **Aluno** (`role: "user"`) — navega pelo catálogo, acompanha progresso, gerencia favoritos
+- **Instrutor** (`role: "instructor"`) — Studio: sessões de treino, feedback dos alunos, perfil
 - **Admin** (`role: "admin"`) — gerencia vídeos, usuários, pagamentos e planos de assinatura
 
-**Credenciais de teste:**
+**Credenciais de teste (apenas com `VITE_ENABLE_MOCK=true`):**
 ```
 Aluno:  aluno@rastahale.com   / rasta123
 Admin:  admin@rastahale.com   / admin123
 ```
 
-O projeto foi criado via Lovable (plataforma de geração de UI). O backend Supabase está configurado mas ainda inativo — toda a lógica roda com dados mock no cliente.
+O backend Supabase está **ativo** — os hooks leem/escrevem no Supabase de verdade, com fallback para mock apenas quando `VITE_SUPABASE_URL` não está definida. O modo mock de auth é **opt-in explícito** (`VITE_ENABLE_MOCK=true`), nunca automático.
 
 ---
 
@@ -24,15 +25,17 @@ O projeto foi criado via Lovable (plataforma de geração de UI). O backend Supa
 | Camada | Tecnologia |
 |--------|-----------|
 | Framework | React 18.3 + TypeScript 5.8 |
-| Build | Vite 5.4 (dev server na porta **8080**) |
+| Build | Vite (dev server na porta **8080**) |
 | Estilização | Tailwind CSS 3.4 + shadcn/ui (Radix UI) |
 | Roteamento | React Router DOM 6.30 |
 | Estado assíncrono | TanStack React Query 5.83 |
 | Formulários | React Hook Form 7.61 + Zod |
+| Backend | Supabase (auth, Postgres, RLS) |
+| Login social + push | Firebase (Auth Google + Cloud Messaging) |
+| Mobile | Capacitor 8 (Android) |
+| i18n | react-i18next (pt/en/es — paridade total) |
 | Ícones | Lucide React |
-| Notificações | Sonner |
-| Gráficos | Recharts 2.15 |
-| Backend (futuro) | Supabase |
+| Notificações toast | Sonner |
 
 ### Comandos
 ```bash
@@ -40,12 +43,18 @@ npm run dev       # Inicia dev server (localhost:8080)
 npm run build     # Build de produção
 npm run preview   # Preview do build
 npm run lint      # ESLint
-npm run test      # Vitest (unitários)
-npm run test:watch
+npm run test      # Vitest (unitários, jsdom)
+npx playwright test  # E2E (requer npx playwright install antes)
+npx cap sync android # Sincroniza web build + plugins com o projeto Android
 ```
 
 ### Variáveis de ambiente
-Copiar `.env.example` para `.env`. As chaves Supabase já estão configuradas no `.env` do projeto mas não estão sendo usadas ativamente — o app roda sem elas enquanto usar mock data.
+Copiar `.env.example` para `.env`. Chaves:
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` — backend principal
+- `VITE_ENABLE_MOCK` — `true` ativa auth mock (dev/demo apenas)
+- `VITE_FIREBASE_*` (6 chaves) + `VITE_FIREBASE_VAPID_KEY` — login Google web e push web
+
+O app funciona sem as chaves Firebase (botão Google some, push desativado). Setup completo: **`FIREBASE-SETUP.md`**.
 
 ---
 
@@ -59,39 +68,46 @@ src/
 │   ├── ui/          # 40+ componentes shadcn/ui — NÃO modificar diretamente
 │   ├── AdminLayout.tsx      # Wrapper de layout para rotas admin
 │   ├── MobileLayout.tsx     # Wrapper de layout para rotas de aluno
-│   ├── BottomTabBar.tsx     # Navegação inferior mobile (5 tabs)
-│   └── VideoCard.tsx        # Card reutilizável de vídeo
+│   └── BottomTabBar.tsx     # Navegação inferior mobile (5 tabs)
 ├── contexts/
-│   └── AuthContext.tsx      # Estado de autenticação global
+│   ├── AuthContext.tsx      # Estado de autenticação global (+ init de push após login)
+│   └── ProfileContext.tsx
 ├── data/
-│   └── mockData.ts          # FONTE ÚNICA DE VERDADE hoje
-├── hooks/
-│   ├── use-mobile.tsx
-│   └── use-toast.ts
+│   └── mockData.ts          # Fallback offline / demo — NÃO é mais a fonte primária
+├── hooks/             # useVideos, useProgress, useAdminData, useInstructorComments,
+│                      # useStudioSessions, usePWAInstall, use-toast, etc.
+├── i18n/              # react-i18next + locales pt/en/es (paridade obrigatória)
 ├── lib/
-│   └── utils.ts             # Utilitário cn() para Tailwind
+│   ├── supabase.ts          # Cliente Supabase tipado
+│   ├── database.types.ts    # Tipos das tabelas (manter em sync com migrations)
+│   ├── push.ts              # Push notifications (web FCM + nativo Capacitor)
+│   ├── auth/
+│   │   ├── index.ts         # Seleção de provider (mock opt-in vs híbrido) + login Google
+│   │   ├── supabaseProvider.ts  # Email/senha + papel (user/instructor/admin)
+│   │   ├── firebase.ts          # Init preguiçoso do Firebase (nunca lança no import)
+│   │   ├── firebaseProvider.ts  # Google web (popup) + branch nativo
+│   │   ├── firebaseNativeProvider.ts # Google nativo via @capacitor-firebase/authentication
+│   │   └── mock.ts          # Provider mock (só com VITE_ENABLE_MOCK=true)
+│   └── utils.ts             # cn()
 ├── pages/
 │   ├── admin/               # AdminDashboard, AdminVideos, AdminUsers, AdminPayments, AdminPlans
-│   ├── Index.tsx            # Home (hero + carrosséis estilo Netflix)
-│   ├── Search.tsx           # Busca e filtros
-│   ├── Favorites.tsx        # Favoritos
-│   ├── ProgressPage.tsx     # Progresso do aluno
-│   ├── Profile.tsx          # Perfil e configurações
-│   ├── VideoDetail.tsx      # Player + vídeos relacionados
-│   └── Login.tsx            # Autenticação
-└── test/                    # Vitest + jsdom
+│   ├── studio/              # Área do instrutor (StudioDashboard, StudioSessoes, etc.)
+│   └── ...                  # Index, Search, Favorites, ProgressPage, Profile, Login, etc.
+└── test/                    # Vitest + jsdom (setup.ts carrega via vite.config)
 ```
 
 ### Fluxo de autenticação
-1. `Login.tsx` chama `login()` do `AuthContext`
-2. Credenciais validadas contra `mockData.ts` (campo `TEST_USER` / `TEST_ADMIN`)
-3. Estado persiste em **`sessionStorage`** (fecha aba = logout automático)
-4. `ProtectedRoute` em `App.tsx` redireciona para `/login` se não autenticado
-5. Rotas `/admin/*` verificam `user.role === "admin"` — redirect se aluno tentar acessar
+1. `Login.tsx` chama `login()` do `AuthContext`, que delega ao `authProvider` (`src/lib/auth/index.ts`)
+2. Email/senha → Supabase Auth; papel resolvido via `profiles.role` e `instructors.user_id`
+3. Google → Firebase (popup na web, `@capacitor-firebase/authentication` no Android) → `supabase.auth.signInWithIdToken()` — sessão final é sempre Supabase
+4. Mock só com `VITE_ENABLE_MOCK=true`, persistido em `sessionStorage`
+5. `ProtectedRoute` em `App.tsx` redireciona para `/login`; rotas `/admin/*` e `/studio/*` verificam papel
 
-### Layouts
-- **Aluno:** `MobileLayout` (viewport 430px, fundo dark) + `BottomTabBar` (Home/Buscar/Favoritos/Progresso/Perfil)
-- **Admin:** `AdminLayout` (header + sidebar desktop + content)
+### Push notifications
+- Módulo único: `src/lib/push.ts` — `initPushNotifications(userId)` (silencioso, após login), `enablePushNotifications(userId)` / `disablePushNotifications()` (toggles de Settings)
+- Web: `firebase/messaging` + VAPID; o SW único `public/sw.js` (anti-cache + listener `push`) é o registration passado ao `getToken()` — **não criar um segundo service worker**
+- Android: `@capacitor/push-notifications` + FCM (`google-services.json` necessário)
+- Tokens persistidos na tabela `push_tokens` (migration 016); envio é server-side (FCM HTTP v1)
 
 ---
 
@@ -99,86 +115,69 @@ src/
 
 ### Estilização
 - Sempre usar `cn()` de `@/lib/utils` para combinar classes Tailwind condicionais
-- Cores via **variáveis CSS HSL** definidas em `index.css` — nunca hardcoded (ex: `bg-primary` não `bg-orange-500`)
-- Tema dark por padrão; variáveis principais: `--background`, `--foreground`, `--primary`, `--card`, `--accent`
-- Componentes de UI: importar exclusivamente de `@/components/ui/` (shadcn) — não instalar duplicatas
+- Cores via **variáveis CSS HSL** definidas em `index.css` — nunca hardcoded
+- Tema dark por padrão
+- Componentes de UI: importar exclusivamente de `@/components/ui/` — use `npx shadcn@latest add <component>` para novos
 
 ### Componentes
-- Novos componentes reutilizáveis vão em `src/components/`
-- Páginas completas vão em `src/pages/`
-- Componentes shadcn: não editar arquivos em `src/components/ui/` diretamente; use `npx shadcn@latest add <component>` para adicionar novos
+- Novos componentes reutilizáveis vão em `src/components/`; páginas em `src/pages/`
+- Não editar arquivos em `src/components/ui/` diretamente
 
 ### Dados e estado
-- Toda manipulação de dados mock passa por `src/data/mockData.ts`
-- Para queries assíncronas (futuro): usar `useQuery` / `useMutation` do TanStack Query
-- Estado local de UI: `useState` / `useReducer` — sem Zustand/Redux por enquanto
+- Queries/mutations: `useQuery` / `useMutation` (TanStack Query) contra o Supabase
+- Fallback para `mockData.ts` **apenas** quando Supabase não configurado — mutations NUNCA caem silenciosamente para mock quando o Supabase está configurado e falha: propagam erro e tostam
+- Novas chaves de texto: adicionar em `src/i18n/locales/{pt,en,es}.json` (paridade obrigatória)
 
 ### TypeScript
-- `strict: false` e `noImplicitAny: false` — configuração permissiva para prototipagem rápida
-- Não ativar strict mode sem revisar todo o codebase antes
-- Interfaces de dados principais estão em `mockData.ts`: `Video`, `User`, `Payment`, `Plan`, `Instructor`
-
-### Formulários
-- React Hook Form + Zod para validação
-- Schema Zod define o contrato; `useForm` consome via `zodResolver`
+- `strict: false` — configuração permissiva para prototipagem rápida; não ativar strict sem revisar o codebase
+- `src/lib/database.types.ts` é mantido à mão — atualizar ao criar migration
 
 ---
 
 ## 5. Gotchas e Decisões Importantes
 
-**`sessionStorage` para auth — intencional**
-Garante que fechar o browser faz logout. Não migrar para `localStorage` sem decisão explícita do produto.
+**Mock é opt-in e nunca automático**
+`VITE_ENABLE_MOCK=true` é a única forma de ativar o auth mock — evita expor credenciais hardcoded em produção.
 
-**Viewport fixo em 430px**
-O app foi desenhado para mobile (iPhone). Não expandir para breakpoints desktop sem uma decisão arquitetural — o layout quebraria sem refatoração dos layouts e navegação.
+**Firebase init é preguiçoso**
+`getFirebaseApp()/getFirebaseAuth()` só inicializam sob demanda e lançam `AuthError` amigável sem as env vars — nunca inicializar Firebase no topo de módulo (derrubava o app inteiro).
 
-**Mock data é a fonte de verdade**
-Não há chamadas de API reais. Qualquer "persistência" durante a sessão é mutação em memória do array importado de `mockData.ts`. Mudanças não sobrevivem a refresh.
+**Google login no Android é nativo, não popup**
+`signInWithPopup` não funciona no WebView do Capacitor. O branch nativo usa `@capacitor-firebase/authentication` e depende de `android/app/google-services.json` + SHA-1/SHA-256 registrados no Firebase Console (senão: `DEVELOPER_ERROR`). Ver `FIREBASE-SETUP.md`.
 
-**Áudio no login**
-O efeito sonoro "ta-dum" em `Login.tsx` usa a **Web Audio API** sintetizada em código — não há arquivo de áudio externo. Funciona apenas em contextos com user interaction (click).
+**Um único service worker**
+`public/sw.js` acumula anti-cache + push FCM. Dois workers no escopo `/` disputam o controle da página — não criar `firebase-messaging-sw.js` separado.
+
+**Instrutores autenticam via Supabase Auth**
+Desde a migration 015, `instructors.user_id` vincula ao `auth.users`; a coluna `login_password` foi removida (existia em plaintext, exposta via anon key). SELECT de `instructors` é restrito a `authenticated`.
+
+**Viewport fixo em 430px (aluno)**
+O layout mobile não foi desenhado para desktop; não expandir breakpoints sem refatoração dos layouts.
 
 **ESLint: `no-unused-vars` desativado**
-Configuração proposital para o ritmo de prototipagem. Não reativar sem limpar variáveis não usadas no projeto primeiro.
+Proposital para o ritmo de prototipagem. Warnings `react-refresh/only-export-components` são conhecidos.
 
 **Lovable integration**
-`vite.config.ts` inclui `componentTagger()` do `lovable-tagger` em modo dev. Não remover — é usado pela plataforma Lovable para rastrear componentes.
+`vite.config.ts` inclui `componentTagger()` do `lovable-tagger` em modo dev. Não remover.
 
-**Supabase keys no `.env`**
-As chaves estão no `.env` mas o cliente Supabase não está sendo instanciado em lugar nenhum ainda. O arquivo `.env` não deve ser commitado — está no `.gitignore`.
+**Senha do banco vazada**
+O `.env` alerta que a senha do Postgres vazou em `supabase/.temp/pooler-url` — rotacionar no Supabase Dashboard.
 
 ---
 
-## 6. Roadmap: Integração Supabase
+## 6. Backend Supabase
 
-Quando o backend for ativado, seguir esta sequência:
+### Migrations
+Em `supabase/migrations/` (001–016). Aplicar em ordem no SQL Editor ou via `supabase db push`. Destaques:
+- 013 `instructor_comments` — feedback aluno→instrutor (antes: sessionStorage local)
+- 014 `studio_sessions` — sessões do Studio visíveis aos alunos (antes: sessionStorage local)
+- 015 `instructor_auth` — `instructors.user_id`, fim do `login_password` plaintext
+- 016 `push_tokens` — tokens FCM por usuário/plataforma
 
-### Estrutura de tabelas sugerida
-```sql
-videos        (id, title, description, thumbnail, duration, category, subcategory, level, instructor_id, visible, unlock_by_progress, required_progress)
-instructors   (id, name, avatar_url, bio)
-plans         (id, name, price, interval, features, active, categories, max_level)
-profiles      (id, email, name, avatar_url, plan_id, status, joined_at)  -- estende auth.users
-payments      (id, user_id, amount, method, status, date, plan_id)
-user_progress (user_id, video_id, progress, watched, is_favorite, last_watched_at)
-```
+Após aplicar 015, rodar `node scripts/seed-users.mjs` para vincular o professor ao auth user.
 
-### Padrão de migração
-1. Criar cliente Supabase em `src/lib/supabase.ts`
-2. Substituir cada entidade de `mockData.ts` por um hook `use<Entity>.ts` com `useQuery` + Supabase client
-3. Migrar `AuthContext` para usar `supabase.auth` (mantendo a mesma interface pública do context)
-4. Adicionar RLS policies: alunos só leem seus próprios `user_progress` e `payments`; admins têm acesso total
+### RLS
+Alunos só escrevem/leem seus próprios dados (`user_progress`, `push_tokens`, comentários próprios); instrutores gerenciam suas sessões; `public.is_admin()` libera acesso total ao admin.
 
-### Auth com Supabase
-```typescript
-// Padrão a seguir em AuthContext após migração:
-const { data: { user } } = await supabase.auth.getUser()
-// role vem de user_metadata ou de uma tabela profiles
-```
-
-### Ordem recomendada de migração
-1. Auth (AuthContext → Supabase Auth)
-2. Videos + Instructors (somente leitura, menor risco)
-3. User Progress (leitura + escrita por aluno)
-4. Plans (leitura pública)
-5. Payments + Users (admin only, com RLS)
+### Tabelas principais
+`videos`, `instructors`, `plans`, `profiles`, `payments`, `user_progress`, `instructor_comments`, `studio_sessions`, `push_tokens`.

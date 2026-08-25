@@ -2,13 +2,21 @@ import { useState } from "react";
 import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile, usePlans, useUserPayments, useUpdatePlanName } from "@/hooks/useProfile";
 import { useProfileOverride } from "@/contexts/ProfileContext";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useLabels } from "@/i18n/labels";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+
+/** true para usuários reais do Supabase Auth (id UUID); mock usa ids "u-…". */
+function isSupabaseUser(userId: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+}
 
 /** Data da próxima cobrança a partir do último pagamento e do intervalo. */
 function nextBillingDate(lastDateStr: string, interval: string): Date {
@@ -29,6 +37,7 @@ const MyPlan = () => {
   const { data: userPayments = [] } = useUserPayments(user?.id ?? "");
   const updatePlanName = useUpdatePlanName();
   const { override, updateOverride } = useProfileOverride();
+  const queryClient = useQueryClient();
 
   const [showChangePlan, setShowChangePlan] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
@@ -55,6 +64,11 @@ const MyPlan = () => {
     setChanging(true);
     try {
       await updatePlanName.mutateAsync({ userId: user.id, planName: newPlan.name });
+      // Reativação: o cancelamento grava status "inativo" no perfil — volta para "ativo".
+      if (isSupabaseConfigured && isSupabaseUser(user.id)) {
+        await supabase.from("profiles").update({ status: "ativo" }).eq("id", user.id);
+        queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      }
       updateOverride({ planName: newPlan.name, planCancelled: false });
     } finally {
       setChanging(false);
@@ -64,11 +78,26 @@ const MyPlan = () => {
   };
 
   const handleCancelPlan = async () => {
+    if (!user) return;
     setCancelling(true);
-    await new Promise((r) => setTimeout(r, 600));
-    updateOverride({ planCancelled: true });
-    setCancelling(false);
-    setShowCancel(false);
+    try {
+      // Cancelamento real: marca o perfil como inativo no Supabase. Sem Supabase
+      // configurado, mantém o comportamento local (override em sessionStorage).
+      if (isSupabaseConfigured && isSupabaseUser(user.id)) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ status: "inativo" })
+          .eq("id", user.id);
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      }
+      updateOverride({ planCancelled: true });
+      setShowCancel(false);
+    } catch {
+      toast.error(t("plan.cancelError"));
+    } finally {
+      setCancelling(false);
+    }
   };
 
   if (plansLoading || !plan) {

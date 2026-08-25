@@ -100,7 +100,9 @@ function EmailModal({ user, onClose }: { user: AdminUser; onClose: () => void })
   });
 
   const onSubmit = (_values: EmailForm) => {
-    toast.success(`Email enviado para ${user.email}`);
+    // Não há backend de envio de email (edge function / provedor SMTP) configurado.
+    // Antes exibia um toast de sucesso falso; agora informa a limitação real.
+    toast.info("Envio de email requer configuração de backend. Nenhum email foi enviado.");
     onClose();
   };
 

@@ -56,7 +56,7 @@ const playNetflixSound = () => {
       osc3.stop();
       ctx.close();
     }, 2000);
-  } catch (e) {
+  } catch {
     // Audio not available
   }
 };

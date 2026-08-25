@@ -205,7 +205,8 @@
     "confirmChange": "Confirmar cambio",
     "cancelTitle": "¿Cancelar suscripción?",
     "cancelDesc": "Perderás el acceso al contenido al final del período pagado. Puedes revertirlo reactivando tu suscripción.",
-    "cancelConfirm": "Cancelar plan"
+    "cancelConfirm": "Cancelar plan",
+    "cancelError": "Error al cancelar el plan. Inténtalo de nuevo."
   },
   "video": {
     "notFound": "Video no encontrado",
@@ -242,7 +243,8 @@
     "minChars": "Escribe al menos 10 caracteres",
     "oneCommentOnly": "Ya dejaste un comentario para este instructor",
     "commentSent": "¡Comentario enviado!",
-    "commentRemoved": "Reseña eliminada"
+    "commentRemoved": "Reseña eliminada",
+    "commentError": "Error al enviar el comentario. Inténtalo de nuevo."
   },
   "athlete": {
     "notFound": "Atleta no encontrado",

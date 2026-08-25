@@ -33,3 +33,52 @@ self.addEventListener("activate", (event) => {
 // Handler de fetch vazio (mantém o app instalável como PWA), mas SEM
 // respondWith: cada requisição é tratada normalmente pelo navegador.
 self.addEventListener("fetch", () => {});
+
+// ============================================================
+//  Push (FCM web) — fundido neste mesmo SW de propósito.
+//
+//  O FCM web sugere um "firebase-messaging-sw.js" separado, mas dois service
+//  workers no mesmo escopo ("/") disputam o controle da página e o FCM só
+//  entrega o push no registration usado no getToken(). Em vez disso, o app
+//  (src/lib/push.ts) chama getToken() com serviceWorkerRegistration apontando
+//  para ESTE worker, e aqui tratamos o evento "push" diretamente.
+//
+//  Vantagem: o SW não precisa das credenciais do Firebase (que vivem nas env
+//  vars da página, não em arquivo estático) nem de importScripts de CDN — ele
+//  só lê o payload e exibe a notificação do sistema.
+//
+//  Payload esperado (FCM HTTP v1, webpush): JSON com
+//  { notification: { title, body, ... }, data: {...} }.
+// ============================================================
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { notification: { title: "RastaHale Academy", body: event.data.text() } };
+  }
+  const notification = payload.notification || {};
+  const title = notification.title || "RastaHale Academy";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: notification.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: payload.data || {},
+    })
+  );
+});
+
+// Toque na notificação: foca uma aba já aberta do app ou abre uma nova.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) return client.focus();
+      }
+      return self.clients.openWindow("/");
+    })
+  );
+});

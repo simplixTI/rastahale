@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth, registerSessionExpiredCallback } from "@/contexts/AuthContext";
-import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { ProfileOverrideProvider } from "@/contexts/ProfileContext";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import Index from "./pages/Index";
@@ -41,6 +40,7 @@ import Settings from "./pages/Settings";
 import BottomTabBar from "./components/BottomTabBar";
 import { LoadingScreen } from "./components/LoadingScreen";
 import Install from "./pages/Install";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -128,6 +128,7 @@ const AppRoutes = () => {
         <Route path="/studio/perfil/editar"      element={<ProtectedRoute instructorOnly><StudioEditPerfil   /></ProtectedRoute>} />
         <Route path="/studio/perfil/configuracoes" element={<ProtectedRoute instructorOnly><StudioConfiguracoes /></ProtectedRoute>} />
         <Route path="/instalar" element={<Install />} />
+        <Route path="/privacidade" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar  && <BottomTabBar />}
@@ -144,9 +145,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <ProfileOverrideProvider>
-            <FavoritesProvider>
-              <AppRoutes />
-            </FavoritesProvider>
+            <AppRoutes />
           </ProfileOverrideProvider>
         </AuthProvider>
       </BrowserRouter>

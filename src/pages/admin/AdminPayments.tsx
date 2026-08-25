@@ -114,7 +114,9 @@ const AdminPayments = () => {
                   </span>
                   {p.status === "pendente" && (
                     <button
-                      onClick={() => toast.success("Cobrança reenviada ao aluno")}
+                      // Reenvio real de cobrança exige integração com gateway de
+                      // pagamento (não configurada). Antes exibia sucesso falso.
+                      onClick={() => toast.info("Reenvio de cobrança requer integração com gateway de pagamento. Nenhuma cobrança foi enviada.")}
                       className="text-[10px] font-medium text-primary"
                     >
                       Reenviar cobrança
@@ -124,7 +126,10 @@ const AdminPayments = () => {
                     <button
                       onClick={() => updateStatus.mutate(
                         { paymentId: p.id, status: "pendente" },
-                        { onSuccess: () => toast.success("Pagamento reativado para pendente") }
+                        {
+                          onSuccess: () => toast.success("Pagamento reativado para pendente"),
+                          onError:   () => toast.error("Erro ao atualizar pagamento"),
+                        }
                       )}
                       disabled={updateStatus.isPending}
                       className="text-[10px] font-medium text-primary disabled:opacity-50"

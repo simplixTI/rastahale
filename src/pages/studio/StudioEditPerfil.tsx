@@ -40,6 +40,7 @@ const StudioEditPerfil = () => {
   const { data: instructor }   = useInstructor(user?.id ?? "");
   const updateInstructor       = useUpdateInstructor();
   const fileRef                = useRef<HTMLInputElement>(null);
+  const navigateTimeoutRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [name,    setName]    = useState("");
   const [bio,     setBio]     = useState("");
@@ -54,6 +55,11 @@ const StudioEditPerfil = () => {
       setAvatar(instructor.avatar);
     }
   }, [instructor]);
+
+  // Cancela a navegação adiada se o componente desmontar antes dos 800ms.
+  useEffect(() => () => {
+    if (navigateTimeoutRef.current) clearTimeout(navigateTimeoutRef.current);
+  }, []);
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -88,7 +94,7 @@ const StudioEditPerfil = () => {
         loginPassword: instructor?.loginPassword,
       });
       setSaved(true);
-      setTimeout(() => navigate("/studio/perfil"), 800);
+      navigateTimeoutRef.current = setTimeout(() => navigate("/studio/perfil"), 800);
     } catch {
       toast.error("Erro ao salvar");
     } finally { setSaving(false); }

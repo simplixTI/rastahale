@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "456321222111",
+    "project_id": "rastahale-eae5d",
+    "storage_bucket": "rastahale-eae5d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:456321222111:android:8e2f06f947cd886832306a",
+        "android_client_info": {
+          "package_name": "com.rastahale.academy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "456321222111-2vsfk57s5t6h0b8g4ig5nfjj2clk2dl3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rastahale.academy",
+            "certificate_hash": "eafe0e66b52afb9878ef8d920fe2b8cafc0d248f"
+          }
+        },
+        {
+          "client_id": "456321222111-jraj8f48h9l1ivd7tv9jjguvo9lf1qvo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD53lDlhqzU89lEMA3oxNZjWhoa2z8rYxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "456321222111-jraj8f48h9l1ivd7tv9jjguvo9lf1qvo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

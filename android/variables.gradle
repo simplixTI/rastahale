@@ -13,4 +13,10 @@ ext {
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'
     cordovaAndroidVersion = '14.0.1'
+    // Versões dos plugins Firebase (@capacitor-firebase/authentication e
+    // @capacitor/push-notifications). Os plugins têm defaults, mas fixamos aqui
+    // para o build ser reproduzível.
+    firebaseAuthVersion = '24.0.1'
+    playServicesAuthVersion = '20.7.0'
+    firebaseMessagingVersion = '25.0.1'
 }

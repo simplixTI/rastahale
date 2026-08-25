@@ -205,7 +205,8 @@
     "confirmChange": "Confirmar troca",
     "cancelTitle": "Cancelar assinatura?",
     "cancelDesc": "Você perderá acesso ao conteúdo ao fim do período pago. Esta ação pode ser revertida reativando sua assinatura.",
-    "cancelConfirm": "Cancelar plano"
+    "cancelConfirm": "Cancelar plano",
+    "cancelError": "Erro ao cancelar o plano. Tente novamente."
   },
   "video": {
     "notFound": "Vídeo não encontrado",
@@ -242,7 +243,8 @@
     "minChars": "Escreva pelo menos 10 caracteres",
     "oneCommentOnly": "Você já deixou um comentário para este instrutor",
     "commentSent": "Comentário enviado!",
-    "commentRemoved": "Avaliação removida"
+    "commentRemoved": "Avaliação removida",
+    "commentError": "Erro ao enviar comentário. Tente novamente."
   },
   "athlete": {
     "notFound": "Atleta não encontrado",

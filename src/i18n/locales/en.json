@@ -205,7 +205,8 @@
     "confirmChange": "Confirm change",
     "cancelTitle": "Cancel subscription?",
     "cancelDesc": "You'll lose access to the content at the end of the paid period. This can be undone by reactivating your subscription.",
-    "cancelConfirm": "Cancel plan"
+    "cancelConfirm": "Cancel plan",
+    "cancelError": "Error cancelling the plan. Please try again."
   },
   "video": {
     "notFound": "Video not found",
@@ -242,7 +243,8 @@
     "minChars": "Write at least 10 characters",
     "oneCommentOnly": "You've already left a comment for this instructor",
     "commentSent": "Comment sent!",
-    "commentRemoved": "Review removed"
+    "commentRemoved": "Review removed",
+    "commentError": "Error sending comment. Please try again."
   },
   "athlete": {
     "notFound": "Athlete not found",

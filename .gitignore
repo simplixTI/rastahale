@@ -17,6 +17,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# Firebase service account (server-side, contém chave privada — nunca commitar)
+firebase-service-account.json
+
 # Supabase CLI local state — contém ref do projeto e connection string (segredo)
 supabase/.temp/
 
@@ -39,3 +42,6 @@ supabase/.temp/
 
 # Artefatos locais do Playwright MCP (snapshots/screenshots de teste)
 .playwright-mcp/
+
+# Cópia aninhada do projeto (não versionar)
+rasta-wave-flow-main/

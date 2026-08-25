@@ -1,9 +1,11 @@
+import { Capacitor } from "@capacitor/core";
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "./firebase";
+import { signInWithGoogleNative, signOutNative } from "./firebaseNativeProvider";
 import { AuthError } from "./types";
 
 const provider = new GoogleAuthProvider();
@@ -14,6 +16,12 @@ export async function signInWithGoogleFirebase(): Promise<{
   name: string;
   photoUrl: string | null;
 }> {
+  // No WebView do Capacitor o popup abaixo não funciona — usa o fluxo nativo
+  // (google-services.json + Credential Manager). Ver firebaseNativeProvider.ts.
+  // O nativo não depende das env vars VITE_FIREBASE_*, só do google-services.json.
+  if (Capacitor.isNativePlatform()) {
+    return signInWithGoogleNative();
+  }
   try {
     const result = await signInWithPopup(getFirebaseAuth(), provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -44,6 +52,11 @@ export async function signInWithGoogleFirebase(): Promise<{
 }
 
 export async function signOutFirebase(): Promise<void> {
+  // No nativo, encerra a sessão do plugin (não há Auth do JS SDK ativa).
+  if (Capacitor.isNativePlatform()) {
+    await signOutNative();
+    return;
+  }
   // Sem Firebase configurado não há sessão dele para encerrar.
   if (!isFirebaseConfigured) return;
   try {

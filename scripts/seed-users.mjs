@@ -67,10 +67,17 @@ async function upsertUsers() {
 
     // Instrutor: cria também a linha em `instructors` com id = UUID do auth user,
     // para que os vídeos enviados no /studio (instructor_id = user.id) satisfaçam o FK.
+    // A migration 015 adiciona `user_id`, vinculando o instrutor ao auth user —
+    // é o que faz o login do /studio reconhecer o papel "instructor".
     if (u.isInstructor) {
-      const { error: instErr } = await supabase.from("instructors").upsert({
-        id: userId, name: u.name, avatar_url: "", bio: u.bio ?? "",
-      });
+      const row = { id: userId, name: u.name, avatar_url: "", bio: u.bio ?? "", user_id: userId };
+      let { error: instErr } = await supabase.from("instructors").upsert(row);
+      // Degrada graciosamente se a migration 015 ainda não foi aplicada.
+      if (instErr && /user_id|schema cache|does not exist/i.test(instErr.message)) {
+        delete row.user_id;
+        ({ error: instErr } = await supabase.from("instructors").upsert(row));
+        if (!instErr) console.log(`   ⚠  instructors ${u.email}: sem user_id (aplique a migration 015)`);
+      }
       if (instErr) console.error(`   ⚠  instructors ${u.email}: ${instErr.message}`);
       else console.log(`   🥋  instructors row criada para ${u.email}`);
     }
@@ -109,7 +116,7 @@ async function seedProgress(ids) {
   ];
 
   for (const r of rows) {
-    const { error } = await supabase.from("user_progress").upsert({ ...r, last_watched_at: new Date().toISOString() });
+    const { error } = await supabase.from("user_progress").upsert({ ...r, last_watched_at: new Date().toISOString() }, { onConflict: "user_id,video_id" });
     if (error) console.error(`   ⚠  ${r.video_id}: ${error.message}`);
   }
   console.log("✅  Progresso seedado");

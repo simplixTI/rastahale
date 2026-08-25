@@ -1,5 +1,5 @@
 import { resolveAvatarUrl, handleAvatarError, DEFAULT_AVATAR } from "@/lib/avatar";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Camera, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -48,6 +48,12 @@ const EditProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cancela a navegação adiada se o componente desmontar antes dos 800ms.
+  useEffect(() => () => {
+    if (navigateTimeoutRef.current) clearTimeout(navigateTimeoutRef.current);
+  }, []);
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,7 +77,7 @@ const EditProfile = () => {
       await updateProfile.mutateAsync({ userId: user.id, name: name.trim(), avatarUrl: avatarToSave });
       updateOverride({ name: name.trim(), avatarUrl: avatarToSave });
       setSaved(true);
-      setTimeout(() => navigate("/perfil"), 800);
+      navigateTimeoutRef.current = setTimeout(() => navigate("/perfil"), 800);
     } finally {
       setIsSaving(false);
     }

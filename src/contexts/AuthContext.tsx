@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { authProvider, isMockModeEnabled } from "@/lib/auth";
+import { initPushNotifications } from "@/lib/push";
 import type { AuthSession, AuthUser, UserRole, AuthError } from "@/lib/auth";
 
 interface AuthCtx {
@@ -84,6 +85,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(restoredUser ?? localUser);
         setSession(restoredSession);
         if (!restoredUser && !localUser) clearPersistedUser();
+        // Push: re-registra o token se o usuário já tinha dado permissão antes
+        // (silencioso, nunca mostra prompt — ver src/lib/push.ts).
+        const activeUser = restoredUser ?? localUser;
+        if (activeUser) void initPushNotifications(activeUser.id);
         releaseLoading();
       })
       .catch(() => {
@@ -98,6 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!active) return;
       setUser(changedUser);
       setSession(changedSession);
+      if (changedUser) void initPushNotifications(changedUser.id);
       releaseLoading();
       if ((event === "SIGNED_OUT" || event === "USER_DELETED") && !changedUser) {
         onSessionExpired?.();

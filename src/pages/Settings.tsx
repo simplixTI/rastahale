@@ -2,8 +2,11 @@ import { useState } from "react";
 import { ArrowLeft, Bell, Moon, Globe, Shield, Info, Languages } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import MobileLayout from "@/components/MobileLayout";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
+import { enablePushNotifications, disablePushNotifications } from "@/lib/push";
 import { cn } from "@/lib/utils";
 
 interface ToggleItemProps {
@@ -50,6 +53,7 @@ function loadSettings() {
 const Settings = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const saved = loadSettings();
 
   const [notifAulas,    setNotifAulas]    = useState(saved.notifAulas    ?? true);
@@ -67,6 +71,27 @@ const Settings = () => {
     setter(v);
     save(key, v);
   };
+
+  // Toggle de NOTIFICAÇÃO: ligar pede permissão ao sistema e registra o token
+  // FCM (web ou nativo); desligar o último toggle remove o token do Supabase,
+  // para o backend parar de enviar para este dispositivo (src/lib/push.ts).
+  const notifToggle =
+    (setter: (v: boolean) => void, key: string, otherTogglesOn: boolean[]) =>
+    async (v: boolean) => {
+      setter(v);
+      save(key, v);
+      if (v) {
+        const ok = await enablePushNotifications(user?.id ?? null);
+        if (!ok) {
+          // Permissão negada ou Firebase não configurado: desfaz o toggle.
+          setter(false);
+          save(key, false);
+          toast.error("Não foi possível ativar as notificações. Verifique a permissão nas configurações do navegador/sistema.");
+        }
+      } else if (!otherTogglesOn.some(Boolean)) {
+        void disablePushNotifications();
+      }
+    };
 
   return (
     <MobileLayout>
@@ -101,19 +126,19 @@ const Settings = () => {
               label={t("settings.newLessons")}
               description={t("settings.newLessonsDesc")}
               checked={notifAulas}
-              onChange={toggle(setNotifAulas, "notifAulas")}
+              onChange={notifToggle(setNotifAulas, "notifAulas", [notifProgress, notifPromo])}
             />
             <ToggleItem
               label={t("settings.weeklyProgress")}
               description={t("settings.weeklyProgressDesc")}
               checked={notifProgress}
-              onChange={toggle(setNotifProgress, "notifProgress")}
+              onChange={notifToggle(setNotifProgress, "notifProgress", [notifAulas, notifPromo])}
             />
             <ToggleItem
               label={t("settings.promos")}
               description={t("settings.promosDesc")}
               checked={notifPromo}
-              onChange={toggle(setNotifPromo, "notifPromo")}
+              onChange={notifToggle(setNotifPromo, "notifPromo", [notifAulas, notifProgress])}
             />
           </div>
         </div>
@@ -156,12 +181,16 @@ const Settings = () => {
                 <p className="text-sm text-muted-foreground">{item.value}</p>
               </div>
             ))}
-            <div className="flex items-center justify-between py-3">
+            <button
+              type="button"
+              onClick={() => navigate("/privacidade")}
+              className="flex w-full items-center justify-between py-3"
+            >
               <div className="flex items-center gap-2">
                 <Shield size={14} className="text-muted-foreground" />
                 <p className="text-sm text-foreground">{t("settings.privacy")}</p>
               </div>
-            </div>
+            </button>
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2">
                 <Globe size={14} className="text-muted-foreground" />

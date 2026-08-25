@@ -116,7 +116,9 @@ export function useUpdateUserStatus() {
   return useMutation({
     mutationFn: async ({ userId, status }: { userId: string; status: "ativo" | "inativo" | "pendente" }) => {
       if (isSupabaseUser(userId)) {
-        await supabase.from("profiles").update({ status }).eq("id", userId);
+        const { error } = await supabase.from("profiles").update({ status }).eq("id", userId);
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
       } else {
         const user = mockUsers.find((u) => u.id === userId);
         if (user) user.status = status;
@@ -136,7 +138,8 @@ export function useUpdateUser() {
       userId: string; name: string; email: string; avatarUrl: string;
     }) => {
       if (isSupabaseUser(userId)) {
-        await supabase.from("profiles").update({ name, email, avatar_url: avatarUrl || undefined }).eq("id", userId);
+        const { error } = await supabase.from("profiles").update({ name, email, avatar_url: avatarUrl || undefined }).eq("id", userId);
+        if (error) throw error;
       } else {
         const user = mockUsers.find((u) => u.id === userId);
         if (user) { user.name = name; user.email = email; if (avatarUrl) user.avatar = avatarUrl; }
@@ -151,7 +154,8 @@ export function useUpdateUserPlan() {
   return useMutation({
     mutationFn: async ({ userId, plan }: { userId: string; plan: string }) => {
       if (isSupabaseUser(userId)) {
-        await supabase.from("profiles").update({ plan_name: plan }).eq("id", userId);
+        const { error } = await supabase.from("profiles").update({ plan_name: plan }).eq("id", userId);
+        if (error) throw error;
       } else {
         const user = mockUsers.find((u) => u.id === userId);
         if (user) user.plan = plan;
@@ -202,7 +206,11 @@ export function useUpdatePaymentStatus() {
     mutationFn: async ({ paymentId, status }: { paymentId: string; status: "pago" | "pendente" | "falhou" }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("payments").update({ status }).eq("id", paymentId);
-        if (!error) return;
+        // Em modo Supabase NÃO caímos para o mock em caso de erro: isso
+        // mascarava falhas reais e a UI exibia sucesso sem salvar nada.
+        // Propaga o erro para o onError da mutation (toast de erro).
+        if (error) throw error;
+        return;
       }
       const payment = mockPayments.find((p) => p.id === paymentId);
       if (payment) payment.status = status;
@@ -254,7 +262,9 @@ export function useToggleVideoVisibility() {
     mutationFn: async ({ videoId, visible }: { videoId: string; visible: boolean }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("videos").update({ visible }).eq("id", videoId);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const video = mockVideos.find((v) => v.id === videoId);
       if (video) video.visible = visible;
@@ -278,7 +288,9 @@ export function useToggleVideoLock() {
           unlock_by_progress: unlockByProgress,
           required_progress:  requiredProgress,
         }).eq("id", videoId);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const video = mockVideos.find((v) => v.id === videoId);
       if (video) { video.unlockByProgress = unlockByProgress; video.requiredProgress = requiredProgress; }
@@ -296,7 +308,9 @@ export function useUpdateVideoThumbnail() {
     mutationFn: async ({ videoId, thumbnail }: { videoId: string; thumbnail: string }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("videos").update({ thumbnail }).eq("id", videoId);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const video = mockVideos.find((v) => v.id === videoId);
       if (video) video.thumbnail = thumbnail;
@@ -391,7 +405,9 @@ export function useDeleteVideo() {
     mutationFn: async (id: string) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("videos").delete().eq("id", id);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const idx = mockVideos.findIndex((v) => v.id === id);
       if (idx !== -1) mockVideos.splice(idx, 1);
@@ -454,7 +470,9 @@ export function useCreatePlan() {
           features:   data.features,
           active:     data.active,
         });
-        if (!error) return;
+        // Em modo Supabase NÃO caímos para o mock em caso de erro (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       mockPlans.push({
         id, name: data.name, price: data.price, interval: data.interval,
@@ -484,7 +502,9 @@ export function useUpdatePlan() {
           features:   data.features,
           active:     data.active,
         }).eq("id", data.id);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const plan = mockPlans.find((p) => p.id === data.id);
       if (plan) {
@@ -503,7 +523,9 @@ export function useTogglePlanActive() {
     mutationFn: async ({ planId, active }: { planId: string; active: boolean }) => {
       if (!isMockMode()) {
         const { error } = await supabase.from("plans").update({ active }).eq("id", planId);
-        if (!error) return;
+        // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
+        if (error) throw error;
+        return;
       }
       const plan = mockPlans.find((p) => p.id === planId);
       if (plan) plan.active = active;

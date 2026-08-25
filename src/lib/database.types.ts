@@ -14,8 +14,15 @@ export interface Database {
           // instrutor precisava de um cast `any` para compilar.
           login_email: string | null;
           login_password: string | null;
+          // Vínculo com auth.users (migration 015). login_password foi
+          // removida do banco pela mesma migration — permanece aqui apenas
+          // para refletir bancos ainda não migrados (o código acessa via cast).
+          user_id: string | null;
         };
-        Insert: Omit<Database["public"]["Tables"]["instructors"]["Row"], "created_at">;
+        // Permissivo de propósito: as colunas de credenciais (007/015) podem
+        // não existir no banco, e o código refaz o insert sem elas quando o
+        // PostgREST acusa coluna ausente (isMissingColumnError).
+        Insert: Partial<Database["public"]["Tables"]["instructors"]["Row"]> & { id: string; name: string };
         Update: Partial<Database["public"]["Tables"]["instructors"]["Insert"]>;
         Relationships: [];
       };
@@ -65,6 +72,22 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["plans"]["Row"], "created_at">;
         Update: Partial<Database["public"]["Tables"]["plans"]["Insert"]>;
+        Relationships: [];
+      };
+      // Tokens FCM por dispositivo (migration 016). id/created_at têm default;
+      // updated_at é enviado no upsert pelo cliente (src/lib/push.ts).
+      push_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Pick<Database["public"]["Tables"]["push_tokens"]["Row"], "user_id" | "token"> &
+          Partial<Omit<Database["public"]["Tables"]["push_tokens"]["Row"], "user_id" | "token">>;
+        Update: Partial<Database["public"]["Tables"]["push_tokens"]["Row"]>;
         Relationships: [];
       };
       profiles: {
@@ -176,6 +199,40 @@ export interface Database {
           id?: string;
         };
         Update: Partial<Database["public"]["Tables"]["store_banners"]["Insert"]>;
+        Relationships: [];
+      };
+      // Migration 013: comentários de alunos no perfil do instrutor.
+      instructor_comments: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          user_id: string;
+          user_name: string;
+          content: string;
+          created_at: string;
+        };
+        // id e created_at têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["instructor_comments"]["Row"], "id" | "created_at"> & {
+          id?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["instructor_comments"]["Insert"]>;
+        Relationships: [];
+      };
+      // Migration 014: sessões (módulos de vídeos) criadas no Studio.
+      studio_sessions: {
+        Row: {
+          id: string;
+          instructor_id: string;
+          title: string;
+          description: string;
+          video_ids: string[];
+          created_at: string;
+        };
+        // id e created_at têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at"> & {
+          id?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["studio_sessions"]["Insert"]>;
         Relationships: [];
       };
     };
