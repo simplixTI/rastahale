@@ -213,7 +213,15 @@
     "cancelTitle": "Cancel subscription?",
     "cancelDesc": "You'll lose access to the content at the end of the paid period. This can be undone by reactivating your subscription.",
     "cancelConfirm": "Cancel plan",
-    "cancelError": "Error cancelling the plan. Please try again."
+    "cancelError": "Error cancelling the plan. Please try again.",
+    "subscribe": "Subscribe",
+    "manage": "Manage subscription",
+    "openPortal": "Open customer portal",
+    "goToCheckout": "Go to checkout",
+    "changeViaPortalHint": "The change is made in Stripe's secure portal.",
+    "changeViaCheckoutHint": "You'll be redirected to pay for the selected plan.",
+    "checkoutSuccess": "Payment confirmed! Welcome aboard.",
+    "checkoutCancelled": "Payment was not completed."
   },
   "video": {
     "notFound": "Video not found",

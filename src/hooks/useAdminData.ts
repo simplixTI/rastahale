@@ -472,13 +472,14 @@ export function useCreatePlan() {
         });
         // Em modo Supabase NÃO caímos para o mock em caso de erro (ver useCreateVideo).
         if (error) throw error;
-        return;
+        return { id };
       }
       mockPlans.push({
         id, name: data.name, price: data.price, interval: data.interval,
         maxLevel: data.max_level, categories: data.categories,
         features: data.features, active: data.active, usersCount: 0,
       });
+      return { id };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-plans"] }),
   });

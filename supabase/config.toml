@@ -1,0 +1,19 @@
+# Configuração do projeto Supabase. Só as edge functions do Stripe são
+# declaradas aqui — o resto do projeto é gerenciado pelo Dashboard.
+
+project_id = "rastahale"
+
+# stripe-webhook é chamado pelo próprio Stripe (sem sessão de usuário),
+# então precisa desativar a verificação de JWT.
+[functions.stripe-webhook]
+verify_jwt = false
+
+# As demais funções exigem JWT (padrão), pois o cliente precisa estar logado.
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.create-portal]
+verify_jwt = true
+
+[functions.admin-sync-plan]
+verify_jwt = true

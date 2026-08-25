@@ -1,103 +1,97 @@
-import { useState } from "react";
-import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check, ExternalLink } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile, usePlans, useUserPayments, useUpdatePlanName } from "@/hooks/useProfile";
-import { useProfileOverride } from "@/contexts/ProfileContext";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { useProfile, usePlans, useUserPayments } from "@/hooks/useProfile";
+import { useCheckout, useBillingPortal } from "@/hooks/useStripe";
 import { useLabels } from "@/i18n/labels";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-/** true para usuários reais do Supabase Auth (id UUID); mock usa ids "u-…". */
-function isSupabaseUser(userId: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-}
-
-/** Data da próxima cobrança a partir do último pagamento e do intervalo. */
-function nextBillingDate(lastDateStr: string, interval: string): Date {
-  const date = new Date(lastDateStr + "T00:00:00");
-  if (interval === "mensal") date.setMonth(date.getMonth() + 1);
-  else if (interval === "trimestral") date.setMonth(date.getMonth() + 3);
-  else if (interval === "anual") date.setFullYear(date.getFullYear() + 1);
-  return date;
-}
 
 const MyPlan = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { t }    = useTranslation();
   const labels   = useLabels();
   const { data: profile } = useProfile(user?.id ?? "");
   const { data: plans = [], isLoading: plansLoading } = usePlans();
   const { data: userPayments = [] } = useUserPayments(user?.id ?? "");
-  const updatePlanName = useUpdatePlanName();
-  const { override, updateOverride } = useProfileOverride();
   const queryClient = useQueryClient();
 
-  const [showChangePlan, setShowChangePlan] = useState(false);
-  const [showCancel, setShowCancel] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [changing, setChanging] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const checkout      = useCheckout();
+  const billingPortal = useBillingPortal();
 
-  const planName = override.planName ?? profile?.planName ?? "Premium";
-  const isCancelled = override.planCancelled ?? false;
-  const plan = plans.find((p) => p.name === planName) ?? plans[0];
+  const [showChangePlan, setShowChangePlan] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+
+  const planName = profile?.planName ?? "Básico";
+  const plan     = plans.find((p) => p.name === planName) ?? plans[0];
   const otherPlans = plans.filter((p) => p.name !== plan?.name);
 
-  const lastPayment = userPayments[0];
-  const nextBilling = lastPayment && plan
-    ? labels.longDate(nextBillingDate(lastPayment.date, plan.interval))
+  const hasActiveSubscription = !!profile?.stripeSubscriptionId
+    && (profile.subscriptionStatus === "active" || profile.subscriptionStatus === "trialing");
+
+  const isCancelled = profile?.status === "inativo" || profile?.subscriptionStatus === "canceled";
+
+  const nextBilling = profile?.currentPeriodEnd
+    ? labels.longDate(new Date(profile.currentPeriodEnd))
     : "—";
 
   const isPremium = plan?.name?.toLowerCase().includes("premium") ?? false;
 
-  const handleChangePlan = async () => {
-    if (!selectedPlanId || !user) return;
-    const newPlan = plans.find((p) => p.id === selectedPlanId);
-    if (!newPlan) return;
-    setChanging(true);
+  // Retorno do Stripe Checkout — mostra toast e atualiza o perfil.
+  // O status real vem do webhook, então damos um refetch com atraso pra
+  // pegar a propagação (o webhook costuma chegar em <2s).
+  useEffect(() => {
+    const status = searchParams.get("checkout");
+    if (!status) return;
+    if (status === "success") {
+      toast.success(t("plan.checkoutSuccess"));
+      // Refetch em duas ondas: rápido pra UX otimista, e um mais lento
+      // pra garantir que o webhook já rodou.
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-payments", user?.id] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+        queryClient.invalidateQueries({ queryKey: ["user-payments", user?.id] });
+      }, 3000);
+    } else if (status === "cancelled") {
+      toast.info(t("plan.checkoutCancelled"));
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, queryClient, user?.id, t]);
+
+  const openCheckout = async (planId: string) => {
+    if (!planId) return;
     try {
-      await updatePlanName.mutateAsync({ userId: user.id, planName: newPlan.name });
-      // Reativação: o cancelamento grava status "inativo" no perfil — volta para "ativo".
-      if (isSupabaseConfigured && isSupabaseUser(user.id)) {
-        await supabase.from("profiles").update({ status: "ativo" }).eq("id", user.id);
-        queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      }
-      updateOverride({ planName: newPlan.name, planCancelled: false });
-    } finally {
-      setChanging(false);
-      setShowChangePlan(false);
-      setSelectedPlanId(null);
+      const url = await checkout.mutateAsync(planId);
+      window.location.href = url;
+    } catch (err) {
+      toast.error((err as Error).message || t("plan.cancelError"));
     }
   };
 
-  const handleCancelPlan = async () => {
-    if (!user) return;
-    setCancelling(true);
+  const openPortal = async () => {
     try {
-      // Cancelamento real: marca o perfil como inativo no Supabase. Sem Supabase
-      // configurado, mantém o comportamento local (override em sessionStorage).
-      if (isSupabaseConfigured && isSupabaseUser(user.id)) {
-        const { error } = await supabase
-          .from("profiles")
-          .update({ status: "inativo" })
-          .eq("id", user.id);
-        if (error) throw error;
-        queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      }
-      updateOverride({ planCancelled: true });
-      setShowCancel(false);
-    } catch {
-      toast.error(t("plan.cancelError"));
-    } finally {
-      setCancelling(false);
+      const url = await billingPortal.mutateAsync();
+      window.location.href = url;
+    } catch (err) {
+      toast.error((err as Error).message || t("plan.cancelError"));
     }
+  };
+
+  const handleConfirmChoice = () => {
+    if (!selectedPlanId) return;
+    setShowChangePlan(false);
+    // Se já tem assinatura ativa, troca de plano acontece no portal Stripe.
+    // Sem assinatura: abre checkout pro plano escolhido.
+    if (hasActiveSubscription) openPortal();
+    else openCheckout(selectedPlanId);
+    setSelectedPlanId(null);
   };
 
   if (plansLoading || !plan) {
@@ -107,6 +101,8 @@ const MyPlan = () => {
       </div>
     );
   }
+
+  const busyExternal = checkout.isPending || billingPortal.isPending;
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
@@ -156,7 +152,7 @@ const MyPlan = () => {
         </div>
 
         {/* Next billing */}
-        {!isCancelled && (
+        {!isCancelled && hasActiveSubscription && (
           <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
             <div className="rounded-full bg-primary/10 p-2.5">
               <Calendar size={18} className="text-primary" />
@@ -191,28 +187,54 @@ const MyPlan = () => {
 
         {/* Actions */}
         <div className="space-y-2">
-          <button
-            onClick={() => { setSelectedPlanId(null); setShowChangePlan(true); }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            <RefreshCw size={15} />
-            {t("plan.change")}
-          </button>
-
-          {!isCancelled && (
+          {/* Sem assinatura ativa → Assinar (abre checkout do plano atual) */}
+          {!hasActiveSubscription && (
             <button
-              onClick={() => setShowCancel(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={() => openCheckout(plan.id)}
+              disabled={busyExternal}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
             >
-              <XCircle size={15} />
-              {t("plan.cancel")}
+              {busyExternal ? (
+                <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
+              ) : (
+                <>
+                  <CreditCard size={15} />
+                  {t("plan.subscribe")}
+                </>
+              )}
             </button>
           )}
 
-          {isCancelled && (
+          {/* Trocar plano (checkout ou portal, decidido dentro do handler) */}
+          {otherPlans.length > 0 && (
             <button
-              onClick={() => { setSelectedPlanId(plan.id); setShowChangePlan(true); }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 py-3 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+              onClick={() => { setSelectedPlanId(null); setShowChangePlan(true); }}
+              disabled={busyExternal}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-foreground disabled:opacity-60"
+            >
+              <RefreshCw size={15} />
+              {t("plan.change")}
+            </button>
+          )}
+
+          {/* Gerenciar / cancelar → sempre pelo portal Stripe */}
+          {hasActiveSubscription && (
+            <button
+              onClick={openPortal}
+              disabled={busyExternal}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-foreground disabled:opacity-60"
+            >
+              <ExternalLink size={15} />
+              {t("plan.manage")}
+            </button>
+          )}
+
+          {/* Sem assinatura ativa e status cancelado → mostrar reativar */}
+          {!hasActiveSubscription && isCancelled && (
+            <button
+              onClick={() => openCheckout(plan.id)}
+              disabled={busyExternal}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 py-3 text-sm font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-60"
             >
               <RefreshCw size={15} />
               {t("plan.reactivate")}
@@ -255,7 +277,7 @@ const MyPlan = () => {
         )}
       </div>
 
-      {/* Sheet — Trocar Plano */}
+      {/* Sheet — Escolher plano (checkout ou portal) */}
       <Sheet open={showChangePlan} onOpenChange={setShowChangePlan}>
         <SheetContent side="bottom" className="bg-background border-border rounded-t-2xl px-4 pb-8">
           <SheetHeader className="mb-4">
@@ -312,50 +334,33 @@ const MyPlan = () => {
             })}
           </div>
 
+          {/* Aviso de qual fluxo será usado ao confirmar. */}
+          {hasActiveSubscription ? (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              {t("plan.changeViaPortalHint")}
+            </p>
+          ) : (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              {t("plan.changeViaCheckoutHint")}
+            </p>
+          )}
+
           <button
-            onClick={handleChangePlan}
-            disabled={!selectedPlanId || changing}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-40 transition-opacity"
+            onClick={handleConfirmChoice}
+            disabled={!selectedPlanId || busyExternal}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-40 transition-opacity"
           >
-            {changing ? (
+            {busyExternal ? (
               <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
             ) : (
-              t("plan.confirmChange")
+              t(hasActiveSubscription ? "plan.openPortal" : "plan.goToCheckout")
             )}
           </button>
         </SheetContent>
       </Sheet>
 
-      {/* Dialog — Cancelar */}
-      <Dialog open={showCancel} onOpenChange={setShowCancel}>
-        <DialogContent className="bg-background border-border max-w-[360px] mx-auto rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">{t("plan.cancelTitle")}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {t("plan.cancelDesc")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 mt-2">
-            <button
-              onClick={() => setShowCancel(false)}
-              className="flex-1 rounded-xl border border-border bg-card py-2.5 text-sm font-medium text-foreground"
-            >
-              {t("common.back")}
-            </button>
-            <button
-              onClick={handleCancelPlan}
-              disabled={cancelling}
-              className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-bold text-white disabled:opacity-60 flex items-center justify-center"
-            >
-              {cancelling ? (
-                <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              ) : (
-                t("plan.cancelConfirm")
-              )}
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Aviso: Dialog interno de cancelar foi removido — cancelamento acontece no portal Stripe. */}
+
     </div>
   );
 };

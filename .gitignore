@@ -45,3 +45,10 @@ supabase/.temp/
 
 # Cópia aninhada do projeto (não versionar)
 rasta-wave-flow-main/
+
+# Capturas geradas para o Play Console (uso pontual, ficam no dashboard da loja)
+screenshots/
+
+# Saída do playwright test (traces, reports, screenshots de falhas)
+test-results/
+playwright-report/

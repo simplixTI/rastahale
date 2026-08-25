@@ -213,7 +213,15 @@
     "cancelTitle": "¿Cancelar suscripción?",
     "cancelDesc": "Perderás el acceso al contenido al final del período pagado. Puedes revertirlo reactivando tu suscripción.",
     "cancelConfirm": "Cancelar plan",
-    "cancelError": "Error al cancelar el plan. Inténtalo de nuevo."
+    "cancelError": "Error al cancelar el plan. Inténtalo de nuevo.",
+    "subscribe": "Suscribirme",
+    "manage": "Gestionar suscripción",
+    "openPortal": "Abrir portal del cliente",
+    "goToCheckout": "Ir al pago",
+    "changeViaPortalHint": "El cambio se realiza en el portal seguro de Stripe.",
+    "changeViaCheckoutHint": "Serás redirigido al pago del plan seleccionado.",
+    "checkoutSuccess": "¡Pago confirmado! Bienvenido(a).",
+    "checkoutCancelled": "El pago no se completó."
   },
   "video": {
     "notFound": "Video no encontrado",

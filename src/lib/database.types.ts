@@ -69,8 +69,14 @@ export interface Database {
           categories: string[];
           max_level: "Iniciante" | "Intermediário" | "Avançado";
           created_at: string;
+          // Adicionadas pela migration 018 (Stripe). Podem não existir em
+          // bancos ainda não migrados — todos os acessos toleram null.
+          stripe_product_id: string | null;
+          stripe_price_id: string | null;
+          stripe_price_history: string[] | null;
         };
-        Insert: Omit<Database["public"]["Tables"]["plans"]["Row"], "created_at">;
+        Insert: Omit<Database["public"]["Tables"]["plans"]["Row"], "created_at" | "stripe_product_id" | "stripe_price_id" | "stripe_price_history"> &
+          Partial<Pick<Database["public"]["Tables"]["plans"]["Row"], "stripe_product_id" | "stripe_price_id" | "stripe_price_history">>;
         Update: Partial<Database["public"]["Tables"]["plans"]["Insert"]>;
         Relationships: [];
       };
@@ -103,6 +109,11 @@ export interface Database {
           last_access: string;
           videos_watched: number;
           total_hours: number;
+          // Migration 018 — Stripe. Null em bancos ainda não migrados.
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          subscription_status: string | null;
+          current_period_end: string | null;
         };
         // Só id, email e name são obrigatórios; o resto tem default no banco
         // (migration 001). Exigir tudo fazia o insert de um perfil novo, que
@@ -118,13 +129,18 @@ export interface Database {
           user_id: string;
           user_name: string;
           amount: number;
-          method: "PIX" | "Cartão" | "Boleto";
+          // Migration 018 amplia o enum para incluir "Stripe".
+          method: "PIX" | "Cartão" | "Boleto" | "Stripe";
           status: "pago" | "pendente" | "falhou";
           date: string;
           plan_name: string;
           created_at: string;
+          stripe_invoice_id: string | null;
+          stripe_subscription_id: string | null;
+          stripe_payment_intent: string | null;
         };
-        Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "created_at">;
+        Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "created_at" | "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent"> &
+          Partial<Pick<Database["public"]["Tables"]["payments"]["Row"], "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent">>;
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
         Relationships: [];
       };

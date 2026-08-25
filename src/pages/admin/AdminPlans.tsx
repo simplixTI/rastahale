@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Eye, EyeOff, Edit2, Plus, CheckCircle, Users, Crown, ChevronDown, ChevronUp } from "lucide-react";
+import { Eye, EyeOff, Edit2, Plus, CheckCircle, Users, Crown, ChevronDown, ChevronUp, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminPlans, useTogglePlanActive, useCreatePlan, useUpdatePlan } from "@/hooks/useAdminData";
+import { useSyncPlanWithStripe } from "@/hooks/useStripe";
 import { videoCategories } from "@/data/mockData";
 import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,19 @@ const AdminPlans = () => {
   const toggleActive = useTogglePlanActive();
   const createPlan   = useCreatePlan();
   const updatePlan   = useUpdatePlan();
+  const syncStripe   = useSyncPlanWithStripe();
+
+  // Após criar/editar um plano, tenta sincronizar com o Stripe.
+  // Erro aqui é toast informativo, não bloqueia — o admin pode sincronizar
+  // depois via botão. O plano no banco sempre é a fonte da verdade.
+  const syncAfter = async (planId: string) => {
+    try {
+      await syncStripe.mutateAsync(planId);
+      toast.success("Sincronizado com Stripe");
+    } catch (err) {
+      toast.warning(`Salvo, mas Stripe falhou: ${(err as Error).message}`);
+    }
+  };
 
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [showCreate,   setShowCreate]   = useState(false);
@@ -41,7 +55,14 @@ const AdminPlans = () => {
         onSubmit={(data) =>
           createPlan.mutate(
             { name: data.name, price: data.price, interval: data.interval, max_level: data.maxLevel, categories: data.categories, features: data.features, active: data.active },
-            { onSuccess: () => { toast.success("Plano criado"); setShowCreate(false); }, onError: () => toast.error("Erro ao criar plano") }
+            {
+              onSuccess: async (result) => {
+                toast.success("Plano criado");
+                setShowCreate(false);
+                if (result?.id) await syncAfter(result.id);
+              },
+              onError: () => toast.error("Erro ao criar plano"),
+            },
           )
         }
         isPending={createPlan.isPending}
@@ -56,7 +77,15 @@ const AdminPlans = () => {
           if (!editingPlan) return;
           updatePlan.mutate(
             { id: editingPlan.id, name: data.name, price: data.price, interval: data.interval, max_level: data.maxLevel, categories: data.categories, features: data.features, active: data.active },
-            { onSuccess: () => { toast.success("Plano atualizado"); setEditingPlan(null); }, onError: () => toast.error("Erro ao atualizar plano") }
+            {
+              onSuccess: async () => {
+                toast.success("Plano atualizado");
+                const planId = editingPlan.id;
+                setEditingPlan(null);
+                await syncAfter(planId);
+              },
+              onError: () => toast.error("Erro ao atualizar plano"),
+            },
           );
         }}
         isPending={updatePlan.isPending}
@@ -196,9 +225,17 @@ const AdminPlans = () => {
                       </button>
                       <button
                         onClick={() => setEditingPlan(p)}
-                        className="flex flex-1 items-center justify-center gap-1 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/50 transition-colors"
+                        className="flex flex-1 items-center justify-center gap-1 py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary/50 transition-colors border-r border-border"
                       >
-                        <Edit2 size={14} /> Editar Plano
+                        <Edit2 size={14} /> Editar
+                      </button>
+                      <button
+                        onClick={() => syncAfter(p.id)}
+                        disabled={syncStripe.isPending}
+                        className="flex flex-1 items-center justify-center gap-1 py-2.5 text-xs font-medium text-primary hover:bg-secondary/50 transition-colors disabled:opacity-50"
+                        title="Cria/atualiza produto e preço no Stripe pra este plano"
+                      >
+                        <RefreshCcw size={14} /> Sync Stripe
                       </button>
                     </div>
                   </div>

@@ -27,6 +27,10 @@ export interface Profile {
   lastAccess: string;
   videosWatched: number;
   totalHours: number;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus?: string | null;
+  currentPeriodEnd?: string | null;
 }
 
 const PROGRESS_KEY = "rasta_progress";
@@ -114,17 +118,21 @@ export function useProfile(userId: string) {
             .single();
           if (!error && data) {
             return {
-              id:            data.id,
-              email:         data.email,
-              name:          data.name,
-              avatarUrl:     data.avatar_url ?? "",
-              planName:      data.plan_name ?? "Básico",
-              status:        data.status as Profile["status"],
-              role:          data.role as Profile["role"],
-              joinDate:      data.join_date,
-              lastAccess:    data.last_access,
-              videosWatched: data.videos_watched ?? 0,
-              totalHours:    Number(data.total_hours ?? 0),
+              id:                   data.id,
+              email:                data.email,
+              name:                 data.name,
+              avatarUrl:            data.avatar_url ?? "",
+              planName:             data.plan_name ?? "Básico",
+              status:               data.status as Profile["status"],
+              role:                 data.role as Profile["role"],
+              joinDate:             data.join_date,
+              lastAccess:           data.last_access,
+              videosWatched:        data.videos_watched ?? 0,
+              totalHours:           Number(data.total_hours ?? 0),
+              stripeCustomerId:     data.stripe_customer_id ?? null,
+              stripeSubscriptionId: data.stripe_subscription_id ?? null,
+              subscriptionStatus:   data.subscription_status ?? null,
+              currentPeriodEnd:     data.current_period_end ?? null,
             } as Profile;
           }
         } catch { /* fallback */ }
