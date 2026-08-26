@@ -3,7 +3,7 @@
 //
 // O portal permite o usuário: ver histórico, trocar cartão, cancelar assinatura,
 // baixar recibos. Toda mudança feita lá é refletida via webhook.
-import { stripe, APP_URL } from "../_shared/stripe.ts";
+import { stripe, resolveAppUrl } from "../_shared/stripe.ts";
 import { supabaseAdmin, requireUser } from "../_shared/supabase.ts";
 import { handleCorsPreflight, json } from "../_shared/cors.ts";
 
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer:   profile.stripe_customer_id,
-      return_url: `${APP_URL}/perfil/plano`,
+      return_url: `${resolveAppUrl(req)}/perfil/plano`,
     });
 
     return json({ url: session.url });

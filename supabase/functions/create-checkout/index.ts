@@ -8,7 +8,7 @@
 //  3. Garante que existe um Stripe customer pro usuário (cria se necessário).
 //  4. Cria a sessão de checkout em modo `subscription`.
 //  5. Devolve a URL — o cliente redireciona (window.location.href = url).
-import { stripe, APP_URL } from "../_shared/stripe.ts";
+import { stripe, resolveAppUrl } from "../_shared/stripe.ts";
 import { supabaseAdmin, requireUser } from "../_shared/supabase.ts";
 import { handleCorsPreflight, json } from "../_shared/cors.ts";
 
@@ -56,14 +56,15 @@ Deno.serve(async (req) => {
     }
 
     // Cria a sessão de checkout
+    const appUrl = resolveAppUrl(req);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
       // Cartão + PIX. Se não tiver PIX ativado na conta, o Stripe simplesmente ignora.
       payment_method_types: ["card"],
-      success_url: `${APP_URL}/perfil/plano?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${APP_URL}/perfil/plano?checkout=cancelled`,
+      success_url: `${appUrl}/perfil/plano?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${appUrl}/perfil/plano?checkout=cancelled`,
       allow_promotion_codes: true,
       subscription_data: {
         metadata: {

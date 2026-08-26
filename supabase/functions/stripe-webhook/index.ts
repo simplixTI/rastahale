@@ -55,8 +55,12 @@ Deno.serve(async (req) => {
 
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        const sub = event.data.object;
-        await syncSubscription(sub);
+        // Refaz o retrieve pra garantir o estado ATUAL da subscription.
+        // Eventos podem chegar fora de ordem (o `created` pode chegar depois
+        // do `updated` de active), e o payload do evento é snapshot antigo.
+        const eventSub = event.data.object;
+        const fresh = await stripe.subscriptions.retrieve(eventSub.id).catch(() => eventSub);
+        await syncSubscription(fresh);
         break;
       }
 
@@ -102,30 +106,50 @@ Deno.serve(async (req) => {
 
 async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
   const customerId = sub.customer as string;
-  const priceId = sub.items?.data?.[0]?.price?.id;
-  if (!priceId) return;
+  const item = sub.items?.data?.[0];
+  const priceId = item?.price?.id;
+  if (!priceId) {
+    console.warn("[stripe-webhook] subscription sem price_id:", sub.id);
+    return;
+  }
 
   // Descobre o plano via price_id (inclui histórico pra assinaturas legadas).
-  const { data: planIdRow } = await supabaseAdmin
+  const { data: planIdRow, error: rpcErr } = await supabaseAdmin
     .rpc("plan_id_by_stripe_price", { price_id: priceId });
+  if (rpcErr) console.warn("[stripe-webhook] RPC plan_id_by_stripe_price:", rpcErr.message);
 
   const planId = typeof planIdRow === "string" ? planIdRow : null;
   const { data: plan } = planId
     ? await supabaseAdmin.from("plans").select("name").eq("id", planId).maybeSingle()
     : { data: null };
 
-  await supabaseAdmin
+  // API 2025+: current_period_end saiu do topo da subscription e foi para o item.
+  // Fallback: usa o topo se ainda existir (versões antigas ou compatibilidade).
+  // deno-lint-ignore no-explicit-any
+  const periodEndUnix = (item as any)?.current_period_end ?? (sub as any).current_period_end;
+  const currentPeriodEnd = typeof periodEndUnix === "number"
+    ? new Date(periodEndUnix * 1000).toISOString()
+    : null;
+
+  const updates: Record<string, unknown> = {
+    stripe_subscription_id: sub.id,
+    subscription_status:    sub.status,
+    status:                 sub.status === "active" || sub.status === "trialing" ? "ativo" : "inativo",
+  };
+  if (plan?.name) updates.plan_name = plan.name;
+  if (currentPeriodEnd) updates.current_period_end = currentPeriodEnd;
+
+  const { error: updateErr } = await supabaseAdmin
     .from("profiles")
-    .update({
-      stripe_subscription_id: sub.id,
-      subscription_status:    sub.status,
-      current_period_end:     new Date(sub.current_period_end * 1000).toISOString(),
-      plan_name:              plan?.name ?? undefined,
-      status:                 sub.status === "active" || sub.status === "trialing" ? "ativo" : "inativo",
-    })
+    .update(updates)
     .eq("stripe_customer_id", customerId);
 
-  console.log("[stripe-webhook] assinatura sincronizada:", sub.id, sub.status);
+  if (updateErr) {
+    console.error("[stripe-webhook] falha ao atualizar profile:", updateErr.message, updates);
+    throw updateErr;
+  }
+
+  console.log("[stripe-webhook] assinatura sincronizada:", sub.id, sub.status, "plan:", plan?.name ?? "(não encontrado)");
 }
 
 async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou"): Promise<void> {
