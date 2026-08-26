@@ -7,6 +7,10 @@
     {
       "source": "/__/firebase/:path*",
       "destination": "https://rastahale-eae5d.firebaseapp.com/__/firebase/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
