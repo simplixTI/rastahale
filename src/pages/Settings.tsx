@@ -225,12 +225,16 @@ const Settings = () => {
                 <p className="text-sm text-foreground">{t("settings.privacy")}</p>
               </div>
             </button>
-            <div className="flex items-center justify-between py-3">
+            <button
+              type="button"
+              onClick={() => navigate("/termos")}
+              className="flex w-full items-center justify-between py-3"
+            >
               <div className="flex items-center gap-2">
                 <Globe size={14} className="text-muted-foreground" />
                 <p className="text-sm text-foreground">{t("settings.terms")}</p>
               </div>
-            </div>
+            </button>
             {/* Exigência da App Store (5.1.1): app com criação de conta precisa
                 deixar o usuário iniciar a exclusão de dentro do app. */}
             <button

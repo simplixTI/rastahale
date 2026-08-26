@@ -44,6 +44,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DeleteAccount from "./pages/DeleteAccount";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +138,7 @@ const AppRoutes = () => {
         <Route path="/instalar" element={<Install />} />
         <Route path="/privacidade" element={<PrivacyPolicy />} />
         <Route path="/excluir-conta" element={<DeleteAccount />} />
+        <Route path="/termos" element={<TermsOfService />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showTabBar  && <BottomTabBar />}
