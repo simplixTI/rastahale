@@ -13,12 +13,16 @@ test.use({
   userAgent: devices["Pixel 7"].userAgent,
   hasTouch: true,
   isMobile: true,
+  colorScheme: "light",
 });
 
 test("captura telas do app para o Play Console", async ({ page }) => {
   test.setTimeout(120_000);
 
+  // Garante tema light mesmo se algum profile antigo tiver 'dark' salvo
   await page.goto("/login");
+  await page.evaluate(() => localStorage.setItem("rasta_theme", "light"));
+  await page.reload();
   await page.fill('input[type="email"]', "aluno@rastahale.com");
   await page.fill('input[type="password"]', "rasta123");
   await page.click('button[type="submit"]');
