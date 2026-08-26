@@ -8,6 +8,7 @@ import { AuthProvider, useAuth, registerSessionExpiredCallback } from "@/context
 import { ProfileOverrideProvider } from "@/contexts/ProfileContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
+import { useDeepLinks } from "@/hooks/useDeepLinks";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Favorites from "./pages/Favorites";
@@ -85,6 +86,10 @@ const AppRoutes = () => {
 
   // Botão voltar do Android navega no histórico em vez de fechar o app.
   useAndroidBackButton();
+
+  // Deep links: quando o Android abre o app via link do dominio
+  // (ex: Stripe redirect apos pagamento), navega pra rota correspondente.
+  useDeepLinks();
 
   // Redireciona ao login quando a sessão expira.
   // Usa ref para evitar stale closure sem re-registrar a cada render.

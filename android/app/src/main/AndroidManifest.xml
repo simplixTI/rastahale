@@ -18,6 +18,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links (HTTPS) — Android abre o app quando um link do domínio
+                 for tocado. Usado pelo redirect do Stripe Checkout/Portal
+                 (success_url/return_url apontam pro nosso domínio).
+                 Requer /.well-known/assetlinks.json publicado na raiz do
+                 domínio para o autoVerify passar. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="www.rastahalevirtualacademy.com" />
+                <data android:scheme="https"
+                      android:host="rastahalevirtualacademy.com" />
+            </intent-filter>
         </activity>
 
         <provider
