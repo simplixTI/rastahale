@@ -9,8 +9,17 @@
       "destination": "https://rastahale-eae5d.firebaseapp.com/__/firebase/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!\\.well-known/).*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
     }
   ]
 }
