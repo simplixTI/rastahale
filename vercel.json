@@ -1,3 +1,12 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://rastahale-eae5d.firebaseapp.com/__/auth/:path*"
+    },
+    {
+      "source": "/__/firebase/:path*",
+      "destination": "https://rastahale-eae5d.firebaseapp.com/__/firebase/:path*"
+    }
+  ]
 }
