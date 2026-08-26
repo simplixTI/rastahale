@@ -14,15 +14,23 @@
       },
       "oauth_client": [
         {
-          "client_id": "456321222111-2vsfk57s5t6h0b8g4ig5nfjj2clk2dl3.apps.googleusercontent.com",
+          "client_id": "456321222111-7226rkuedvvaa8rak7vvjg646ejst605.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.rastahale.academy",
-            "certificate_hash": "eafe0e66b52afb9878ef8d920fe2b8cafc0d248f"
+            "certificate_hash": "a79f43d136184b72ae2b69d28d53eff45fcba339"
           }
         },
         {
-          "client_id": "456321222111-jraj8f48h9l1ivd7tv9jjguvo9lf1qvo.apps.googleusercontent.com",
+          "client_id": "456321222111-eienmo395gncqnrgq1u637k1s8s4j3i6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rastahale.academy",
+            "certificate_hash": "94dcf0e97ae089e5a7d3ebec3abef1706c3f9c6d"
+          }
+        },
+        {
+          "client_id": "456321222111-mbi7c5142lnrjknn4neg9c96lrogeb5f.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
