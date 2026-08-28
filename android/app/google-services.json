@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "456321222111-2vsfk57s5t6h0b8g4ig5nfjj2clk2dl3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rastahale.academy",
+            "certificate_hash": "eafe0e66b52afb9878ef8d920fe2b8cafc0d248f"
+          }
+        },
+        {
           "client_id": "456321222111-7226rkuedvvaa8rak7vvjg646ejst605.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -27,6 +35,14 @@
           "android_info": {
             "package_name": "com.rastahale.academy",
             "certificate_hash": "94dcf0e97ae089e5a7d3ebec3abef1706c3f9c6d"
+          }
+        },
+        {
+          "client_id": "456321222111-q4riisjq1sp63j0d2e900l4955jdbok2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rastahale.academy",
+            "certificate_hash": "326d8ae4ae1eadd4438d3bd247ee60fe3b72c1c8"
           }
         },
         {
