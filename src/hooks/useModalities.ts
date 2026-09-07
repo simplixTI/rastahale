@@ -29,11 +29,13 @@ export function useModalities() {
     queryFn: async (): Promise<Modality[]> => {
       if (!isMockMode()) {
         const { data, error } = await modalitiesTable().select("*").order("created_at");
-        if (!error && data && data.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (data as any[]).map((m) => ({ id: m.id, label: m.label }));
-        }
-        return DEFAULT_MODALITIES;
+        // Só o ERRO (ex: tabela ainda não existe) cai nos padrões. Lista vazia é
+        // estado legítimo: quer dizer que o admin removeu todas. Tratar vazio como
+        // "sem tabela" fazia a modalidade recém-excluída reaparecer no refetch
+        // seguinte — o delete chegava ao banco, mas a UI ressuscitava o padrão.
+        if (error) return DEFAULT_MODALITIES;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return ((data ?? []) as any[]).map((m) => ({ id: m.id, label: m.label }));
       }
       return [...mockModalities];
     },
