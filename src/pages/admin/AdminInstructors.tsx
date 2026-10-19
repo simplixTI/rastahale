@@ -10,7 +10,8 @@ import {
   KeyRound, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { uploadMedia } from "@/lib/storageUpload";
 import AdminLayout from "@/components/AdminLayout";
 import {
   useAdminInstructors, useCreateInstructor,
@@ -32,19 +33,9 @@ function isMockMode(): boolean {
 }
 
 async function uploadAvatar(file: File, onProgress?: (p: number) => void): Promise<string | null> {
-  const path = `avatars/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const opts: any = {
-    upsert: false,
-    onUploadProgress: onProgress
-      ? ({ loaded, total }: { loaded: number; total: number }) => {
-          if (total) onProgress(Math.round((loaded / total) * 100));
-        }
-      : undefined,
-  };
-  const { error } = await supabase.storage.from("media").upload(path, file, opts);
-  if (error) return null;
-  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+  try {
+    return await uploadMedia(file, "avatars", { onProgress });
+  } catch { return null; }
 }
 
 // ── estilos ───────────────────────────────────────────────────────────────────

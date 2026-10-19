@@ -5,9 +5,8 @@ import MobileLayout from "@/components/MobileLayout";
 import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
-import { useModalities } from "@/hooks/useModalities";
+import { useModules, moduleNames } from "@/hooks/useModules";
 import { useLabels } from "@/i18n/labels";
-import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
 const levels = ["all", "Iniciante", "Intermediário", "Avançado"] as const;
@@ -17,9 +16,9 @@ const Search = () => {
   const { t }    = useTranslation();
   const labels   = useLabels();
   const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
-  const { data: modalities = [] } = useModalities();
-  // Chips de modalidade: "all" + modalidades cadastradas.
-  const categories = ["all", ...modalities.map((m) => m.id)];
+  const { data: modules = [] } = useModules();
+  // Chips de categoria: "all" + categorias (módulos) cadastradas.
+  const categories = ["all", ...moduleNames(modules)];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [level, setLevel] = useState<string>("all");
@@ -28,7 +27,7 @@ const Search = () => {
   const filtered = useMemo(() => {
     return videos.filter((v) => {
       const matchesQuery = !query || v.title.toLowerCase().includes(query.toLowerCase());
-      const matchesCat = category === "all" || v.category === category;
+      const matchesCat = category === "all" || v.subcategory === category;
       const matchesLvl = level === "all" || v.level === level;
       return matchesQuery && matchesCat && matchesLvl;
     });
@@ -73,7 +72,7 @@ const Search = () => {
                       category === c ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                     )}
                   >
-                    {c === "all" ? t("search.allCategories") : getCategoryLabel(c)}
+                    {c === "all" ? t("search.allCategories") : c}
                   </button>
                 ))}
               </div>

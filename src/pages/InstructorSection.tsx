@@ -11,7 +11,6 @@ import { useStudioSessions } from "@/hooks/useStudioSessions";
 import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
-import { getCategoryLabel } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 
 // ── CommentCard ───────────────────────────────────────────────────────────────
@@ -221,7 +220,7 @@ const InstructorSection = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{v.title}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{getCategoryLabel(v.category)} · {v.subcategory}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{v.subcategory}</p>
                     <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",
                       v.level === "Iniciante" ? "bg-emerald-500/20 text-emerald-400" :
                       v.level === "Intermediário" ? "bg-amber-500/20 text-amber-400" : "bg-red-500/20 text-red-400"

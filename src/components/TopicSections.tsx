@@ -38,7 +38,7 @@ function FadeIn({ children, delay = 0 }: { children: ReactNode; delay?: number }
 
 /**
  * Seções de tópicos (posições) na Home. Cada tópico é uma subcategoria/módulo
- * gerenciado no admin (Vídeos → Módulos). Os vídeos são agrupados por
+ * gerenciado no admin (Vídeos → Categorias). Os vídeos são agrupados por
  * `subcategory`; a ordem segue a lista de módulos cadastrada.
  */
 const TopicSections = () => {

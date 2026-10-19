@@ -11,10 +11,11 @@ import {
   useAdminVideos, useCreateVideo, useToggleVideoVisibility,
   useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo,
 } from "@/hooks/useAdminData";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { uploadMedia } from "@/lib/storageUpload";
 import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions";
 import VideoFormModal from "@/components/VideoFormModal";
-import { getLevelColor, getCategoryLabel } from "@/data/mockData";
+import { getLevelColor } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/Logo";
 import {
@@ -31,13 +32,8 @@ function isMockMode(): boolean {
 }
 
 async function uploadFile(file: File, folder: string, onProgress?: (p: number) => void): Promise<string | null> {
-  const path = `${folder}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const opts: any = { upsert: false, onUploadProgress: onProgress ? ({ loaded, total }: { loaded: number; total: number }) => { if (total) onProgress(Math.round((loaded / total) * 100)); } : undefined };
-    const { error } = await supabase.storage.from("media").upload(path, file, opts);
-    if (error) return null;
-    return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+    return await uploadMedia(file, folder, { onProgress });
   } catch { return null; }
 }
 
@@ -98,7 +94,7 @@ function VideoRow({ v, onEdit }: { v: AdminVideo; onEdit: () => void }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">{v.title}</p>
-          <p className="text-[10px] text-muted-foreground">{getCategoryLabel(v.category)} · {v.subcategory}</p>
+          <p className="text-[10px] text-muted-foreground">{v.subcategory}</p>
           <span className={cn("mt-0.5 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold", getLevelColor(v.level))}>{v.level}</span>
         </div>
       </div>

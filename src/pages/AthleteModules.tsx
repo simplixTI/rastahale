@@ -7,7 +7,6 @@ import { useVideos } from "@/hooks/useVideos";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
 import { totalMinutes } from "@/lib/duration";
-import { getCategoryLabel } from "@/data/mockData";
 
 const AthleteModules = () => {
   const { id }   = useParams<{ id: string }>();
@@ -114,7 +113,6 @@ const AthleteModules = () => {
             {modules.map((mod) => {
               const cover    = mod.videos[0]?.thumbnail;
               const minutes  = totalMinutes(mod.videos.map((v) => v.duration));
-              const category = getCategoryLabel(mod.videos[0]?.category ?? "");
               return (
                 <button
                   key={mod.name}
@@ -131,7 +129,6 @@ const AthleteModules = () => {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-foreground">{mod.name}</p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{category}</p>
                     <div className="mt-1 flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <BookOpen size={10} className="text-primary" />

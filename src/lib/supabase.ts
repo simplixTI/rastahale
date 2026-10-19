@@ -3,8 +3,9 @@ import { Capacitor } from "@capacitor/core";
 import type { Database } from "./database.types";
 
 // Fallback para quando as env vars não estão configuradas (ex: deploy sem .env)
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL     || "https://placeholder.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-anon-key";
+// Exportados para o upload resumível (TUS), que fala direto com o Storage.
+export const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL     || "https://placeholder.supabase.co";
+export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "placeholder-anon-key";
 
 /**
  * true quando URL e anon key reais estão presentes no .env.

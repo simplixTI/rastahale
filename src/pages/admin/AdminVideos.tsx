@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreateVideo, useUpdateVideo, useUpdateVideoThumbnail, useDeleteVideo } from "@/hooks/useAdminData";
-import { getLevelColor, getCategoryLabel } from "@/data/mockData";
+import { getLevelColor } from "@/data/mockData";
 import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
 import VideoFormModal from "@/components/VideoFormModal";
@@ -130,7 +130,7 @@ const AdminVideos = () => {
             onClick={() => navigate("/admin/modulos")}
             className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Layers size={12} /> Módulos
+            <Layers size={12} /> Categorias
           </button>
           <button
             onClick={() => setShowUpload(true)}
@@ -231,7 +231,7 @@ const AdminVideos = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-foreground truncate">{v.title}</p>
-                          <p className="text-[10px] text-muted-foreground">{getCategoryLabel(v.category)} · {v.duration}</p>
+                          <p className="text-[10px] text-muted-foreground">{v.duration}</p>
                           <div className="mt-1 flex items-center gap-1.5">
                             <span className={cn("rounded-full px-2 py-0.5 text-[9px] font-semibold", getLevelColor(v.level))}>
                               {v.level}

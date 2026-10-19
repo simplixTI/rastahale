@@ -8,7 +8,7 @@ import { useInstructor } from "@/hooks/useInstructors";
 import { useToggleFavorite, useUpdateProgress } from "@/hooks/useProgress";
 import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
-import { getLevelColor, getCategoryLabel } from "@/data/mockData";
+import { getLevelColor } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
@@ -239,7 +239,7 @@ const VideoDetail = () => {
 
   const isFav     = video.isFavorite ?? false;
   const isWatched = video.watched ?? false;
-  const related   = allVideos.filter((v) => v.category === video.category && v.id !== video.id).slice(0, 5);
+  const related   = allVideos.filter((v) => v.subcategory === video.subcategory && v.id !== video.id).slice(0, 5);
 
   // Ponto de retomada, em segundos, a partir do progresso salvo.
   const startAt = (() => {
@@ -290,7 +290,7 @@ const VideoDetail = () => {
           <div className="flex-1">
             <h1 className="text-lg font-bold text-foreground">{video.title}</h1>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{getCategoryLabel(video.category)}</span>
+              <span>{video.subcategory}</span>
               <span>·</span>
               <span>{video.duration}</span>
               <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", getLevelColor(video.level))}>

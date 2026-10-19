@@ -4,14 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { uploadMedia, UploadError } from "@/lib/storageUpload";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { videoCategories, type Video } from "@/data/mockData";
-import { useModules, moduleNames } from "@/hooks/useModules";
-import { useModalities } from "@/hooks/useModalities";
+import { type Video } from "@/data/mockData";
+import { useModules, moduleNames, modalityOfModule, DEFAULT_MODALITY } from "@/hooks/useModules";
 import { useInstructors } from "@/hooks/useInstructors";
 
 // Modo demo = Supabase não configurado. O instrutor loga com id "inst-…" (não
@@ -42,26 +42,12 @@ function getVideoDurationFromFile(file: File): Promise<string> {
   });
 }
 
-async function uploadToStorage(
-  file: File,
-  folder: "thumbnails" | "videos",
-  onProgress?: (pct: number) => void,
-): Promise<string | null> {
-  const path = `${folder}/${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const options: any = {
-    upsert: false,
-    // onUploadProgress é suportado pelo Supabase Storage JS v2 para uploads TUS (> 6 MB)
-    onUploadProgress: onProgress
-      ? ({ loaded, total }: { loaded: number; total: number }) => {
-          if (total) onProgress(Math.round((loaded / total) * 100));
-        }
-      : undefined,
-  };
-  const { error } = await supabase.storage.from("media").upload(path, file, options);
-  if (error) return null;
-  const { data } = supabase.storage.from("media").getPublicUrl(path);
-  return data.publicUrl;
+// O Windows/Chrome às vezes entrega MKV/AVI com file.type vazio.
+const VIDEO_EXT = /\.(mp4|m4v|mov|avi|mkv|webm)$/i;
+
+function uploadErrorToast(err: unknown, fallback: string) {
+  if (err instanceof UploadError && err.cancelled) return;
+  toast.error(err instanceof Error && err.message ? err.message : fallback, { duration: 10000 });
 }
 
 const schema = z.object({
@@ -70,8 +56,8 @@ const schema = z.object({
   thumbnail:        z.string().min(1,  "Adicione uma thumbnail"),
   videoUrl:         z.string().optional(),
   duration:         z.string().min(1,  "Ex: 12:30"),
-  category:         z.string().min(1,  "Selecione a modalidade"),
-  subcategory:      z.string().min(1,  "Selecione"),
+  category:         z.string(), // interno: herdado da categoria ao salvar
+  subcategory:      z.string().min(1,  "Selecione uma categoria"),
   level:            z.enum(["Iniciante", "Intermediário", "Avançado"]),
   instructorId:     z.string().min(1,  "Selecione"),
   visible:          z.boolean(),
@@ -106,9 +92,10 @@ interface UploadZoneProps {
   progress?:  number;
   fileName?:  string;
   onFile:     (file: File) => void;
+  onCancel?:  () => void;
 }
 
-function UploadZone({ accept, label, hint, uploading, progress = 0, fileName, onFile }: UploadZoneProps) {
+function UploadZone({ accept, label, hint, uploading, progress = 0, fileName, onFile, onCancel }: UploadZoneProps) {
   const inputRef                = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -121,7 +108,7 @@ function UploadZone({ accept, label, hint, uploading, progress = 0, fileName, on
         e.preventDefault();
         setDragging(false);
         const file = e.dataTransfer.files[0];
-        if (file) onFile(file);
+        if (file && !uploading) onFile(file);
       }}
       className={cn(
         "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-5 transition-colors select-none",
@@ -159,6 +146,16 @@ function UploadZone({ accept, label, hint, uploading, progress = 0, fileName, on
             style={{ width: `${progress}%` }}
           />
         </div>
+      )}
+
+      {uploading && onCancel && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onCancel(); }}
+          className="text-[10px] font-medium text-muted-foreground underline hover:text-foreground"
+        >
+          Cancelar envio
+        </button>
       )}
     </div>
   );
@@ -203,38 +200,33 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     resolver: zodResolver(schema),
     defaultValues: {
       title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
-      category: "jiu-jitsu", subcategory: videoCategories[0],
+      category: DEFAULT_MODALITY, subcategory: "",
       level: "Iniciante", instructorId: instructors[0]?.id ?? "",
       visible: true, unlockByProgress: false, requiredProgress: 50,
     },
   });
 
-  const { data: modules = [] }       = useModules();
-  const { data: modalities = [] }    = useModalities();
-  const selectedCategory = watch("category");
-  // Módulos da modalidade selecionada (fallback para a lista fixa se vazio).
-  const subOptions = (() => {
-    const names = moduleNames(modules, selectedCategory);
-    return names.length ? names : [...videoCategories];
+  // Categoria = um dos módulos cadastrados (lista única, sem modalidade por
+  // cima). Fica em `subcategory`; a modalidade interna (`category`) é herdada
+  // do módulo escolhido na hora de salvar.
+  const { data: modules = [], isSuccess: modulesLoaded } = useModules();
+  const currentSub = watch("subcategory");
+  // Na edição, uma categoria que já foi removida continua listada — senão o
+  // vídeo trocaria de categoria ao salvar sem o admin perceber.
+  const categoryOptions = (() => {
+    const names = moduleNames(modules);
+    return isEdit && currentSub && !names.includes(currentSub) ? [currentSub, ...names] : names;
   })();
 
-  // Ao TROCAR de modalidade, o módulo (subcategoria) atual pode não existir na
-  // nova modalidade — o <select> mostra a 1ª opção mas o valor do form ficaria
-  // com o antigo (salvando o módulo errado). Reseta para a 1ª opção válida.
-  // Ignora a 1ª execução após abrir (para não sobrescrever a subcategoria de um
-  // vídeo em edição).
-  const prevCategory = useRef<string | undefined>(undefined);
-  const currentSub   = watch("subcategory");
+  // Vídeo novo: pré-seleciona a 1ª categoria assim que a lista chega. O valor
+  // precisa estar no form — antes o <select> exibia a 1ª opção, mas o form
+  // gravava um padrão escondido (tela mostrava "Wrestling", salvava "Fundamentos").
   useEffect(() => {
-    if (!open) { prevCategory.current = undefined; return; }
-    if (prevCategory.current === undefined) { prevCategory.current = selectedCategory; return; }
-    if (prevCategory.current !== selectedCategory) {
-      prevCategory.current = selectedCategory;
-      if (subOptions.length && !subOptions.includes(currentSub)) {
-        setValue("subcategory", subOptions[0], { shouldValidate: true });
-      }
+    if (!open || isEdit) return;
+    if (categoryOptions.length && !categoryOptions.includes(currentSub)) {
+      setValue("subcategory", categoryOptions[0], { shouldValidate: true });
     }
-  }, [selectedCategory, open, currentSub, subOptions, setValue]);
+  }, [open, isEdit, categoryOptions, currentSub, setValue]);
 
   // Os instrutores chegam de forma assíncrona: se o valor atual estiver vazio ou
   // apontar para um instrutor que não existe mais (ex: removido), seleciona o
@@ -255,6 +247,17 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const [thumbProgress,  setThumbProgress]  = useState(0);
   const [videoProgress,  setVideoProgress]  = useState(0);
   const [confirmDelete,  setConfirmDelete]  = useState(false);
+  const thumbAbort = useRef<AbortController | null>(null);
+  const videoAbort = useRef<AbortController | null>(null);
+
+  // Fechar o modal (ou sair da página) interrompe envios em andamento — antes
+  // o upload seguia em segundo plano e o resultado se perdia.
+  useEffect(() => {
+    if (open) return;
+    thumbAbort.current?.abort();
+    videoAbort.current?.abort();
+  }, [open]);
+  useEffect(() => () => { thumbAbort.current?.abort(); videoAbort.current?.abort(); }, []);
 
   useEffect(() => {
     if (open) {
@@ -278,13 +281,17 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             }
           : {
               title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
-              category: "jiu-jitsu", subcategory: videoCategories[0],
-              level: "Iniciante", instructorId: instructors[0]?.id ?? "",
+              category: DEFAULT_MODALITY, subcategory: "",
+              // Preenchido pelo efeito de instrutores acima.
+              level: "Iniciante", instructorId: "",
               visible: true, unlockByProgress: false, requiredProgress: 50,
             }
       );
     }
-  }, [open, video, reset, instructors]);
+    // Só ao abrir/trocar de vídeo. Depender de `instructors` resetava o
+    // formulário quando a lista chegava ou era recarregada — com o modal já
+    // em uso, apagava o que foi digitado e escondia o upload em andamento.
+  }, [open, video, reset]);
 
   const unlockByProgress = watch("unlockByProgress");
   const thumbValue       = watch("thumbnail");
@@ -294,6 +301,8 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   async function handleThumbFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem (PNG, JPG, WEBP)"); return; }
     if (file.size > 10 * 1024 * 1024)    { toast.error("Imagem muito grande (máx. 10 MB)"); return; }
+    const controller = new AbortController();
+    thumbAbort.current = controller;
     setThumbUploading(true);
     setThumbProgress(0);
     try {
@@ -303,18 +312,24 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         url = URL.createObjectURL(file);
         setThumbProgress(100);
       } else {
-        url = (await uploadToStorage(file, "thumbnails", setThumbProgress)) ?? "";
-        if (!url) { toast.error("Erro ao enviar thumbnail"); return; }
+        url = await uploadMedia(file, "thumbnails", { onProgress: setThumbProgress, signal: controller.signal });
       }
       setValue("thumbnail", url, { shouldValidate: true });
+    } catch (err) {
+      uploadErrorToast(err, "Erro ao enviar thumbnail");
     } finally {
+      if (thumbAbort.current === controller) thumbAbort.current = null;
       setThumbUploading(false);
     }
   }
 
   async function handleVideoFile(file: File) {
-    if (!file.type.startsWith("video/")) { toast.error("Selecione um arquivo de vídeo"); return; }
-    // Sem limite de tamanho: mock usa blob URL (streaming local), Supabase usa TUS para arquivos grandes
+    if (!file.type.startsWith("video/") && !VIDEO_EXT.test(file.name)) { toast.error("Selecione um arquivo de vídeo"); return; }
+    // A duração sai dos metadados do próprio arquivo — lida já na seleção para
+    // aparecer enquanto o envio (que pode levar minutos) ainda está rodando.
+    getVideoDurationFromFile(file).then((dur) => { if (dur) setValue("duration", dur, { shouldValidate: true }); });
+    const controller = new AbortController();
+    videoAbort.current = controller;
     setVideoUploading(true);
     setVideoProgress(0);
     try {
@@ -323,16 +338,15 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         url = URL.createObjectURL(file);
         setVideoProgress(100);
       } else {
-        url = (await uploadToStorage(file, "videos", setVideoProgress)) ?? "";
-        if (!url) { toast.error("Erro ao enviar vídeo"); return; }
+        // Arquivos grandes sobem em partes (TUS), com progresso real e retomada.
+        url = await uploadMedia(file, "videos", { onProgress: setVideoProgress, signal: controller.signal });
       }
       setValue("videoUrl", url, { shouldValidate: true });
       setVideoFileName(file.name);
-
-      // Arquivo enviado: a duração sai dos metadados do próprio vídeo.
-      const dur = await getVideoDurationFromFile(file);
-      if (dur) setValue("duration", dur, { shouldValidate: true });
+    } catch (err) {
+      uploadErrorToast(err, "Erro ao enviar vídeo");
     } finally {
+      if (videoAbort.current === controller) videoAbort.current = null;
       setVideoUploading(false);
     }
   }
@@ -348,7 +362,12 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+        <form
+          onSubmit={handleSubmit((values) =>
+            // A modalidade interna acompanha a categoria escolhida.
+            onSubmit({ ...values, category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY) }))}
+          className="space-y-3 pt-1"
+        >
 
           {/* Título */}
           <div>
@@ -383,6 +402,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
                 uploading={thumbUploading}
                 progress={thumbProgress}
                 onFile={handleThumbFile}
+                onCancel={() => thumbAbort.current?.abort()}
               />
             )}
 
@@ -444,11 +464,12 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               <UploadZone
                 accept="video/*"
                 label="Clique ou arraste um vídeo"
-                hint="MP4, MOV, AVI, MKV • sem limite de tamanho"
+                hint="MP4, MOV, AVI, MKV"
                 uploading={videoUploading}
                 progress={videoProgress}
                 fileName={videoFileName || undefined}
                 onFile={handleVideoFile}
+                onCancel={() => videoAbort.current?.abort()}
               />
             )}
 
@@ -467,20 +488,19 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             {errors.videoUrl && <p className="mt-0.5 text-[10px] text-red-400">{errors.videoUrl.message}</p>}
           </div>
 
-          {/* Modalidade / Subcategoria */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelCls}>Modalidade</label>
-              <select {...register("category")} className={fieldCls}>
-                {modalities.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Módulo</label>
-              <select {...register("subcategory")} className={fieldCls}>
-                {subOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+          {/* Categoria */}
+          <div>
+            <label className={labelCls}>Categoria</label>
+            {/* Controlado (value): as opções chegam depois do reset; sem isso o
+                select exibia uma opção diferente do valor que seria salvo. */}
+            <select {...register("subcategory")} value={currentSub} className={fieldCls}>
+              {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            {modulesLoaded && categoryOptions.length === 0 ? (
+              <p className="mt-0.5 text-[10px] text-amber-400">Nenhuma categoria cadastrada — crie em Vídeos → Categorias.</p>
+            ) : errors.subcategory && (
+              <p className="mt-0.5 text-[10px] text-red-400">{errors.subcategory.message}</p>
+            )}
           </div>
 
           {/* Nível / Instrutor */}
@@ -496,7 +516,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             {!hideInstructor && (
               <div>
                 <label className={labelCls}>Instrutor</label>
-                <select {...register("instructorId")} className={fieldCls}>
+                <select {...register("instructorId")} value={currentInstructor} className={fieldCls}>
                   {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
                 </select>
               </div>
