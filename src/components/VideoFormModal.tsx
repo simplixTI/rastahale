@@ -6,6 +6,7 @@ import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } f
 import { toast } from "sonner";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, UploadError } from "@/lib/storageUpload";
+import { isBunnyConfigured, uploadVideoToBunny } from "@/lib/bunnyStream";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -337,6 +338,10 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       if (isMockMode()) {
         url = URL.createObjectURL(file);
         setVideoProgress(100);
+      } else if (isBunnyConfigured) {
+        // Bunny Stream: converte para HLS (qualidade adaptativa) e entrega pela CDN.
+        url = await uploadVideoToBunny(file, { onProgress: setVideoProgress, signal: controller.signal });
+        toast.success("Vídeo enviado. O Bunny leva alguns minutos para processá-lo antes de ficar disponível.", { duration: 8000 });
       } else {
         // Arquivos grandes sobem em partes (TUS), com progresso real e retomada.
         url = await uploadMedia(file, "videos", { onProgress: setVideoProgress, signal: controller.signal });
@@ -458,7 +463,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             {videoMode === "url" ? (
               <>
                 <input {...register("videoUrl")} className={fieldCls} placeholder="https://youtube.com/watch?v=… ou URL direta" />
-                <p className="mt-0.5 text-[10px] text-muted-foreground">YouTube, Vimeo ou link direto de MP4</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">YouTube, Vimeo ou link direto de MP4 / HLS (.m3u8)</p>
               </>
             ) : (
               <UploadZone

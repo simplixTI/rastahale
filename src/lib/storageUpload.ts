@@ -17,7 +17,7 @@ export class UploadError extends Error {
   }
 }
 
-interface UploadOptions {
+export interface UploadOptions {
   /** Porcentagem 0–100 dos bytes já enviados. */
   onProgress?: (pct: number) => void;
   /** Abortar interrompe o envio; reenviar o mesmo arquivo retoma de onde parou. */

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { bunnyVideoIdFromUrl, deleteBunnyVideo } from "@/lib/bunnyStream";
 import {
   videos as mockVideos,
   mockUsers,
@@ -404,9 +405,14 @@ export function useDeleteVideo() {
   return useMutation({
     mutationFn: async (id: string) => {
       if (!isMockMode()) {
+        // Lê a URL antes de apagar a linha para remover também o vídeo do Bunny.
+        const { data: row } = await supabase.from("videos").select("video_url").eq("id", id).maybeSingle();
         const { error } = await supabase.from("videos").delete().eq("id", id);
         // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
         if (error) throw error;
+        const bunnyId = bunnyVideoIdFromUrl(row?.video_url);
+        // Melhor esforço: a aula já foi excluída; uma falha só deixa o arquivo no Bunny.
+        if (bunnyId) deleteBunnyVideo(bunnyId).catch(() => { /* órfão no Bunny */ });
         return;
       }
       const idx = mockVideos.findIndex((v) => v.id === id);

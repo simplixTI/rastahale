@@ -252,6 +252,7 @@
     "notFound": "Video no encontrado",
     "noUrl": "URL del video no configurada",
     "noSupport": "Tu navegador no admite la reproducción de video.",
+    "processing": "No se pudo cargar el video. Si se acaba de subir, todavía se está procesando — inténtalo de nuevo en unos minutos.",
     "favorited": "En favoritos",
     "favorite": "Añadir a favoritos",
     "watched": "Visto",

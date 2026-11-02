@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import type Hls from "hls.js";
 import { ArrowLeft, Heart, CheckCircle, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -9,6 +10,7 @@ import { useToggleFavorite, useUpdateProgress } from "@/hooks/useProgress";
 import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
 import { getLevelColor } from "@/data/mockData";
+import { isHlsUrl } from "@/lib/bunnyStream";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
@@ -102,6 +104,48 @@ function YouTubePlayer({ videoId, startAt, onProgress }: {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+// ── HLS (Bunny Stream) ────────────────────────────────────────────────────────
+// Só Safari/iOS tocam .m3u8 nativamente; no Chrome e no WebView do Android o
+// hls.js alimenta o <video> via Media Source. Carregado sob demanda para não
+// pesar para quem só assiste YouTube/MP4.
+
+/** Liga a playlist HLS ao <video>. Devolve true se ela não carregou (ex: Bunny ainda processando). */
+function useHlsSource(videoRef: RefObject<HTMLVideoElement>, url: string | null): boolean {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+    const el = videoRef.current;
+    if (!el || !url) return;
+    let hls: Hls | undefined;
+    let cancelled = false;
+    const onNativeError = () => setFailed(true);
+
+    import("hls.js").then(({ default: HlsJs }) => {
+      if (cancelled) return;
+      if (HlsJs.isSupported()) {
+        hls = new HlsJs();
+        hls.on(HlsJs.Events.ERROR, (_event, data) => { if (data.fatal) setFailed(true); });
+        hls.loadSource(url);
+        hls.attachMedia(el);
+      } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
+        el.addEventListener("error", onNativeError);
+        el.src = url;
+      } else {
+        setFailed(true);
+      }
+    }).catch(() => { if (!cancelled) setFailed(true); });
+
+    return () => {
+      cancelled = true;
+      hls?.destroy();
+      el.removeEventListener("error", onNativeError);
+    };
+  }, [videoRef, url]);
+
+  return failed;
+}
+
 // ── VideoPlayer ───────────────────────────────────────────────────────────────
 
 function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
@@ -113,6 +157,8 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
   const videoRef   = useRef<HTMLVideoElement>(null);
   const lastSentAt = useRef(0);
   const seeked     = useRef(false);
+  const isHls      = !!videoUrl && isHlsUrl(videoUrl);
+  const hlsFailed  = useHlsSource(videoRef, isHls ? videoUrl : null);
 
   if (!videoUrl) {
     return (
@@ -151,17 +197,17 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
     );
   }
 
-  // HTML5 video (mp4, webm, etc.)
+  // HTML5 video (mp4, webm, etc.; HLS via useHlsSource)
   const report = () => {
     const el = videoRef.current;
     if (el && el.duration > 0) onProgress((el.currentTime / el.duration) * 100);
   };
 
   return (
-    <div className="aspect-video w-full bg-black">
+    <div className="relative aspect-video w-full bg-black">
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={isHls ? undefined : videoUrl}
         controls
         autoPlay={false}
         className="h-full w-full"
@@ -186,6 +232,12 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
       >
         {t("video.noSupport")}
       </video>
+      {hlsFailed && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
+          <VideoIcon size={36} className="text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">{t("video.processing")}</p>
+        </div>
+      )}
     </div>
   );
 }

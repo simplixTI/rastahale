@@ -252,6 +252,7 @@
     "notFound": "Video not found",
     "noUrl": "Video URL not configured",
     "noSupport": "Your browser doesn't support video playback.",
+    "processing": "Couldn't load the video. If it was just uploaded, it is still processing — try again in a few minutes.",
     "favorited": "Favorited",
     "favorite": "Favorite",
     "watched": "Watched",
