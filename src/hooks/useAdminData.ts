@@ -382,9 +382,20 @@ export function useUpdateVideo() {
       if (data.requiredProgress !== undefined) updates.required_progress  = data.requiredProgress;
 
       if (!isMockMode()) {
+        // Trocou o vídeo da aula: guarda o anterior para removê-lo do Bunny depois.
+        let previousUrl: string | null | undefined;
+        if (videoUrl !== undefined) {
+          const { data: row } = await supabase.from("videos").select("video_url").eq("id", id).maybeSingle();
+          previousUrl = row?.video_url;
+        }
         const { error } = await supabase.from("videos").update(updates).eq("id", id);
         // Propaga o erro em vez de mascarar com o mock (ver useCreateVideo).
         if (error) throw error;
+        const previousBunnyId = bunnyVideoIdFromUrl(previousUrl);
+        if (previousBunnyId && previousBunnyId !== bunnyVideoIdFromUrl(videoUrl)) {
+          // Melhor esforço: a aula já foi salva; uma falha só deixa o arquivo no Bunny.
+          deleteBunnyVideo(previousBunnyId).catch(() => { /* órfão no Bunny */ });
+        }
         return;
       }
       const idx = mockVideos.findIndex((v) => v.id === id);

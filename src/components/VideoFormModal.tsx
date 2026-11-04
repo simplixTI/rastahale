@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,7 +6,7 @@ import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } f
 import { toast } from "sonner";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, UploadError } from "@/lib/storageUpload";
-import { isBunnyConfigured, uploadVideoToBunny } from "@/lib/bunnyStream";
+import { bunnyVideoIdFromUrl, deleteBunnyVideo, isBunnyConfigured, uploadVideoToBunny } from "@/lib/bunnyStream";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -248,8 +248,20 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const [thumbProgress,  setThumbProgress]  = useState(0);
   const [videoProgress,  setVideoProgress]  = useState(0);
   const [confirmDelete,  setConfirmDelete]  = useState(false);
+  // A duração não saiu dos metadados (MKV/AVI costumam não abrir no navegador):
+  // o campo vira digitável, senão não haveria como preencher e salvar.
+  const [durationFailed, setDurationFailed] = useState(false);
   const thumbAbort = useRef<AbortController | null>(null);
   const videoAbort = useRef<AbortController | null>(null);
+  // Vídeo enviado ao Bunny neste formulário e ainda não confirmado numa aula salva.
+  const unsavedBunnyId = useRef<string | null>(null);
+
+  /** Remove do Bunny o vídeo enviado aqui que acabou não sendo usado em nenhuma aula. */
+  const discardUnsavedBunnyVideo = useCallback(() => {
+    const id = unsavedBunnyId.current;
+    unsavedBunnyId.current = null;
+    if (id) deleteBunnyVideo(id).catch(() => { /* fica órfão — não aparece para o aluno */ });
+  }, []);
 
   // Fechar o modal (ou sair da página) interrompe envios em andamento — antes
   // o upload seguia em segundo plano e o resultado se perdia.
@@ -257,14 +269,20 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     if (open) return;
     thumbAbort.current?.abort();
     videoAbort.current?.abort();
-  }, [open]);
-  useEffect(() => () => { thumbAbort.current?.abort(); videoAbort.current?.abort(); }, []);
+    discardUnsavedBunnyVideo();
+  }, [open, discardUnsavedBunnyVideo]);
+  useEffect(() => () => {
+    thumbAbort.current?.abort();
+    videoAbort.current?.abort();
+    discardUnsavedBunnyVideo();
+  }, [discardUnsavedBunnyVideo]);
 
   useEffect(() => {
     if (open) {
       setThumbMode("url");
       setVideoMode("url");
       setVideoFileName("");
+      setDurationFailed(false);
       setThumbProgress(0);
       setVideoProgress(0);
       setConfirmDelete(false);
@@ -328,7 +346,11 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     if (!file.type.startsWith("video/") && !VIDEO_EXT.test(file.name)) { toast.error("Selecione um arquivo de vídeo"); return; }
     // A duração sai dos metadados do próprio arquivo — lida já na seleção para
     // aparecer enquanto o envio (que pode levar minutos) ainda está rodando.
-    getVideoDurationFromFile(file).then((dur) => { if (dur) setValue("duration", dur, { shouldValidate: true }); });
+    setDurationFailed(false);
+    getVideoDurationFromFile(file).then((dur) => {
+      if (dur) setValue("duration", dur, { shouldValidate: true });
+      else setDurationFailed(true);
+    });
     const controller = new AbortController();
     videoAbort.current = controller;
     setVideoUploading(true);
@@ -341,6 +363,8 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
       } else if (isBunnyConfigured) {
         // Bunny Stream: converte para HLS (qualidade adaptativa) e entrega pela CDN.
         url = await uploadVideoToBunny(file, { onProgress: setVideoProgress, signal: controller.signal });
+        discardUnsavedBunnyVideo(); // este envio substitui o anterior, se houver
+        unsavedBunnyId.current = bunnyVideoIdFromUrl(url);
         toast.success("Vídeo enviado. O Bunny leva alguns minutos para processá-lo antes de ficar disponível.", { duration: 8000 });
       } else {
         // Arquivos grandes sobem em partes (TUS), com progresso real e retomada.
@@ -368,9 +392,13 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         </DialogHeader>
 
         <form
-          onSubmit={handleSubmit((values) =>
+          onSubmit={handleSubmit((values) => {
+            // A partir daqui o vídeo pertence à aula: o modal pode fechar antes de
+            // o banco responder, e esse fechamento não pode apagá-lo do Bunny.
+            unsavedBunnyId.current = null;
             // A modalidade interna acompanha a categoria escolhida.
-            onSubmit({ ...values, category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY) }))}
+            onSubmit({ ...values, category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY) });
+          })}
           className="space-y-3 pt-1"
         >
 
@@ -433,7 +461,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
 
           {/* Duração — automática quando o vídeo é um arquivo enviado; digitada
               quando é uma URL (não dá para ler os metadados de link externo). */}
-          {videoMode === "file" ? (
+          {videoMode === "file" && !durationFailed ? (
             <div>
               <label className={labelCls}>Duração</label>
               <div className={cn(fieldCls, "flex items-center")}>
@@ -484,7 +512,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
                 <p className="flex-1 truncate text-[10px] text-emerald-400">{videoFileName}</p>
                 <button
                   type="button"
-                  onClick={() => { setValue("videoUrl", ""); setVideoFileName(""); }}
+                  onClick={() => { discardUnsavedBunnyVideo(); setValue("videoUrl", ""); setVideoFileName(""); }}
                 >
                   <X size={11} className="text-emerald-400" />
                 </button>
