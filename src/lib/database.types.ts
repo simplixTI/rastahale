@@ -27,7 +27,8 @@ export interface Database {
           thumbnail: string;
           video_url: string | null;
           duration: string;
-          category: "jiu-jitsu" | "luta-livre";
+          // Texto desde a migration 009: as modalidades são cadastráveis.
+          category: string;
           subcategory: string;
           level: "Iniciante" | "Intermediário" | "Avançado";
           instructor_id: string;
@@ -97,7 +98,7 @@ export interface Database {
           avatar_url: string;
           plan_name: string;
           status: "ativo" | "inativo" | "pendente";
-          role: "user" | "admin";
+          role: "user" | "admin" | "instructor";
           join_date: string;
           last_access: string;
           videos_watched: number;
@@ -161,7 +162,7 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          category: "jiu-jitsu" | "luta-livre";
+          category: string;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["modules"]["Row"], "created_at">;

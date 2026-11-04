@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { Database } from "@/lib/database.types";
 import { bunnyVideoIdFromUrl, deleteBunnyVideo } from "@/lib/bunnyStream";
 import {
   videos as mockVideos,
@@ -359,7 +360,7 @@ export function useUpdateVideo() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, videoUrl, ...data }: Partial<Video> & { id: string; videoUrl?: string | null }) => {
-      const updates: Record<string, unknown> = {};
+      const updates: Database["public"]["Tables"]["videos"]["Update"] = {};
       if (data.title       !== undefined) updates.title               = data.title;
       if (data.description !== undefined) updates.description         = data.description;
       if (data.thumbnail   !== undefined) updates.thumbnail           = data.thumbnail;
@@ -393,7 +394,7 @@ export function useUpdateVideo() {
       const idx = mockVideos.findIndex((v) => v.id === id);
       if (idx !== -1) {
         Object.assign(mockVideos[idx], data);
-        if (videoUrl !== undefined) (mockVideos[idx] as Record<string, unknown>).videoUrl = videoUrl;
+        if (videoUrl !== undefined) mockVideos[idx].videoUrl = videoUrl;
       }
     },
     onSuccess: () => {

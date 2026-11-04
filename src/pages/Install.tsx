@@ -85,7 +85,7 @@ const Install = () => {
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-10">
       {/* header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-2">
-        <button onClick={() => navigate(history.length > 1 ? -1 : "/perfil")}
+        <button onClick={() => { if (history.length > 1) navigate(-1); else navigate("/perfil"); }}
           className="rounded-full border border-border bg-card p-2 text-foreground">
           <ArrowLeft size={18} />
         </button>

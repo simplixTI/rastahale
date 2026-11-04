@@ -1,6 +1,7 @@
 import { DEFAULT_AVATAR } from "@/lib/avatar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import type { Database } from "@/lib/database.types";
 import { mockUsers, mockPayments, mockPlans, videos as mockVideos, instructors as mockInstructors } from "@/data/mockData";
 import type { UserRole } from "@/lib/auth";
 
@@ -147,7 +148,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async ({ userId, name, avatarUrl }: { userId: string; name?: string; avatarUrl?: string }) => {
       if (isSupabaseUser(userId)) {
-        const updates: Record<string, string> = {};
+        const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
         if (name)      updates.name       = name;
         if (avatarUrl) updates.avatar_url = avatarUrl;
         await supabase.from("profiles").update(updates).eq("id", userId);

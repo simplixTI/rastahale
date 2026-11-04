@@ -44,6 +44,7 @@ npm run build     # Build de produção
 npm run preview   # Preview do build
 npm run lint      # ESLint
 npm run test      # Vitest (unitários, jsdom)
+npm run verify    # Tipos + lint + testes. A Vercel roda isto antes do build: se falhar, nada é publicado
 npx playwright test  # E2E (requer npx playwright install antes)
 npx cap sync android # Sincroniza web build + plugins com o projeto Android
 ```
@@ -168,7 +169,7 @@ O `.env` alerta que a senha do Postgres vazou em `supabase/.temp/pooler-url` —
 ## 6. Backend Supabase
 
 ### Migrations
-Em `supabase/migrations/` (001–016). Aplicar em ordem no SQL Editor ou via `supabase db push`. Destaques:
+Em `supabase/migrations/` (001–018). Aplicar em ordem no SQL Editor ou via `supabase db push`. Quem aplica pelo SQL Editor precisa também registrar a versão em `supabase_migrations.schema_migrations`, senão um `db push` futuro tenta rodá-la de novo. Destaques:
 - 013 `instructor_comments` — feedback aluno→instrutor (antes: sessionStorage local)
 - 014 `studio_sessions` — sessões do Studio visíveis aos alunos (antes: sessionStorage local)
 - 015 `instructor_auth` — `instructors.user_id`, fim do `login_password` plaintext

@@ -105,6 +105,11 @@ export const supabaseAuthProvider: AuthProvider = {
     throw new AuthError("Use o provider Firebase para login com Google.", "provider_error");
   },
 
+  async signInWithApple() {
+    // Mesmo caso do Google: quem implementa é o provider híbrido em ./index.ts.
+    throw new AuthError("Use o provider Firebase para login com Apple.", "provider_error");
+  },
+
   async signOut() {
     await supabase.auth.signOut({ scope: "local" });
   },
