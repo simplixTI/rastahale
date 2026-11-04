@@ -10,18 +10,11 @@ export interface Database {
           avatar_url: string;
           bio: string;
           created_at: string;
-          // Adicionadas pela migration 007. Sem elas declaradas, o login de
-          // instrutor precisava de um cast `any` para compilar.
+          // Sem uso desde que o email de acesso passou a vir do perfil.
           login_email: string | null;
-          login_password: string | null;
-          // Vínculo com auth.users (migration 015). login_password foi
-          // removida do banco pela mesma migration — permanece aqui apenas
-          // para refletir bancos ainda não migrados (o código acessa via cast).
+          // Vínculo com auth.users (migration 015).
           user_id: string | null;
         };
-        // Permissivo de propósito: as colunas de credenciais (007/015) podem
-        // não existir no banco, e o código refaz o insert sem elas quando o
-        // PostgREST acusa coluna ausente (isMissingColumnError).
         Insert: Partial<Database["public"]["Tables"]["instructors"]["Row"]> & { id: string; name: string };
         Update: Partial<Database["public"]["Tables"]["instructors"]["Insert"]>;
         Relationships: [];

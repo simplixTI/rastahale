@@ -9,6 +9,7 @@ import { useInstructor } from "@/hooks/useInstructors";
 import { useProfile } from "@/hooks/useProfile";
 import { useToggleFavorite, useUpdateProgress } from "@/hooks/useProgress";
 import VideoCard from "@/components/VideoCard";
+import LoadError from "@/components/LoadError";
 import { useLabels } from "@/i18n/labels";
 import { getLevelColor } from "@/data/mockData";
 import { canWatchLessons } from "@/lib/access";
@@ -369,12 +370,14 @@ const VideoDetail = () => {
   const { t }    = useTranslation();
   const labels   = useLabels();
 
-  const { data: video, isLoading } = useVideoById(id ?? "", user?.id ?? "");
+  const { data: video, isLoading, isError, refetch } = useVideoById(id ?? "", user?.id ?? "");
   const { data: instructor }       = useInstructor(video?.instructorId ?? "");
   const toggleFavoriteMutation     = useToggleFavorite();
   const updateProgressMutation     = useUpdateProgress();
   const { data: allVideos = [] }   = useVideos(user?.id ?? "");
-  const { data: profile, isLoading: profileLoading } = useProfile(user?.id ?? "");
+  const {
+    data: profile, isLoading: profileLoading, isError: profileError, refetch: refetchProfile,
+  } = useProfile(user?.id ?? "");
 
   // Grava o progresso de reprodução. A partir de 95% conta como assistida —
   // os segundos finais (créditos, despedida) raramente são vistos até o fim.
@@ -398,6 +401,14 @@ const VideoDetail = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <LoadError onRetry={() => refetch()} />
       </div>
     );
   }
@@ -455,6 +466,11 @@ const VideoDetail = () => {
           />
         ) : profileLoading ? (
           <div className="aspect-video w-full bg-black" />
+        ) : profileError ? (
+          // Sem saber o status da conta, não dá para dizer que ela não assina.
+          <div className="relative aspect-video w-full bg-black">
+            <PlayerMessage text={t("common.loadError")} actionLabel={t("common.retry")} onAction={() => refetchProfile()} />
+          </div>
         ) : (
           <LockedPlayer thumbnail={video.thumbnail} title={video.title} />
         )}

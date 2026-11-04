@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
-import { useUpdateInstructor } from "@/hooks/useAdminData";
+import { useUpdateOwnInstructor } from "@/hooks/useAdminData";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ const StudioEditPerfil = () => {
   const navigate               = useNavigate();
   const { user }               = useAuth();
   const { data: instructor }   = useInstructor(user?.id ?? "");
-  const updateInstructor       = useUpdateInstructor();
+  const updateInstructor       = useUpdateOwnInstructor();
   const fileRef                = useRef<HTMLInputElement>(null);
   const navigateTimeoutRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -90,8 +90,6 @@ const StudioEditPerfil = () => {
         name: name.trim(),
         bio:  bio.trim(),
         avatar,
-        loginEmail:    instructor?.loginEmail,
-        loginPassword: instructor?.loginPassword,
       });
       setSaved(true);
       navigateTimeoutRef.current = setTimeout(() => navigate("/studio/perfil"), 800);
@@ -156,7 +154,7 @@ const StudioEditPerfil = () => {
         <div>
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Email</label>
           <input
-            value={instructor?.loginEmail ?? user?.email ?? ""}
+            value={user?.email ?? ""}
             disabled
             className="w-full rounded-lg border border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground cursor-not-allowed"
           />

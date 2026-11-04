@@ -21,13 +21,23 @@ function isMockMode(): boolean {
  *     o aluno enxergar os concorrentes.
  *  2. tabela `profiles` — fallback quando a view ainda não existe. A RLS pode
  *     limitar ao próprio aluno (ele vê só a si mesmo); o admin vê todos.
- *  3. mock — modo demo.
+ *
+ * Sem Supabase, usa os dados de demonstração. Com ele, falha vira erro.
  */
 export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async (): Promise<LeaderboardEntry[]> => {
-      if (!isMockMode()) {
+      if (isMockMode()) {
+        return mockUsers.map((u) => ({
+          id:            u.id,
+          name:          u.name,
+          avatarUrl:     u.avatar,
+          videosWatched: u.videosWatched,
+        }));
+      }
+
+      {
         // 1) view dedicada
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,30 +55,21 @@ export function useLeaderboard() {
           }
         } catch { /* view ausente — tenta profiles */ }
 
-        // 2) fallback: profiles (RLS pode limitar ao próprio aluno)
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("id, name, avatar_url, videos_watched, role");
-          if (!error && data) {
-            return data
-              .filter((u) => u.role === "user")
-              .map((u) => ({
-                id:            u.id,
-                name:          u.name,
-                avatarUrl:     u.avatar_url ?? "",
-                videosWatched: u.videos_watched ?? 0,
-              }));
-          }
-        } catch { /* cai para o mock */ }
       }
 
-      return mockUsers.map((u) => ({
-        id:            u.id,
-        name:          u.name,
-        avatarUrl:     u.avatar,
-        videosWatched: u.videosWatched,
-      }));
+      // 2) fallback: profiles (RLS pode limitar ao próprio aluno)
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, avatar_url, videos_watched, role");
+      if (error) throw error;
+      return (data ?? [])
+        .filter((u) => u.role === "user")
+        .map((u) => ({
+          id:            u.id,
+          name:          u.name,
+          avatarUrl:     u.avatar_url ?? "",
+          videosWatched: u.videos_watched ?? 0,
+        }));
     },
     staleTime: 1000 * 30,
   });

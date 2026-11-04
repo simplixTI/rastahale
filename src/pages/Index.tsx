@@ -3,6 +3,7 @@ import { Play, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
+import LoadError from "@/components/LoadError";
 import VideoCard from "@/components/VideoCard";
 import AthleteCard from "@/components/AthleteCard";
 import TopicSections from "@/components/TopicSections";
@@ -62,7 +63,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t }    = useTranslation();
-  const { data: videos = [], isLoading }      = useVideos(user?.id ?? "");
+  const { data: videos = [], isLoading, isError, refetch } = useVideos(user?.id ?? "");
   const { data: instructors = [] }            = useInstructors();
 
   const firstName        = user?.name?.split(" ")[0] ?? t("home.fallbackName");
@@ -87,6 +88,14 @@ const Index = () => {
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      </MobileLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <MobileLayout>
+        <LoadError onRetry={() => refetch()} />
       </MobileLayout>
     );
   }

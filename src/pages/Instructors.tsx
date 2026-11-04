@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { BookOpen, ChevronRight, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
+import LoadError from "@/components/LoadError";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
@@ -10,7 +11,7 @@ const Instructors = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t }    = useTranslation();
-  const { data: instructors = [], isLoading } = useInstructors();
+  const { data: instructors = [], isLoading, isError, refetch } = useInstructors();
   const { data: videos = [] }                  = useVideos(user?.id ?? "");
 
   const cards = instructors.map((inst) => ({
@@ -32,6 +33,8 @@ const Instructors = () => {
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : isError ? (
+        <LoadError onRetry={() => refetch()} />
       ) : cards.length === 0 ? (
         <div className="mt-16 text-center">
           <Users size={32} className="mx-auto text-muted-foreground" />

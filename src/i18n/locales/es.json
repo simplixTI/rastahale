@@ -7,7 +7,9 @@
     "modules_one": "{{count}} módulo",
     "modules_other": "{{count}} módulos",
     "comments_one": "{{count}} comentario",
-    "comments_other": "{{count}} comentarios"
+    "comments_other": "{{count}} comentarios",
+    "loadError": "No se pudo cargar. Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Intentar de nuevo"
   },
   "lang": {
     "pt": "Português",

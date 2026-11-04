@@ -110,32 +110,30 @@ export function useProfile(userId: string) {
     queryKey:  ["profile", userId],
     queryFn:   async () => {
       if (isSupabaseUser(userId)) {
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", userId)
-            .single();
-          if (!error && data) {
-            return {
-              id:                   data.id,
-              email:                data.email,
-              name:                 data.name,
-              avatarUrl:            data.avatar_url ?? "",
-              planName:             data.plan_name ?? "Básico",
-              status:               data.status as Profile["status"],
-              role:                 data.role as Profile["role"],
-              joinDate:             data.join_date,
-              lastAccess:           data.last_access,
-              videosWatched:        data.videos_watched ?? 0,
-              totalHours:           Number(data.total_hours ?? 0),
-              stripeCustomerId:     data.stripe_customer_id ?? null,
-              stripeSubscriptionId: data.stripe_subscription_id ?? null,
-              subscriptionStatus:   data.subscription_status ?? null,
-              currentPeriodEnd:     data.current_period_end ?? null,
-            } as Profile;
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+        // Perfil falso aqui podia até liberar ou bloquear aula do jeito errado.
+        if (error) throw error;
+        return {
+          id:                   data.id,
+          email:                data.email,
+          name:                 data.name,
+          avatarUrl:            data.avatar_url ?? "",
+          planName:             data.plan_name ?? "Básico",
+          status:               data.status as Profile["status"],
+          role:                 data.role as Profile["role"],
+          joinDate:             data.join_date,
+          lastAccess:           data.last_access,
+          videosWatched:        data.videos_watched ?? 0,
+          totalHours:           Number(data.total_hours ?? 0),
+          stripeCustomerId:     data.stripe_customer_id ?? null,
+          stripeSubscriptionId: data.stripe_subscription_id ?? null,
+          subscriptionStatus:   data.subscription_status ?? null,
+          currentPeriodEnd:     data.current_period_end ?? null,
+        } as Profile;
       }
       return buildMockProfile(userId);
     },

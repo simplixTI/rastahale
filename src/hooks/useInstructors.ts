@@ -13,17 +13,14 @@ export function useInstructors() {
     queryKey: ["instructors"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase.from("instructors").select("*");
-          if (!error && data && data.length > 0) {
-            return data.map((i) => ({
-              id:     i.id,
-              name:   i.name,
-              avatar: i.avatar_url ?? "",
-              bio:    i.bio ?? "",
-            }));
-          }
-        } catch { /* Supabase inacessível — usa mock */ }
+        const { data, error } = await supabase.from("instructors").select("*");
+        if (error) throw error;
+        return (data ?? []).map((i) => ({
+          id:     i.id,
+          name:   i.name,
+          avatar: i.avatar_url ?? "",
+          bio:    i.bio ?? "",
+        }));
       }
       return mockInstructors.map((i) => ({ ...i }));
     },

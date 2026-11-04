@@ -25,9 +25,8 @@ function isMockMode(): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modulesTable = () => (supabase as any).from("modules");
 
-// Lista padrão = mesmas categorias do seed da migração 008, nas duas
-// modalidades. Usada como fallback quando a tabela `modules` ainda não existe
-// (migração 008 não aplicada) ou no modo demo, para a UI não ficar vazia.
+// Lista padrão do modo demo = mesmas categorias do seed da migração 008, nas
+// duas modalidades.
 const DEFAULT_MODULES: Module[] = videoCategories.flatMap((name) => [
   { id: `mod-jj-${name}`, name, category: "jiu-jitsu" as Modality },
   { id: `mod-ll-${name}`, name, category: "luta-livre" as Modality },
@@ -42,12 +41,9 @@ export function useModules() {
     queryFn: async (): Promise<Module[]> => {
       if (!isMockMode()) {
         const { data, error } = await modulesTable().select("*").order("name");
-        // Erro (ex: tabela ainda não existe) → cai nos padrões em vez de quebrar.
-        if (!error && data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (data as any[]).map((m) => ({ id: m.id, name: m.name, category: m.category as Modality }));
-        }
-        return DEFAULT_MODULES;
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return ((data ?? []) as any[]).map((m) => ({ id: m.id, name: m.name, category: m.category as Modality }));
       }
       return [...mockModules];
     },

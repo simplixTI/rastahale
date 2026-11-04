@@ -187,7 +187,7 @@ Alunos só escrevem/leem seus próprios dados (`user_progress`, `push_tokens`, c
 ## 7. Produção e Bunny Stream
 
 **De onde o site publica**
-`www.rastahalevirtualacademy.com` é o projeto Vercel `rastahale` do time `simplix`, publicado da `main` de `github.com/simplixTI/rastahale` (remote `simplix`; o `origin` em `lucasstxp` não publica nada). Publique sempre por git: um deploy manual pela CLI já colocou no ar código que não estava em repositório nenhum.
+`www.rastahalevirtualacademy.com` é o projeto Vercel `rastahale` do time `simplix`, publicado da `main` de `github.com/simplixTI/rastahale` (remote `origin`; o remote `lucasstxp` é o repositório antigo e não publica nada). Publique sempre por git: um deploy manual pela CLI já colocou no ar código que não estava em repositório nenhum.
 
 **Vídeos no Bunny**
 - Upload: o navegador envia direto ao Bunny (TUS); a Edge Function `bunny-stream` só assina. Sem `VITE_BUNNY_STREAM_CDN_HOSTNAME` no build, o upload volta silenciosamente para o Supabase Storage.
@@ -196,8 +196,11 @@ Alunos só escrevem/leem seus próprios dados (`user_progress`, `push_tokens`, c
 - Deploy da função: `npx supabase functions deploy bunny-stream --no-verify-jwt`.
 - Aula oculta (`visible = false`) não abre no player nem para o admin: o catálogo só carrega aulas visíveis.
 
-**Instrutor precisa de linha em `instructors` com `id` igual ao `auth.users.id`**
-O Studio grava `videos.instructor_id = user.id`, e existe FK para `instructors(id)` e RLS comparando com `auth.uid()`. Sem essa linha, salvar a aula falha.
+**Professor com login tem `instructors.id` igual ao `auth.users.id`**
+O Studio grava `videos.instructor_id = user.id`, e existe FK para `instructors(id)` e RLS comparando com `auth.uid()`. O admin cria, edita e remove professores pela Edge Function `admin-instructors` (precisa da service role para criar o login); dar acesso a um professor antigo (`inst-…`) move as aulas para o id novo. Ao remover, a conta volta a ser de aluno. Deploy: `npx supabase functions deploy admin-instructors --no-verify-jwt`.
+
+**Dados de demonstração só sem Supabase**
+Com o Supabase configurado, lista vazia é vazia e falha vira erro (`LoadError`). Nunca volte a cair em `mockData` nesse caso: aluno de verdade via aulas e professores falsos.
 
 **Gerar o app Android**
 Os botões Google/Apple só aparecem se `VITE_FIREBASE_*` estiver no build, e sempre rode `npm run build && npx cap sync android` antes do Gradle. No emulador, confira a `versionCode` depois de instalar: um `adb install` com assinatura diferente falha e deixa o app antigo rodando.

@@ -18,8 +18,12 @@ verify_jwt = true
 [functions.admin-sync-plan]
 verify_jwt = true
 
-# bunny-stream valida a sessão por conta própria (ver comentário no início dela).
+# bunny-stream e admin-instructors validam a sessão por conta própria (ver o
+# comentário no início de cada uma).
 [functions.bunny-stream]
+verify_jwt = false
+
+[functions.admin-instructors]
 verify_jwt = false
 
 # Auth — URL de retorno dos emails (reset de senha, magic link) + valores

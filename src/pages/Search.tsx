@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
+import LoadError from "@/components/LoadError";
 import VideoCard from "@/components/VideoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/hooks/useVideos";
@@ -15,7 +16,7 @@ const Search = () => {
   const { user } = useAuth();
   const { t }    = useTranslation();
   const labels   = useLabels();
-  const { data: videos = [], isLoading } = useVideos(user?.id ?? "");
+  const { data: videos = [], isLoading, isError, refetch } = useVideos(user?.id ?? "");
   const { data: modules = [] } = useModules();
   // Chips de categoria: "all" + categorias (módulos) cadastradas.
   const categories = ["all", ...moduleNames(modules)];
@@ -102,6 +103,8 @@ const Search = () => {
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : isError ? (
+        <LoadError onRetry={() => refetch()} />
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-3 px-4">
           {filtered.map((v) => (
@@ -110,7 +113,7 @@ const Search = () => {
         </div>
       )}
 
-      {!isLoading && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && (
         <div className="mt-16 text-center">
           <p className="text-sm text-muted-foreground">{t("search.empty")}</p>
         </div>

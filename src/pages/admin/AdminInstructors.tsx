@@ -47,7 +47,7 @@ const labelCls = "block text-[10px] font-semibold uppercase tracking-wider text-
 
 type InstructorRow = {
   id: string; name: string; bio: string; avatar: string;
-  loginEmail?: string; loginPassword?: string;
+  hasLogin: boolean; loginEmail?: string;
 };
 
 // ── schema ────────────────────────────────────────────────────────────────────
@@ -134,8 +134,9 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
   const [avatarUploading, setUploading]     = useState(false);
   const [avatarProgress,  setProgress]      = useState(0);
   const [showPass,        setShowPass]      = useState(false);
+  const hasLogin                            = !!instructor?.hasLogin;
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, reset, setError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", bio: "", avatar: "", loginEmail: "", loginPassword: "" },
   });
@@ -147,7 +148,7 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
     if (open) {
       reset(instructor
         ? { name: instructor.name, bio: instructor.bio, avatar: instructor.avatar,
-            loginEmail: instructor.loginEmail ?? "", loginPassword: instructor.loginPassword ?? "" }
+            loginEmail: instructor.loginEmail ?? "", loginPassword: "" }
         : { name: "", bio: "", avatar: "", loginEmail: "", loginPassword: "" }
       );
       setProgress(0);
@@ -155,6 +156,19 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
   }, [open, instructor, reset]);
 
   const avatarValue = watch("avatar");
+
+  function submit(values: FormValues) {
+    // A senha só é exigida ao criar o acesso; depois, em branco mantém a atual.
+    if (values.loginEmail && !hasLogin && !values.loginPassword) {
+      setError("loginPassword", { message: "Defina uma senha para o primeiro acesso" });
+      return;
+    }
+    if (values.loginPassword && !values.loginEmail) {
+      setError("loginEmail", { message: "Informe o email de acesso" });
+      return;
+    }
+    onSubmit(values);
+  }
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
@@ -177,7 +191,7 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-1">
+        <form onSubmit={handleSubmit(submit)} className="space-y-3 pt-1">
           <div>
             <label className={labelCls}>Nome</label>
             <input {...register("name")} className={fieldCls} placeholder="Ex: Rafael Leão" />
@@ -206,18 +220,21 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
               <span className="ml-auto text-[9px] text-muted-foreground">opcional</span>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              Defina um email e senha para que o instrutor faça login e gerencie suas próprias aulas.
+              {hasLogin
+                ? "O instrutor já entra no Studio com este email. Deixe a senha em branco para manter a atual."
+                : "Defina um email e senha para que o instrutor faça login e gerencie suas próprias aulas."}
             </p>
             <div>
               <label className={labelCls}>Email de acesso</label>
-              <input {...register("loginEmail")} type="email" className={fieldCls} placeholder="instrutor@email.com" />
+              <input {...register("loginEmail")} type="email" autoComplete="off" className={fieldCls} placeholder="instrutor@email.com" />
               {errors.loginEmail && <p className="mt-0.5 text-[10px] text-red-400">{errors.loginEmail.message}</p>}
             </div>
             <div>
               <label className={labelCls}>Senha de acesso</label>
               <div className="relative">
-                <input {...register("loginPassword")} type={showPass ? "text" : "password"}
-                  className={cn(fieldCls, "pr-8")} placeholder="Mínimo 6 caracteres" />
+                {/* new-password: sem isso o navegador preenche a senha do próprio admin. */}
+                <input {...register("loginPassword")} type={showPass ? "text" : "password"} autoComplete="new-password"
+                  className={cn(fieldCls, "pr-8")} placeholder={hasLogin ? "Nova senha (opcional)" : "Mínimo 6 caracteres"} />
                 <button type="button" onClick={() => setShowPass((v) => !v)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                   {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
@@ -256,7 +273,7 @@ function InstructorCard({ instructor, videoCount, onEdit, onDelete }: {
   const [progress,       setProgress]       = useState(0);
   const fileRef                             = useRef<HTMLInputElement>(null);
 
-  const hasLogin = !!(instructor.loginEmail && instructor.loginPassword);
+  const hasLogin = instructor.hasLogin;
 
   async function handleAvatarFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
@@ -371,20 +388,33 @@ function InstructorCard({ instructor, videoCount, onEdit, onDelete }: {
 
 // ── ConfirmDelete ─────────────────────────────────────────────────────────────
 
-function ConfirmDelete({ name, onConfirm, onCancel }: { name: string; onConfirm: () => void; onCancel: () => void }) {
+function ConfirmDelete({ name, videoCount, onConfirm, onCancel }: {
+  name: string; videoCount: number; onConfirm: () => void; onCancel: () => void;
+}) {
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onCancel(); }}>
       <DialogContent className="border-border bg-background sm:max-w-xs">
         <DialogHeader>
           <DialogTitle className="text-sm font-bold text-foreground">Remover instrutor?</DialogTitle>
         </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          Tem certeza que deseja remover <span className="font-semibold text-foreground">{name}</span>?
-          Os vídeos associados permanecerão sem instrutor. O acesso ao Studio será revogado.
-        </p>
+        {videoCount > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">{name}</span> ainda tem {videoCount} aula{videoCount !== 1 ? "s" : ""}.
+            Passe-as para outro instrutor ou exclua-as antes de remover.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Tem certeza que deseja remover <span className="font-semibold text-foreground">{name}</span>?
+            O acesso ao Studio será revogado e as sessões do instrutor serão apagadas.
+          </p>
+        )}
         <DialogFooter className="pt-2">
-          <button onClick={onCancel} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
-          <button onClick={onConfirm} className="rounded-full btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
+          <button onClick={onCancel} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
+            {videoCount > 0 ? "Fechar" : "Cancelar"}
+          </button>
+          {videoCount === 0 && (
+            <button onClick={onConfirm} className="rounded-full btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -411,8 +441,13 @@ const AdminInstructors = () => {
       { name: values.name, bio: values.bio, avatar: values.avatar,
         loginEmail: values.loginEmail || undefined, loginPassword: values.loginPassword || undefined },
       {
-        onSuccess: () => { toast.success("Instrutor adicionado"); setShowCreate(false); },
-        onError:   () => toast.error("Erro ao adicionar instrutor"),
+        onSuccess: (result) => {
+          toast.success(result.existingAccount
+            ? "Instrutor adicionado. O email já tinha conta, então a senha continua a mesma."
+            : "Instrutor adicionado");
+          setShowCreate(false);
+        },
+        onError: (err) => toast.error(err.message || "Erro ao adicionar instrutor"),
       }
     );
   }
@@ -423,8 +458,13 @@ const AdminInstructors = () => {
       { id: editing.id, name: values.name, bio: values.bio, avatar: values.avatar,
         loginEmail: values.loginEmail || undefined, loginPassword: values.loginPassword || undefined },
       {
-        onSuccess: () => { toast.success("Instrutor atualizado"); setEditing(null); },
-        onError:   () => toast.error("Erro ao atualizar instrutor"),
+        onSuccess: (result) => {
+          toast.success(result.existingAccount
+            ? "Instrutor atualizado. O email já tinha conta, então a senha continua a mesma."
+            : "Instrutor atualizado");
+          setEditing(null);
+        },
+        onError: (err) => toast.error(err.message || "Erro ao atualizar instrutor"),
       }
     );
   }
@@ -433,17 +473,17 @@ const AdminInstructors = () => {
     if (!deleting) return;
     deleteInstructor.mutate({ id: deleting.id }, {
       onSuccess: () => { toast.success("Instrutor removido"); setDeleting(null); },
-      onError:   () => toast.error("Erro ao remover instrutor"),
+      onError:   (err) => toast.error(err.message || "Erro ao remover instrutor"),
     });
   }
 
-  const withLogin = instructors.filter((i) => i.loginEmail && i.loginPassword).length;
+  const withLogin = instructors.filter((i) => i.hasLogin).length;
 
   return (
     <AdminLayout title="Instrutores">
       <InstructorFormModal open={showCreate} onOpenChange={setShowCreate} onSubmit={handleCreate} isPending={createInstructor.isPending} />
       <InstructorFormModal open={!!editing} onOpenChange={(v) => { if (!v) setEditing(null); }} instructor={editing} onSubmit={handleUpdate} isPending={updateInstructor.isPending} />
-      {deleting && <ConfirmDelete name={deleting.name} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
+      {deleting && <ConfirmDelete name={deleting.name} videoCount={videoCount(deleting.id)} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">Instrutores</h2>

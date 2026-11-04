@@ -7,7 +7,9 @@
     "modules_one": "{{count}} module",
     "modules_other": "{{count}} modules",
     "comments_one": "{{count}} comment",
-    "comments_other": "{{count}} comments"
+    "comments_other": "{{count}} comments",
+    "loadError": "Couldn't load this. Check your connection and try again.",
+    "retry": "Try again"
   },
   "lang": {
     "pt": "Português",

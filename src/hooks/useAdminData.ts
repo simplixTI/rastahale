@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { bunnyVideoIdFromUrl, deleteBunnyVideo } from "@/lib/bunnyStream";
 import {
@@ -27,17 +28,17 @@ function isMockMode(): boolean {
   return !isSupabaseConfigured;
 }
 
-/**
- * true quando o erro é "coluna não existe no schema cache" (PGRST204). Usado
- * para degradar graciosamente quando a migração 007 (login do instrutor) ainda
- * não foi aplicada: refazemos o insert/update sem as colunas de credenciais.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isMissingColumnError(error: any): boolean {
-  if (!error) return false;
-  if (error.code === "PGRST204") return true;
-  const msg = String(error.message ?? "").toLowerCase();
-  return msg.includes("column") && (msg.includes("schema cache") || msg.includes("does not exist"));
+/** Chama a Edge Function "admin-instructors", única que pode criar logins. */
+async function callInstructorsFunction<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke("admin-instructors", { body });
+  if (!error) return data as T;
+  if (error instanceof FunctionsHttpError) {
+    const status = error.context.status;
+    const detail = await error.context.json().then((b) => b?.error ?? "").catch(() => "");
+    if (status === 404 && !detail) throw new Error('A função "admin-instructors" não está publicada no Supabase.');
+    throw new Error(detail || `Erro ${status} ao salvar`);
+  }
+  throw new Error("Não foi possível falar com o servidor. Verifique a conexão.");
 }
 
 const toProfile = (u: typeof mockUsers[number]) => ({
@@ -84,27 +85,24 @@ export function useAdminUsers() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .order("join_date", { ascending: false });
-          if (!error && data && data.length > 0) {
-            return data.map((u) => ({
-              id:             u.id,
-              name:           u.name,
-              email:          u.email,
-              avatar_url:     u.avatar_url ?? "",
-              plan_name:      u.plan_name ?? "Básico",
-              status:         u.status as "ativo" | "inativo" | "pendente",
-              role:           u.role as "user" | "admin",
-              join_date:      u.join_date,
-              last_access:    u.last_access,
-              videos_watched: u.videos_watched ?? 0,
-              total_hours:    Number(u.total_hours ?? 0),
-            }));
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .order("join_date", { ascending: false });
+        if (error) throw error;
+        return (data ?? []).map((u) => ({
+          id:             u.id,
+          name:           u.name,
+          email:          u.email,
+          avatar_url:     u.avatar_url ?? "",
+          plan_name:      u.plan_name ?? "Básico",
+          status:         u.status as "ativo" | "inativo" | "pendente",
+          role:           u.role as "user" | "admin",
+          join_date:      u.join_date,
+          last_access:    u.last_access,
+          videos_watched: u.videos_watched ?? 0,
+          total_hours:    Number(u.total_hours ?? 0),
+        }));
       }
       return mockUsers.map(toProfile);
     },
@@ -176,24 +174,21 @@ export function useAdminPayments() {
     queryKey: ["admin-payments"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase
-            .from("payments")
-            .select("*")
-            .order("date", { ascending: false });
-          if (!error && data && data.length > 0) {
-            return data.map((p) => ({
-              id:        p.id,
-              user_id:   p.user_id,
-              user_name: p.user_name,
-              amount:    Number(p.amount),
-              method:    p.method as "PIX" | "Cartão" | "Boleto",
-              status:    p.status as "pago" | "pendente" | "falhou",
-              date:      p.date,
-              plan_name: p.plan_name,
-            }));
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase
+          .from("payments")
+          .select("*")
+          .order("date", { ascending: false });
+        if (error) throw error;
+        return (data ?? []).map((p) => ({
+          id:        p.id,
+          user_id:   p.user_id,
+          user_name: p.user_name,
+          amount:    Number(p.amount),
+          method:    p.method as "PIX" | "Cartão" | "Boleto",
+          status:    p.status as "pago" | "pendente" | "falhou",
+          date:      p.date,
+          plan_name: p.plan_name,
+        }));
       }
       return mockPayments.map(toPayment);
     },
@@ -230,26 +225,23 @@ export function useAdminVideos() {
     queryKey: ["admin-videos"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase.from("videos").select("*");
-          if (!error && data && data.length > 0) {
-            return data.map((v) => ({
-              id:               v.id,
-              title:            v.title,
-              description:      v.description ?? "",
-              thumbnail:        v.thumbnail ?? "",
-              videoUrl:         v.video_url ?? null,
-              duration:         v.duration,
-              category:         v.category as string,
-              subcategory:      v.subcategory,
-              level:            v.level as "Iniciante" | "Intermediário" | "Avançado",
-              instructorId:     v.instructor_id,
-              visible:          v.visible,
-              unlockByProgress: v.unlock_by_progress,
-              requiredProgress: v.required_progress,
-            }));
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase.from("videos").select("*");
+        if (error) throw error;
+        return (data ?? []).map((v) => ({
+          id:               v.id,
+          title:            v.title,
+          description:      v.description ?? "",
+          thumbnail:        v.thumbnail ?? "",
+          videoUrl:         v.video_url ?? null,
+          duration:         v.duration,
+          category:         v.category as string,
+          subcategory:      v.subcategory,
+          level:            v.level as "Iniciante" | "Intermediário" | "Avançado",
+          instructorId:     v.instructor_id,
+          visible:          v.visible,
+          unlockByProgress: v.unlock_by_progress,
+          requiredProgress: v.required_progress,
+        }));
       }
       return mockVideos.map((v) => ({ ...v, videoUrl: v.videoUrl ?? null }));
     },
@@ -444,22 +436,19 @@ export function useAdminPlans() {
     queryKey: ["admin-plans"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase.from("plans").select("*");
-          if (!error && data && data.length > 0) {
-            return data.map((p) => ({
-              id:          p.id,
-              name:        p.name,
-              price:       Number(p.price),
-              interval:    p.interval as "mensal" | "trimestral" | "anual",
-              features:    p.features ?? [],
-              active:      p.active,
-              categories:  p.categories ?? [],
-              max_level:   p.max_level as "Iniciante" | "Intermediário" | "Avançado",
-              users_count: 0,
-            }));
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase.from("plans").select("*");
+        if (error) throw error;
+        return (data ?? []).map((p) => ({
+          id:          p.id,
+          name:        p.name,
+          price:       Number(p.price),
+          interval:    p.interval as "mensal" | "trimestral" | "anual",
+          features:    p.features ?? [],
+          active:      p.active,
+          categories:  p.categories ?? [],
+          max_level:   p.max_level as "Iniciante" | "Intermediário" | "Avançado",
+          users_count: 0,
+        }));
       }
       return mockPlans.map(toPlan);
     },
@@ -559,22 +548,22 @@ export function useAdminDashboard() {
     queryKey: ["admin-dashboard"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const [{ data: profiles }, { data: videos }, { data: payments }] = await Promise.all([
-            supabase.from("profiles").select("id, status"),
-            supabase.from("videos").select("id"),
-            supabase.from("payments").select("amount, status"),
-          ]);
-          if (profiles && videos && payments) {
-            return {
-              totalUsers:      profiles.length,
-              activeUsers:     profiles.filter((u) => u.status === "ativo").length,
-              totalVideos:     videos.length,
-              pendingPayments: payments.filter((p) => p.status === "pendente").length,
-              revenue:         payments.filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.amount), 0),
-            };
-          }
-        } catch { /* fallback */ }
+        const [profilesRes, videosRes, paymentsRes] = await Promise.all([
+          supabase.from("profiles").select("id, status"),
+          supabase.from("videos").select("id"),
+          supabase.from("payments").select("amount, status"),
+        ]);
+        const failure = profilesRes.error ?? videosRes.error ?? paymentsRes.error;
+        if (failure) throw failure;
+        const profiles = profilesRes.data ?? [];
+        const payments = paymentsRes.data ?? [];
+        return {
+          totalUsers:      profiles.length,
+          activeUsers:     profiles.filter((u) => u.status === "ativo").length,
+          totalVideos:     (videosRes.data ?? []).length,
+          pendingPayments: payments.filter((p) => p.status === "pendente").length,
+          revenue:         payments.filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.amount), 0),
+        };
       }
       return {
         totalUsers:      mockUsers.length,
@@ -595,26 +584,31 @@ export function useAdminInstructors() {
     queryKey: ["admin-instructors"],
     queryFn: async () => {
       if (!isMockMode()) {
-        try {
-          const { data, error } = await supabase.from("instructors").select("*");
-          if (!error && data && data.length > 0) {
-            return data.map((i) => {
-              // login_email/login_password podem não existir se a migração 007
-              // não foi aplicada — acessa via cast e cai para undefined.
-              const row = i as Record<string, unknown>;
-              return {
-                id:            i.id,
-                name:          i.name,
-                avatar:        i.avatar_url ?? "",
-                bio:           i.bio ?? "",
-                loginEmail:    (row.login_email    as string | null) ?? undefined,
-                loginPassword: (row.login_password as string | null) ?? undefined,
-              };
-            });
-          }
-        } catch { /* fallback */ }
+        const { data, error } = await supabase.from("instructors").select("*");
+        if (error) throw error;
+        // O email de acesso fica no perfil, que só o admin lê: em `instructors`
+        // ele seria visível a qualquer aluno logado.
+        const userIds = (data ?? []).map((i) => i.user_id).filter((id): id is string => !!id);
+        const emails = new Map<string, string>();
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles").select("id, email").in("id", userIds);
+          if (profilesError) throw profilesError;
+          (profiles ?? []).forEach((p) => emails.set(p.id, p.email));
+        }
+        return (data ?? []).map((i) => ({
+          id:         i.id,
+          name:       i.name,
+          avatar:     i.avatar_url ?? "",
+          bio:        i.bio ?? "",
+          hasLogin:   !!i.user_id,
+          loginEmail: i.user_id ? emails.get(i.user_id) : undefined,
+        }));
       }
-      return mockInstructors.map((i) => ({ ...i }));
+      return mockInstructors.map((i) => ({
+        id: i.id, name: i.name, avatar: i.avatar, bio: i.bio,
+        hasLogin: !!i.loginEmail, loginEmail: i.loginEmail,
+      }));
     },
 
   });
@@ -626,24 +620,14 @@ export function useCreateInstructor() {
     mutationFn: async ({ name, bio, avatar, loginEmail, loginPassword }: {
       name: string; bio: string; avatar: string; loginEmail?: string; loginPassword?: string;
     }) => {
-      const id = `inst-${Date.now()}`;
       if (!isMockMode()) {
-        const base = { id, name, bio, avatar_url: avatar || null };
-        // Tenta salvar com as credenciais de Studio. Se as colunas ainda não
-        // existem (migração 007 não aplicada), refaz sem elas — o instrutor é
-        // criado de qualquer forma. NÃO caímos para o mock em erro real: isso
-        // mascarava falhas e o instrutor "sumia" após o refetch do Supabase.
-        let { error } = await supabase.from("instructors").insert({
-          ...base, login_email: loginEmail || null, login_password: loginPassword || null,
+        return callInstructorsFunction<{ id: string; existingAccount?: boolean }>({
+          action: "save", name, bio, avatar, email: loginEmail, password: loginPassword,
         });
-        if (error && isMissingColumnError(error)) {
-          ({ error } = await supabase.from("instructors").insert(base));
-        }
-        if (error) throw error;
-        return { id };
       }
+      const id = `inst-${Date.now()}`;
       mockInstructors.push({ id, name, bio, avatar, loginEmail, loginPassword });
-      return { id };
+      return { id, existingAccount: false };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-instructors"] });
@@ -659,15 +643,9 @@ export function useUpdateInstructor() {
       id: string; name: string; bio: string; avatar: string; loginEmail?: string; loginPassword?: string;
     }) => {
       if (!isMockMode()) {
-        const base = { name, bio, avatar_url: avatar || null };
-        let { error } = await supabase.from("instructors").update({
-          ...base, login_email: loginEmail || null, login_password: loginPassword || null,
-        }).eq("id", id);
-        if (error && isMissingColumnError(error)) {
-          ({ error } = await supabase.from("instructors").update(base).eq("id", id));
-        }
-        if (error) throw error;
-        return;
+        return callInstructorsFunction<{ id: string; existingAccount?: boolean }>({
+          action: "save", id, name, bio, avatar, email: loginEmail, password: loginPassword,
+        });
       }
       const inst = mockInstructors.find((i) => i.id === id);
       if (inst) {
@@ -675,6 +653,29 @@ export function useUpdateInstructor() {
         inst.loginEmail = loginEmail || undefined;
         inst.loginPassword = loginPassword || undefined;
       }
+      return { id, existingAccount: false };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+      // Dar acesso a um professor antigo troca o id dele nas aulas.
+      qc.invalidateQueries({ queryKey: ["videos"] });
+      qc.invalidateQueries({ queryKey: ["admin-videos"] });
+    },
+  });
+}
+
+/** O professor edita o próprio perfil no Studio. */
+export function useUpdateOwnInstructor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name, bio, avatar }: { id: string; name: string; bio: string; avatar: string }) => {
+      if (!isMockMode()) {
+        await callInstructorsFunction({ action: "save-own", name, bio, avatar });
+        return;
+      }
+      const inst = mockInstructors.find((i) => i.id === id);
+      if (inst) { inst.name = name; inst.bio = bio; inst.avatar = avatar; }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-instructors"] });
@@ -707,8 +708,7 @@ export function useDeleteInstructor() {
   return useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       if (!isMockMode()) {
-        const { error } = await supabase.from("instructors").delete().eq("id", id);
-        if (error) throw error;
+        await callInstructorsFunction({ action: "remove", id });
         return;
       }
       const idx = mockInstructors.findIndex((i) => i.id === id);

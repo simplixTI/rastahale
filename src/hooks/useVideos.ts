@@ -49,12 +49,9 @@ function isMockMode(): boolean {
 }
 
 async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgress[]> {
-  let vids: Database["public"]["Tables"]["videos"]["Row"][] = [];
-  try {
-    const { data, error } = await supabase.from("videos").select("*").eq("visible", true);
-    if (error || !data || data.length === 0) return [];
-    vids = data;
-  } catch { return []; }
+  const { data: vids, error } = await supabase.from("videos").select("*").eq("visible", true);
+  if (error) throw error;
+  if (!vids || vids.length === 0) return [];
 
   const progressMap: Record<string, { progress: number; watched: boolean; is_favorite: boolean }> = {};
 
@@ -135,10 +132,9 @@ export function useVideos(userId: string) {
   return useQuery({
     queryKey: ["videos", userId],
     queryFn: async () => {
-      if (!isMockMode()) {
-        const fromSupabase = await fetchVideosFromSupabase(userId);
-        if (fromSupabase.length > 0) return fromSupabase;
-      }
+      // Demonstração só sem Supabase. Com ele, catálogo vazio é vazio e falha é
+      // erro: mostrar aulas falsas a um aluno de verdade é pior que uma tela vazia.
+      if (!isMockMode()) return fetchVideosFromSupabase(userId);
       return buildMockVideoList(userId);
     },
     enabled:   !!userId,
@@ -153,7 +149,7 @@ export function useFavoriteVideos(userId: string) {
 }
 
 export function useVideoById(videoId: string, userId: string) {
-  const { data, isLoading, isError, error, isFetching } = useVideos(userId);
+  const { data, isLoading, isError, error, isFetching, refetch } = useVideos(userId);
   const video = useMemo(() => data?.find((v) => v.id === videoId), [data, videoId]);
-  return { data: video, isLoading, isError, error, isFetching };
+  return { data: video, isLoading, isError, error, isFetching, refetch };
 }
