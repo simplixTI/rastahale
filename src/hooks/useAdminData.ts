@@ -706,13 +706,20 @@ export function useUpdateInstructorAvatar() {
 export function useDeleteInstructor() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
+    mutationFn: async ({ id, lessons, transferTo }: {
+      id: string; lessons?: "delete" | "transfer"; transferTo?: string;
+    }) => {
       if (!isMockMode()) {
-        await callInstructorsFunction({ action: "remove", id });
-        return;
+        return callInstructorsFunction<{ keptAsStudent?: boolean }>({ action: "remove", id, lessons, transferTo });
+      }
+      for (let i = mockVideos.length - 1; i >= 0; i--) {
+        if (mockVideos[i].instructorId !== id) continue;
+        if (lessons === "transfer" && transferTo) mockVideos[i].instructorId = transferTo;
+        else mockVideos.splice(i, 1);
       }
       const idx = mockInstructors.findIndex((i) => i.id === id);
       if (idx !== -1) mockInstructors.splice(idx, 1);
+      return { keptAsStudent: false };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-instructors"] });

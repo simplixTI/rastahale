@@ -197,7 +197,7 @@ Alunos só escrevem/leem seus próprios dados (`user_progress`, `push_tokens`, c
 - Aula oculta (`visible = false`) não abre no player nem para o admin: o catálogo só carrega aulas visíveis.
 
 **Professor com login tem `instructors.id` igual ao `auth.users.id`**
-O Studio grava `videos.instructor_id = user.id`, e existe FK para `instructors(id)` e RLS comparando com `auth.uid()`. O admin cria, edita e remove professores pela Edge Function `admin-instructors` (precisa da service role para criar o login); dar acesso a um professor antigo (`inst-…`) move as aulas para o id novo. Ao remover, a conta volta a ser de aluno. Deploy: `npx supabase functions deploy admin-instructors --no-verify-jwt`.
+O Studio grava `videos.instructor_id = user.id`, e existe FK para `instructors(id)` e RLS comparando com `auth.uid()`. O admin cria, edita e remove professores pela Edge Function `admin-instructors` (precisa da service role para criar o login); dar acesso a um professor antigo (`inst-…`) move as aulas para o id novo. Ao remover, o admin escolhe excluir as aulas ou passá-las a outro professor, e o login é apagado (conta com pagamentos não é apagada: vira aluno, para não deixar assinatura cobrando sem dono nem perder o histórico). Deploy: `npx supabase functions deploy admin-instructors --no-verify-jwt`.
 
 **Dados de demonstração só sem Supabase**
 Com o Supabase configurado, lista vazia é vazia e falha vira erro (`LoadError`). Nunca volte a cair em `mockData` nesse caso: aluno de verdade via aulas e professores falsos.

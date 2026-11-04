@@ -388,33 +388,68 @@ function InstructorCard({ instructor, videoCount, onEdit, onDelete }: {
 
 // ── ConfirmDelete ─────────────────────────────────────────────────────────────
 
-function ConfirmDelete({ name, videoCount, onConfirm, onCancel }: {
-  name: string; videoCount: number; onConfirm: () => void; onCancel: () => void;
+type RemoveChoice = { lessons?: "delete" | "transfer"; transferTo?: string };
+
+function ConfirmDelete({ name, videoCount, others, isPending, onConfirm, onCancel }: {
+  name: string; videoCount: number; others: { id: string; name: string }[];
+  isPending?: boolean; onConfirm: (choice: RemoveChoice) => void; onCancel: () => void;
 }) {
+  const hasLessons = videoCount > 0;
+  const canTransfer = others.length > 0;
+  const [lessons, setLessons]       = useState<"delete" | "transfer">(canTransfer ? "transfer" : "delete");
+  const [transferTo, setTransferTo] = useState(others[0]?.id ?? "");
+
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onCancel(); }}>
       <DialogContent className="border-border bg-background sm:max-w-xs">
         <DialogHeader>
           <DialogTitle className="text-sm font-bold text-foreground">Remover instrutor?</DialogTitle>
         </DialogHeader>
-        {videoCount > 0 ? (
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{name}</span> ainda tem {videoCount} aula{videoCount !== 1 ? "s" : ""}.
-            Passe-as para outro instrutor ou exclua-as antes de remover.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Tem certeza que deseja remover <span className="font-semibold text-foreground">{name}</span>?
-            O acesso ao Studio será revogado e as sessões do instrutor serão apagadas.
-          </p>
+        <p className="text-xs text-muted-foreground">
+          Tem certeza que deseja remover <span className="font-semibold text-foreground">{name}</span>?
+          O login e as sessões do instrutor serão apagados. Para estudar na plataforma, será preciso criar uma conta de aluno.
+        </p>
+
+        {hasLessons && (
+          <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+            <p className="text-[11px] font-semibold text-foreground">
+              O que fazer com {videoCount === 1 ? "a aula" : `as ${videoCount} aulas`}?
+            </p>
+            {canTransfer && (
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">
+                <input type="radio" name="lessons" className="accent-primary" checked={lessons === "transfer"}
+                  onChange={() => setLessons("transfer")} />
+                Passar para outro instrutor
+              </label>
+            )}
+            {canTransfer && lessons === "transfer" && (
+              <select value={transferTo} onChange={(e) => setTransferTo(e.target.value)} className={fieldCls}
+                aria-label="Instrutor que recebe as aulas">
+                {others.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            )}
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">
+              <input type="radio" name="lessons" className="accent-primary" checked={lessons === "delete"}
+                onChange={() => setLessons("delete")} />
+              Excluir definitivamente
+            </label>
+            {lessons === "delete" && (
+              <p className="text-[10px] text-red-400">
+                As aulas, os vídeos e o progresso dos alunos nelas serão apagados. Não dá para desfazer.
+              </p>
+            )}
+          </div>
         )}
+
         <DialogFooter className="pt-2">
-          <button onClick={onCancel} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">
-            {videoCount > 0 ? "Fechar" : "Cancelar"}
+          <button onClick={onCancel} className="rounded-full btn-press border border-border px-4 py-2 text-xs font-medium text-muted-foreground">Cancelar</button>
+          <button
+            disabled={isPending}
+            onClick={() => onConfirm(hasLessons ? { lessons, transferTo: lessons === "transfer" ? transferTo : undefined } : {})}
+            className="rounded-full btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
+          >
+            {isPending ? "Removendo…" : "Remover"}
           </button>
-          {videoCount === 0 && (
-            <button onClick={onConfirm} className="rounded-full btn-press bg-red-500 px-4 py-2 text-xs font-medium text-white">Remover</button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -469,10 +504,15 @@ const AdminInstructors = () => {
     );
   }
 
-  function handleDelete() {
+  function handleDelete(choice: RemoveChoice) {
     if (!deleting) return;
-    deleteInstructor.mutate({ id: deleting.id }, {
-      onSuccess: () => { toast.success("Instrutor removido"); setDeleting(null); },
+    deleteInstructor.mutate({ id: deleting.id, ...choice }, {
+      onSuccess: (result) => {
+        toast.success(result.keptAsStudent
+          ? "Instrutor removido. A conta já tinha pagamentos, então continua existindo como aluno."
+          : "Instrutor removido");
+        setDeleting(null);
+      },
       onError:   (err) => toast.error(err.message || "Erro ao remover instrutor"),
     });
   }
@@ -483,7 +523,16 @@ const AdminInstructors = () => {
     <AdminLayout title="Instrutores">
       <InstructorFormModal open={showCreate} onOpenChange={setShowCreate} onSubmit={handleCreate} isPending={createInstructor.isPending} />
       <InstructorFormModal open={!!editing} onOpenChange={(v) => { if (!v) setEditing(null); }} instructor={editing} onSubmit={handleUpdate} isPending={updateInstructor.isPending} />
-      {deleting && <ConfirmDelete name={deleting.name} videoCount={videoCount(deleting.id)} onConfirm={handleDelete} onCancel={() => setDeleting(null)} />}
+      {deleting && (
+        <ConfirmDelete
+          name={deleting.name}
+          videoCount={videoCount(deleting.id)}
+          others={instructors.filter((i) => i.id !== deleting.id)}
+          isPending={deleteInstructor.isPending}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      )}
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-foreground">Instrutores</h2>
