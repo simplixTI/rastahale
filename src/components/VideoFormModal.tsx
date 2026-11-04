@@ -67,6 +67,12 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const FIELD_LABELS: Partial<Record<keyof FormValues, string>> = {
+  title: "Título", description: "Descrição", thumbnail: "Thumbnail", videoUrl: "Vídeo", duration: "Duração",
+  subcategory: "Categoria", level: "Nível", instructorId: "Instrutor", requiredProgress: "Progresso mínimo",
+};
+
 type VideoWithUrl = Video & { videoUrl?: string | null };
 
 interface Props {
@@ -301,8 +307,10 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           : {
               title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
               category: DEFAULT_MODALITY, subcategory: "",
-              // Preenchido pelo efeito de instrutores acima.
-              level: "Iniciante", instructorId: "",
+              // Precisa vir preenchido aqui: este reset roda depois do efeito de
+              // instrutores acima e, sem o <select> na tela (Studio), o campo
+              // ficava vazio e a validação reprovava sem nada aparecer.
+              level: "Iniciante", instructorId: instructors[0]?.id ?? "",
               visible: true, unlockByProgress: false, requiredProgress: 50,
             }
       );
@@ -398,6 +406,10 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             unsavedBunnyId.current = null;
             // A modalidade interna acompanha a categoria escolhida.
             onSubmit({ ...values, category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY) });
+          }, (invalid) => {
+            // Sem isto, um campo fora da tela reprovava e o botão parecia não fazer nada.
+            const fields = Object.keys(invalid).map((f) => FIELD_LABELS[f as keyof FormValues] ?? f);
+            toast.error(`Confira: ${fields.join(", ")}`);
           })}
           className="space-y-3 pt-1"
         >
