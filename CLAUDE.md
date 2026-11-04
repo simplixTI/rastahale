@@ -181,3 +181,23 @@ Alunos só escrevem/leem seus próprios dados (`user_progress`, `push_tokens`, c
 
 ### Tabelas principais
 `videos`, `instructors`, `plans`, `profiles`, `payments`, `user_progress`, `instructor_comments`, `studio_sessions`, `push_tokens`.
+
+---
+
+## 7. Produção e Bunny Stream
+
+**De onde o site publica**
+`www.rastahalevirtualacademy.com` é o projeto Vercel `rastahale` do time `simplix`, publicado da `main` de `github.com/simplixTI/rastahale` (remote `simplix`; o `origin` em `lucasstxp` não publica nada). Publique sempre por git: um deploy manual pela CLI já colocou no ar código que não estava em repositório nenhum.
+
+**Vídeos no Bunny**
+- Upload: o navegador envia direto ao Bunny (TUS); a Edge Function `bunny-stream` só assina. Sem `VITE_BUNNY_STREAM_CDN_HOSTNAME` no build, o upload volta silenciosamente para o Supabase Storage.
+- Reprodução: `getBunnyPlayback()` chama a ação `playback`, que confere a regra de acesso e devolve a URL. A regra (admin/instrutor, ou `profiles.status = 'ativo'`) existe em dois lugares que devem ficar iguais: `src/lib/access.ts` (tela) e a própria função (servidor).
+- Proteção por token: com o secret `BUNNY_STREAM_TOKEN_KEY` a função assina as URLs. Ligue no painel do Bunny e grave o secret em seguida: URL assinada não abre enquanto a CDN não exige token, e URL sem assinatura não abre depois que passa a exigir.
+- Deploy da função: `npx supabase functions deploy bunny-stream --no-verify-jwt`.
+- Aula oculta (`visible = false`) não abre no player nem para o admin: o catálogo só carrega aulas visíveis.
+
+**Instrutor precisa de linha em `instructors` com `id` igual ao `auth.users.id`**
+O Studio grava `videos.instructor_id = user.id`, e existe FK para `instructors(id)` e RLS comparando com `auth.uid()`. Sem essa linha, salvar a aula falha.
+
+**Gerar o app Android**
+Os botões Google/Apple só aparecem se `VITE_FIREBASE_*` estiver no build, e sempre rode `npm run build && npx cap sync android` antes do Gradle. No emulador, confira a `versionCode` depois de instalar: um `adb install` com assinatura diferente falha e deixa o app antigo rodando.

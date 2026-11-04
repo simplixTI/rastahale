@@ -217,18 +217,20 @@ function useHlsSource(videoRef: RefObject<HTMLVideoElement>, url: string | null,
 }
 
 // ── Mensagens sobre o player ──────────────────────────────────────────────────
+// Ficam sobre fundo preto nos dois temas, então usam branco fixo: no tema claro,
+// `primary` é quase preto e sumiria.
 
 function PlayerMessage({ text, actionLabel, onAction }: {
   text: string; actionLabel?: string; onAction?: () => void;
 }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
-      <VideoIcon size={36} className="text-muted-foreground" />
-      <p className="text-xs text-muted-foreground">{text}</p>
+      <VideoIcon size={36} className="text-white/70" />
+      <p className="text-xs text-white/80">{text}</p>
       {actionLabel && (
         <button
           onClick={onAction}
-          className="mt-1 rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+          className="mt-1 rounded-full btn-press bg-white px-4 py-2 text-xs font-medium text-black"
         >
           {actionLabel}
         </button>
@@ -242,12 +244,12 @@ function LockedMessage() {
   const { t }    = useTranslation();
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/80 px-6 text-center">
-      <Lock size={28} className="text-primary" />
+      <Lock size={28} className="text-white" />
       <p className="text-sm font-semibold text-white">{t("video.lockedTitle")}</p>
-      <p className="text-xs text-muted-foreground">{t("video.lockedText")}</p>
+      <p className="text-xs text-white/80">{t("video.lockedText")}</p>
       <button
         onClick={() => navigate("/perfil/plano")}
-        className="mt-1 rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+        className="mt-1 rounded-full btn-press bg-white px-4 py-2 text-xs font-medium text-black"
       >
         {t("video.lockedCta")}
       </button>
