@@ -1,0 +1,20 @@
+# A CLI da Vercel envia a pasta inteira e não lê o .gitignore. O deploy de
+# 22/09/2026 levou junto o .env, a chave de serviço do Firebase e os dados do
+# keystore. Segredos e projetos nativos nunca devem subir no deploy do site.
+.env
+.env.*
+!.env.example
+firebase-service-account.json
+*.jks
+*.keystore
+keystore.properties
+local.properties
+
+android/
+ios/
+dist/
+e2e/
+screenshots/
+*.tmp.png
+.claude/
+.vscode/
