@@ -77,7 +77,32 @@
     "google": "Sign in with Google",
     "apple": "Sign in with Apple",
     "or": "or",
-    "notConfigured": "App not configured yet. Add Supabase/Firebase keys to .env or enable mock mode."
+    "notConfigured": "App not configured yet. Add Supabase/Firebase keys to .env or enable mock mode.",
+    "forgotPassword": "Forgot my password"
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "subtitle": "We'll email you a link to reset it",
+    "email": "Email",
+    "submit": "Send link",
+    "submitting": "Sending...",
+    "success": "We sent an email with a link to reset your password. Check your inbox and spam.",
+    "backToLogin": "Back to sign in",
+    "errorGeneric": "Couldn't send the email. Please try again."
+  },
+  "resetPassword": {
+    "title": "New password",
+    "subtitle": "Choose your new sign-in password",
+    "password": "New password",
+    "confirm": "Confirm password",
+    "submit": "Save password",
+    "submitting": "Saving...",
+    "success": "Password updated. Redirecting...",
+    "errorMismatch": "Passwords don't match.",
+    "errorShort": "Password must be at least 6 characters.",
+    "errorInvalidLink": "Invalid or expired link. Request a new email.",
+    "errorGeneric": "Couldn't update the password. Please try again.",
+    "backToLogin": "Back to sign in"
   },
   "home": {
     "welcome": "Welcome back",

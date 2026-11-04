@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { authProvider, isMockModeEnabled, isFirebaseConfigured, isAnyAuthConfigured, AuthError } from "@/lib/auth";
@@ -320,6 +320,13 @@ const Login = () => {
           >
             {isLoading ? t("login.submitting") : t("login.submit")}
           </button>
+
+          <Link
+            to="/esqueci-senha"
+            className="block text-center text-xs text-muted-foreground hover:text-foreground"
+          >
+            {t("login.forgotPassword")}
+          </Link>
         </form>
 
         {!isMockModeEnabled && isFirebaseConfigured && (

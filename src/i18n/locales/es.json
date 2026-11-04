@@ -77,7 +77,32 @@
     "google": "Entrar con Google",
     "apple": "Entrar con Apple",
     "or": "o",
-    "notConfigured": "App aún no configurada. Agrega las claves de Supabase/Firebase al .env o activa el modo mock."
+    "notConfigured": "App aún no configurada. Agrega las claves de Supabase/Firebase al .env o activa el modo mock.",
+    "forgotPassword": "Olvidé mi contraseña"
+  },
+  "forgotPassword": {
+    "title": "Recuperar contraseña",
+    "subtitle": "Te enviaremos un enlace por email para restablecerla",
+    "email": "Email",
+    "submit": "Enviar enlace",
+    "submitting": "Enviando...",
+    "success": "Enviamos un email con el enlace para restablecer tu contraseña. Revisa tu bandeja de entrada y el spam.",
+    "backToLogin": "Volver al inicio de sesión",
+    "errorGeneric": "No se pudo enviar el email. Inténtalo de nuevo."
+  },
+  "resetPassword": {
+    "title": "Nueva contraseña",
+    "subtitle": "Define tu nueva contraseña de acceso",
+    "password": "Nueva contraseña",
+    "confirm": "Confirmar contraseña",
+    "submit": "Guardar contraseña",
+    "submitting": "Guardando...",
+    "success": "Contraseña actualizada. Redirigiendo...",
+    "errorMismatch": "Las contraseñas no coinciden.",
+    "errorShort": "La contraseña debe tener al menos 6 caracteres.",
+    "errorInvalidLink": "Enlace inválido o caducado. Solicita un nuevo email.",
+    "errorGeneric": "No se pudo actualizar la contraseña. Inténtalo de nuevo.",
+    "backToLogin": "Volver al inicio de sesión"
   },
   "home": {
     "welcome": "Bienvenido de nuevo",

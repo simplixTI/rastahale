@@ -125,8 +125,9 @@ async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
 
   // API 2025+: current_period_end saiu do topo da subscription e foi para o item.
   // Fallback: usa o topo se ainda existir (versões antigas ou compatibilidade).
-  // deno-lint-ignore no-explicit-any
-  const periodEndUnix = (item as any)?.current_period_end ?? (sub as any).current_period_end;
+  const itemPeriodEnd = (item as { current_period_end?: number } | undefined)?.current_period_end;
+  const subPeriodEnd = (sub as { current_period_end?: number }).current_period_end;
+  const periodEndUnix = itemPeriodEnd ?? subPeriodEnd;
   const currentPeriodEnd = typeof periodEndUnix === "number"
     ? new Date(periodEndUnix * 1000).toISOString()
     : null;

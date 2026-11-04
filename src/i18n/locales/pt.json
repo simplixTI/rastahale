@@ -77,7 +77,32 @@
     "google": "Entrar com Google",
     "apple": "Entrar com Apple",
     "or": "ou",
-    "notConfigured": "App ainda não configurado. Adicione as chaves do Supabase/Firebase ao .env ou ative o modo mock."
+    "notConfigured": "App ainda não configurado. Adicione as chaves do Supabase/Firebase ao .env ou ative o modo mock.",
+    "forgotPassword": "Esqueci minha senha"
+  },
+  "forgotPassword": {
+    "title": "Recuperar senha",
+    "subtitle": "Enviaremos um link de redefinição pro seu email",
+    "email": "Email",
+    "submit": "Enviar link",
+    "submitting": "Enviando...",
+    "success": "Enviamos um email com o link pra redefinir sua senha. Confira sua caixa de entrada e o spam.",
+    "backToLogin": "Voltar para o login",
+    "errorGeneric": "Não foi possível enviar o email. Tente novamente."
+  },
+  "resetPassword": {
+    "title": "Nova senha",
+    "subtitle": "Defina sua nova senha de acesso",
+    "password": "Nova senha",
+    "confirm": "Confirmar senha",
+    "submit": "Salvar senha",
+    "submitting": "Salvando...",
+    "success": "Senha atualizada. Redirecionando...",
+    "errorMismatch": "As senhas não coincidem.",
+    "errorShort": "A senha precisa ter pelo menos 6 caracteres.",
+    "errorInvalidLink": "Link inválido ou expirado. Solicite um novo email.",
+    "errorGeneric": "Não foi possível atualizar a senha. Tente novamente.",
+    "backToLogin": "Voltar para o login"
   },
   "home": {
     "welcome": "Bem-vindo de volta",

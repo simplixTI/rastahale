@@ -16,6 +16,8 @@ import ProgressPage from "./pages/ProgressPage";
 import Profile from "./pages/Profile";
 import VideoDetail from "./pages/VideoDetail";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminVideos from "./pages/admin/AdminVideos";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -82,7 +84,9 @@ const AppRoutes = () => {
   const location = useLocation();
   const isAdmin    = location.pathname.startsWith("/admin");
   const isStudio   = location.pathname.startsWith("/studio");
-  const isLogin    = location.pathname === "/login";
+  const isLogin    = location.pathname === "/login"
+                   || location.pathname === "/esqueci-senha"
+                   || location.pathname === "/reset-senha";
   const showTabBar = !isAdmin && !isLogin && !isStudio;
 
   // Botão voltar do Android navega no histórico em vez de fechar o app.
@@ -108,6 +112,8 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
+        <Route path="/esqueci-senha" element={<ForgotPassword />} />
+        <Route path="/reset-senha" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/buscar" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/favoritos" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />

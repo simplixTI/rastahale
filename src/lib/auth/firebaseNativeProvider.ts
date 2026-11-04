@@ -37,9 +37,13 @@ export async function signInWithGoogleNative(): Promise<GoogleSignInResult> {
   } catch (err) {
     if (err instanceof AuthError) throw err;
     // Loga TUDO do erro pra debug em produção (aparece no logcat/webview console).
-    // deno-lint-ignore no-explicit-any
-    const e = err as any;
-    // eslint-disable-next-line no-console
+    const e = err as {
+      message?: string;
+      code?: string | number;
+      name?: string;
+      cause?: unknown;
+      stack?: string;
+    };
     console.error("[GoogleSignIn][native] erro completo:", {
       message: e?.message,
       code:    e?.code,
