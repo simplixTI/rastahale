@@ -119,6 +119,25 @@ export async function uploadVideoToBunny(file: File, options: UploadOptions = {}
   return `https://${CDN_HOSTNAME}/${ticket.videoId}/playlist.m3u8`;
 }
 
+export type BunnyPlayback =
+  | { state: "ready"; url: string }
+  | { state: "processing"; progress?: number }
+  | { state: "locked" }
+  | { state: "failed" };
+
+/**
+ * Pede à Edge Function a URL para tocar esta aula. É lá que a assinatura do
+ * aluno é conferida e, com a proteção por token ativa, que o link é assinado.
+ */
+export async function getBunnyPlayback(lessonId: string): Promise<BunnyPlayback> {
+  const { data, error } = await supabase.functions.invoke("bunny-stream", {
+    body: { action: "playback", lessonId },
+  });
+  if (!error) return data as BunnyPlayback;
+  const status = error instanceof FunctionsHttpError ? error.context.status : 0;
+  return status === 403 ? { state: "locked" } : { state: "failed" };
+}
+
 /** Remove o vídeo do Bunny. A Edge Function recusa se alguma aula ainda o usa. */
 export async function deleteBunnyVideo(videoId: string): Promise<void> {
   await callFunction({ action: "delete", videoId });

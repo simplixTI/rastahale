@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type Hls from "hls.js";
-import { ArrowLeft, Heart, CheckCircle, Play, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, Heart, CheckCircle, Lock, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideoById, useVideos } from "@/hooks/useVideos";
 import { useInstructor } from "@/hooks/useInstructors";
+import { useProfile } from "@/hooks/useProfile";
 import { useToggleFavorite, useUpdateProgress } from "@/hooks/useProgress";
 import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
 import { getLevelColor } from "@/data/mockData";
-import { isHlsUrl } from "@/lib/bunnyStream";
+import { canWatchLessons } from "@/lib/access";
+import { bunnyVideoIdFromUrl, getBunnyPlayback, isHlsUrl, type BunnyPlayback } from "@/lib/bunnyStream";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
@@ -109,47 +112,153 @@ function YouTubePlayer({ videoId, startAt, onProgress }: {
 // hls.js alimenta o <video> via Media Source. Carregado sob demanda para não
 // pesar para quem só assiste YouTube/MP4.
 
-/** Liga a playlist HLS ao <video>. Devolve true se ela não carregou (ex: Bunny ainda processando). */
-function useHlsSource(videoRef: RefObject<HTMLVideoElement>, url: string | null): boolean {
-  const [failed, setFailed] = useState(false);
+type HlsStatus = "idle" | "loading" | "ready" | "processing" | "locked" | "error";
+
+// Enquanto o Bunny converte o vídeo, confere de novo sozinho.
+const PROCESSING_POLL_MS = 15_000;
+// Quedas de rede e link vencido: novas tentativas antes de mostrar o erro.
+const MAX_AUTO_RETRIES = 3;
+
+/** Liga a playlist HLS ao <video>, cuidando de link assinado, conversão e quedas de rede. */
+function useHlsSource(videoRef: RefObject<HTMLVideoElement>, url: string | null, lessonId: string) {
+  const [status, setStatus]   = useState<HlsStatus>("idle");
+  const [attempt, setAttempt] = useState(0);
+  const retries  = useRef(0);
+  const resumeAt = useRef(0); // onde retomar depois de recarregar a playlist
+
+  const retry = useCallback(() => {
+    retries.current = 0;
+    setAttempt((n) => n + 1);
+  }, []);
 
   useEffect(() => {
-    setFailed(false);
+    retries.current  = 0;
+    resumeAt.current = 0;
+  }, [url]);
+
+  useEffect(() => {
     const el = videoRef.current;
-    if (!el || !url) return;
+    if (!el || !url) { setStatus("idle"); return; }
+    setStatus("loading");
+
     let hls: Hls | undefined;
     let cancelled = false;
-    const onNativeError = () => setFailed(true);
+    let usedNative = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    import("hls.js").then(({ default: HlsJs }) => {
+    const reload = (delay: number) => { timer = setTimeout(() => setAttempt((n) => n + 1), delay); };
+    const retryOrFail = () => {
       if (cancelled) return;
-      if (HlsJs.isSupported()) {
-        hls = new HlsJs();
-        hls.on(HlsJs.Events.ERROR, (_event, data) => { if (data.fatal) setFailed(true); });
-        hls.loadSource(url);
-        hls.attachMedia(el);
-      } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
-        el.addEventListener("error", onNativeError);
-        el.src = url;
-      } else {
-        setFailed(true);
+      if (retries.current >= MAX_AUTO_RETRIES) { setStatus("error"); return; }
+      retries.current += 1;
+      resumeAt.current = el.currentTime;
+      reload(2000 * retries.current);
+    };
+    const onMetadata = () => {
+      if (resumeAt.current > 0 && resumeAt.current < el.duration) {
+        el.currentTime = resumeAt.current;
+        resumeAt.current = 0;
+        el.play().catch(() => { /* autoplay bloqueado — o aluno aperta play */ });
       }
-    }).catch(() => { if (!cancelled) setFailed(true); });
+    };
+    el.addEventListener("loadedmetadata", onMetadata);
+
+    (async () => {
+      // Aula no Bunny: a URL sai da Edge Function, que confere a assinatura do aluno.
+      const playback: BunnyPlayback = bunnyVideoIdFromUrl(url) && isSupabaseConfigured
+        ? await getBunnyPlayback(lessonId)
+        : { state: "ready", url };
+      if (cancelled) return;
+
+      if (playback.state === "processing") { setStatus("processing"); reload(PROCESSING_POLL_MS); return; }
+      if (playback.state === "locked")     { setStatus("locked"); return; }
+      if (playback.state === "failed")     { setStatus("error"); return; }
+
+      const { default: HlsJs } = await import("hls.js");
+      if (cancelled) return;
+
+      if (HlsJs.isSupported()) {
+        let recoveredMedia = false;
+        hls = new HlsJs();
+        hls.on(HlsJs.Events.FRAG_BUFFERED, () => { retries.current = 0; });
+        hls.on(HlsJs.Events.ERROR, (_event, data) => {
+          if (!data.fatal) return;
+          if (data.type === HlsJs.ErrorTypes.MEDIA_ERROR && !recoveredMedia) {
+            recoveredMedia = true;
+            hls?.recoverMediaError();
+            return;
+          }
+          retryOrFail();
+        });
+        hls.loadSource(playback.url);
+        hls.attachMedia(el);
+        setStatus("ready");
+      } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
+        usedNative = true;
+        el.addEventListener("error", retryOrFail);
+        el.src = playback.url;
+        setStatus("ready");
+      } else {
+        setStatus("error");
+      }
+    })().catch(() => { if (!cancelled) setStatus("error"); });
 
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
       hls?.destroy();
-      el.removeEventListener("error", onNativeError);
+      el.removeEventListener("loadedmetadata", onMetadata);
+      el.removeEventListener("error", retryOrFail);
+      if (usedNative) { el.removeAttribute("src"); el.load(); }
     };
-  }, [videoRef, url]);
+  }, [videoRef, url, lessonId, attempt]);
 
-  return failed;
+  return { status, retry };
+}
+
+// ── Mensagens sobre o player ──────────────────────────────────────────────────
+
+function PlayerMessage({ text, actionLabel, onAction }: {
+  text: string; actionLabel?: string; onAction?: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
+      <VideoIcon size={36} className="text-muted-foreground" />
+      <p className="text-xs text-muted-foreground">{text}</p>
+      {actionLabel && (
+        <button
+          onClick={onAction}
+          className="mt-1 rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LockedMessage() {
+  const navigate = useNavigate();
+  const { t }    = useTranslation();
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/80 px-6 text-center">
+      <Lock size={28} className="text-primary" />
+      <p className="text-sm font-semibold text-white">{t("video.lockedTitle")}</p>
+      <p className="text-xs text-muted-foreground">{t("video.lockedText")}</p>
+      <button
+        onClick={() => navigate("/perfil/plano")}
+        className="mt-1 rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+      >
+        {t("video.lockedCta")}
+      </button>
+    </div>
+  );
 }
 
 // ── VideoPlayer ───────────────────────────────────────────────────────────────
 
-function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
-  videoUrl: string | null; thumbnail: string; title: string;
+function VideoPlayer({ lessonId, videoUrl, thumbnail, title, startAt, onProgress }: {
+  lessonId: string; videoUrl: string | null; thumbnail: string; title: string;
   startAt: number; onProgress: (pct: number) => void;
 }) {
   const [playing, setPlaying] = useState(false);
@@ -158,7 +267,7 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
   const lastSentAt = useRef(0);
   const seeked     = useRef(false);
   const isHls      = !!videoUrl && isHlsUrl(videoUrl);
-  const hlsFailed  = useHlsSource(videoRef, isHls ? videoUrl : null);
+  const { status: hlsStatus, retry: retryHls } = useHlsSource(videoRef, isHls ? videoUrl : null, lessonId);
 
   if (!videoUrl) {
     return (
@@ -232,12 +341,21 @@ function VideoPlayer({ videoUrl, thumbnail, title, startAt, onProgress }: {
       >
         {t("video.noSupport")}
       </video>
-      {hlsFailed && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
-          <VideoIcon size={36} className="text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">{t("video.processing")}</p>
-        </div>
+      {hlsStatus === "processing" && <PlayerMessage text={t("video.stillProcessing")} />}
+      {hlsStatus === "error" && (
+        <PlayerMessage text={t("video.processing")} actionLabel={t("video.retry")} onAction={retryHls} />
       )}
+      {hlsStatus === "locked" && <LockedMessage />}
+    </div>
+  );
+}
+
+/** Aluno sem assinatura ativa vê a capa da aula e o caminho para assinar. */
+function LockedPlayer({ thumbnail, title }: { thumbnail: string; title: string }) {
+  return (
+    <div className="relative aspect-video w-full bg-black">
+      <img src={thumbnail} alt={title} className="h-full w-full object-cover opacity-60" />
+      <LockedMessage />
     </div>
   );
 }
@@ -254,6 +372,7 @@ const VideoDetail = () => {
   const toggleFavoriteMutation     = useToggleFavorite();
   const updateProgressMutation     = useUpdateProgress();
   const { data: allVideos = [] }   = useVideos(user?.id ?? "");
+  const { data: profile, isLoading: profileLoading } = useProfile(user?.id ?? "");
 
   // Grava o progresso de reprodução. A partir de 95% conta como assistida —
   // os segundos finais (créditos, despedida) raramente são vistos até o fim.
@@ -289,6 +408,8 @@ const VideoDetail = () => {
     );
   }
 
+  // Modo demo (sem Supabase) não tem assinatura para conferir.
+  const canWatch  = !isSupabaseConfigured || canWatchLessons(user?.role, profile?.status);
   const isFav     = video.isFavorite ?? false;
   const isWatched = video.watched ?? false;
   const related   = allVideos.filter((v) => v.subcategory === video.subcategory && v.id !== video.id).slice(0, 5);
@@ -321,13 +442,20 @@ const VideoDetail = () => {
     <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
       {/* Player */}
       <div className="relative w-full">
-        <VideoPlayer
-          videoUrl={video.videoUrl ?? null}
-          thumbnail={video.thumbnail}
-          title={video.title}
-          startAt={startAt}
-          onProgress={handleProgress}
-        />
+        {canWatch ? (
+          <VideoPlayer
+            lessonId={video.id}
+            videoUrl={video.videoUrl ?? null}
+            thumbnail={video.thumbnail}
+            title={video.title}
+            startAt={startAt}
+            onProgress={handleProgress}
+          />
+        ) : profileLoading ? (
+          <div className="aspect-video w-full bg-black" />
+        ) : (
+          <LockedPlayer thumbnail={video.thumbnail} title={video.title} />
+        )}
         <button
           onClick={() => navigate(-1)}
           className="absolute left-3 top-3 z-10 rounded-full bg-black/50 p-2 text-white backdrop-blur-sm"

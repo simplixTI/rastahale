@@ -260,7 +260,12 @@
     "progress": "Progreso",
     "viewSection": "Ver página →",
     "about": "Sobre esta clase",
-    "related": "Videos Relacionados"
+    "related": "Videos Relacionados",
+    "lockedTitle": "Clase exclusiva para suscriptores",
+    "lockedText": "Suscríbete a un plan para ver esta y todas las demás clases.",
+    "lockedCta": "Ver planes",
+    "stillProcessing": "Este video todavía se está procesando. Empezará solo cuando esté listo.",
+    "retry": "Intentar de nuevo"
   },
   "instructors": {
     "title": "Profesores",

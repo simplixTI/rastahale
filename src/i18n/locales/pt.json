@@ -260,7 +260,12 @@
     "progress": "Progresso",
     "viewSection": "Ver sessão →",
     "about": "Sobre esta aula",
-    "related": "Vídeos Relacionados"
+    "related": "Vídeos Relacionados",
+    "lockedTitle": "Aula exclusiva para assinantes",
+    "lockedText": "Assine um plano para assistir a esta e a todas as outras aulas.",
+    "lockedCta": "Ver planos",
+    "stillProcessing": "Este vídeo ainda está sendo processado. Ele começa sozinho quando ficar pronto.",
+    "retry": "Tentar novamente"
   },
   "instructors": {
     "title": "Professores",

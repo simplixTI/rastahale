@@ -260,7 +260,12 @@
     "progress": "Progress",
     "viewSection": "View page →",
     "about": "About this lesson",
-    "related": "Related Videos"
+    "related": "Related Videos",
+    "lockedTitle": "Lesson for subscribers only",
+    "lockedText": "Subscribe to a plan to watch this and every other lesson.",
+    "lockedCta": "See plans",
+    "stillProcessing": "This video is still processing. It will start on its own when it's ready.",
+    "retry": "Try again"
   },
   "instructors": {
     "title": "Teachers",
