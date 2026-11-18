@@ -1,8 +1,22 @@
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import App from "./App.tsx";
 import "./i18n"; // registra i18next antes de qualquer componente renderizar
 import "./index.css";
 import "./App.css";
+
+// App nativo: trava o zoom da página. No iOS, tocar num campo com fonte menor
+// que 16px (os do login são 14px) dá zoom automático e ele NÃO volta depois —
+// o app inteiro ficava ampliado, cortado na direita e fora de centro. Na web o
+// zoom por pinça continua liberado (acessibilidade).
+if (Capacitor.isNativePlatform()) {
+  document
+    .querySelector('meta[name="viewport"]')
+    ?.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover",
+    );
+}
 
 // Registra o Service Worker para PWA
 if ("serviceWorker" in navigator) {

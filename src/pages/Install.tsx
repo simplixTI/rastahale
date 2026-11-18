@@ -96,7 +96,7 @@ const Install = () => {
       <div className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 flex items-center gap-4">
         <Logo className="h-16 w-16 rounded-2xl shadow-lg flex-shrink-0 object-contain" />
         <div>
-          <p className="text-base font-bold text-foreground">RastaHale Academy</p>
+          <p className="text-base font-bold text-foreground">RastaHale Club</p>
           <p className="text-xs text-muted-foreground mt-0.5">{t("install.appSubtitle")}</p>
           <div className="mt-2 flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-emerald-400" />

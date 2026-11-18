@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
@@ -12,6 +13,11 @@ import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
 import { cn } from "@/lib/utils";
+
+// Comentários ficam fora do app das lojas (iOS/Android): a Apple (guideline 1.2)
+// exige denúncia e bloqueio de usuários para conteúdo gerado por alunos, e isso
+// ainda não existe. Na web continuam aparecendo.
+const SHOW_COMMENTS = !Capacitor.isNativePlatform();
 
 // ── CommentCard ───────────────────────────────────────────────────────────────
 
@@ -233,75 +239,77 @@ const InstructorSection = () => {
         )}
 
         {/* ── seção de comentários ── */}
-        <div className="mt-10">
-          <div className="mb-4 flex items-center gap-2">
-            <MessageCircle size={16} className="text-primary" />
-            <h2 className="text-sm font-bold text-foreground">
-              {t("instructorSection.commentsTitle")}
-            </h2>
-            {comments.length > 0 && (
-              <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
-                {comments.length}
-              </span>
+        {SHOW_COMMENTS && (
+          <div className="mt-10">
+            <div className="mb-4 flex items-center gap-2">
+              <MessageCircle size={16} className="text-primary" />
+              <h2 className="text-sm font-bold text-foreground">
+                {t("instructorSection.commentsTitle")}
+              </h2>
+              {comments.length > 0 && (
+                <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
+                  {comments.length}
+                </span>
+              )}
+            </div>
+
+            {/* formulário — só para quem ainda não comentou */}
+            {!myComment && user?.role !== "instructor" && (
+              <div className="mb-4 rounded-xl border border-border bg-card p-4 space-y-3">
+                <p className="text-xs font-semibold text-foreground">{t("instructorSection.leaveComment")}</p>
+
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  rows={3}
+                  placeholder={t("instructorSection.commentPlaceholder")}
+                  className="w-full resize-none rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+
+                <button
+                  onClick={handleSubmitComment}
+                  disabled={commentText.trim().length < 10}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
+                >
+                  <Send size={12} /> {t("instructorSection.sendComment")}
+                </button>
+              </div>
+            )}
+
+            {myComment && (
+              <div className="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                <p className="text-[10px] text-primary font-semibold">{t("instructorSection.alreadyCommented")}</p>
+              </div>
+            )}
+
+            {/* lista de comentários */}
+            {comments.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <MessageCircle size={28} className="text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">{t("instructorSection.noComments")}</p>
+                <p className="text-xs text-muted-foreground">{t("instructorSection.beFirst")}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {comments.map((c) => (
+                  <CommentCard
+                    key={c.id}
+                    comment={c}
+                    canDelete={user?.id === c.userId}
+                    onDelete={async () => {
+                      try {
+                        await removeComment(c.id);
+                        toast.success(t("instructorSection.commentRemoved"));
+                      } catch {
+                        toast.error(t("instructorSection.commentError"));
+                      }
+                    }}
+                  />
+                ))}
+              </div>
             )}
           </div>
-
-          {/* formulário — só para quem ainda não comentou */}
-          {!myComment && user?.role !== "instructor" && (
-            <div className="mb-4 rounded-xl border border-border bg-card p-4 space-y-3">
-              <p className="text-xs font-semibold text-foreground">{t("instructorSection.leaveComment")}</p>
-
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                rows={3}
-                placeholder={t("instructorSection.commentPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-
-              <button
-                onClick={handleSubmitComment}
-                disabled={commentText.trim().length < 10}
-                className="flex w-full items-center justify-center gap-1.5 rounded-full btn-press bg-primary py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
-              >
-                <Send size={12} /> {t("instructorSection.sendComment")}
-              </button>
-            </div>
-          )}
-
-          {myComment && (
-            <div className="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-              <p className="text-[10px] text-primary font-semibold">{t("instructorSection.alreadyCommented")}</p>
-            </div>
-          )}
-
-          {/* lista de comentários */}
-          {comments.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <MessageCircle size={28} className="text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">{t("instructorSection.noComments")}</p>
-              <p className="text-xs text-muted-foreground">{t("instructorSection.beFirst")}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {comments.map((c) => (
-                <CommentCard
-                  key={c.id}
-                  comment={c}
-                  canDelete={user?.id === c.userId}
-                  onDelete={async () => {
-                    try {
-                      await removeComment(c.id);
-                      toast.success(t("instructorSection.commentRemoved"));
-                    } catch {
-                      toast.error(t("instructorSection.commentError"));
-                    }
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

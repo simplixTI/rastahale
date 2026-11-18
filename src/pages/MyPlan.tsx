@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, CheckCircle, CreditCard, Calendar, Zap, Crown, RefreshCw, XCircle, Check, ExternalLink, Info } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,6 +10,8 @@ import { useProfile, usePlans, useUserPayments } from "@/hooks/useProfile";
 import { useCheckout, useBillingPortal } from "@/hooks/useStripe";
 import { useLabels } from "@/i18n/labels";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import IapPlanActions from "@/components/IapPlanActions";
+import { isIapAvailable } from "@/lib/purchases";
 import { cn } from "@/lib/utils";
 
 const MyPlan = () => {
@@ -36,12 +39,24 @@ const MyPlan = () => {
     && (profile.subscriptionStatus === "active" || profile.subscriptionStatus === "trialing");
 
   const isCancelled = profile?.status === "inativo" || profile?.subscriptionStatus === "canceled";
+  // Conta que nunca assinou (status "pendente"): não tem plano em vigor. Sem
+  // isto o cartão dizia "Plano atual: Básico — Ativo" para quem não paga nada.
+  const noSubscription = profile?.status === "pendente";
 
   const nextBilling = profile?.currentPeriodEnd
     ? labels.longDate(new Date(profile.currentPeriodEnd))
     : "—";
 
   const isPremium = plan?.name?.toLowerCase().includes("premium") ?? false;
+
+  // App nativo (iOS/Android): Apple guideline 3.1.1 e o equivalente do Google
+  // proíbem checkout externo (Stripe) de conteúdo digital. No app a assinatura
+  // é vendida pela compra da loja (IapPlanActions, via RevenueCat). Se o build
+  // não tem a chave do RevenueCat, a tela fica só informativa — sem botões,
+  // sem link e sem citar o site.
+  const isNative = Capacitor.isNativePlatform();
+  const iapAvailable = isIapAvailable();
+  const hideCurrentPlan = isNative && iapAvailable && noSubscription;
 
   // Retorno do Stripe Checkout — mostra toast e atualiza o perfil.
   // O status real vem do webhook, então damos um refetch com atraso pra
@@ -118,6 +133,8 @@ const MyPlan = () => {
       </div>
 
       <div className="px-4 mt-4 space-y-4">
+        {/* No app, quem nunca assinou vê direto os planos à venda. */}
+        {!hideCurrentPlan && (<>
         {/* Plan card */}
         <div className={cn(
           "rounded-2xl p-5 border",
@@ -133,16 +150,20 @@ const MyPlan = () => {
             </div>
             <span className={cn(
               "rounded-full px-3 py-1 text-xs font-semibold",
-              isCancelled ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
+              noSubscription ? "bg-muted text-muted-foreground"
+                : isCancelled ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
             )}>
-              {isCancelled ? t("plan.cancelled") : t("plan.active")}
+              {noSubscription ? t("plan.noSubscription") : isCancelled ? t("plan.cancelled") : t("plan.active")}
             </span>
           </div>
 
-          <div className="mt-4 flex items-end gap-1">
-            <span className="text-3xl font-bold text-foreground">{labels.currency(plan.price)}</span>
-            <span className="mb-1 text-sm text-muted-foreground">{labels.interval(plan.interval)}</span>
-          </div>
+          {/* O preço do banco é o da web; no app quem informa o preço é a loja. */}
+          {!isNative && (
+            <div className="mt-4 flex items-end gap-1">
+              <span className="text-3xl font-bold text-foreground">{labels.currency(plan.price)}</span>
+              <span className="mb-1 text-sm text-muted-foreground">{labels.interval(plan.interval)}</span>
+            </div>
+          )}
 
           {isCancelled && (
             <p className="mt-3 text-xs text-muted-foreground">
@@ -150,6 +171,8 @@ const MyPlan = () => {
             </p>
           )}
         </div>
+
+        </>)}
 
         {/* Next billing */}
         {!isCancelled && hasActiveSubscription && (
@@ -168,6 +191,7 @@ const MyPlan = () => {
           </div>
         )}
 
+        {!hideCurrentPlan && (<>
         {/* Features */}
         {plan.features?.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4">
@@ -184,9 +208,27 @@ const MyPlan = () => {
             </ul>
           </div>
         )}
+        </>)}
 
         {/* Actions */}
         <div className="space-y-2">
+          {isNative && iapAvailable && user ? (
+            <IapPlanActions
+              userId={user.id}
+              isActive={profile?.status === "ativo"}
+              subscriptionSource={profile?.subscriptionSource}
+            />
+          ) : isNative ? (
+            <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
+              <div className="rounded-full bg-primary/10 p-2.5 shrink-0">
+                <Info size={18} className="text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t("plan.nativeManageNotice")}
+              </p>
+            </div>
+          ) : (
+            <>
           {/* Sem assinatura ativa → Assinar (abre checkout do plano atual) */}
           {!hasActiveSubscription && (
             <button
@@ -239,6 +281,8 @@ const MyPlan = () => {
               <RefreshCw size={15} />
               {t("plan.reactivate")}
             </button>
+          )}
+            </>
           )}
         </div>
 

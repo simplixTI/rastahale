@@ -52,3 +52,6 @@ screenshots/
 # Saída do playwright test (traces, reports, screenshots de falhas)
 test-results/
 playwright-report/
+
+# Config do Firebase no iOS (baixado do console, nao versionar)
+ios/App/App/GoogleService-Info.plist

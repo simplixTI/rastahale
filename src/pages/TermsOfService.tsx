@@ -18,13 +18,13 @@ const TermsOfService = () => {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Termos de Serviço</h1>
           <p className="text-sm text-muted-foreground">
-            RastaHale Academy · Última atualização: {LAST_UPDATED}
+            RastaHale Club · Última atualização: {LAST_UPDATED}
           </p>
         </header>
 
         <Section title="1. O serviço">
           <p>
-            O RastaHale Academy é uma plataforma de aulas e treinos em vídeo de
+            O RastaHale Club é uma plataforma de aulas e treinos em vídeo de
             Jiu-Jitsu Brasileiro e Luta Livre, oferecida em site e aplicativo.
             Ao criar uma conta ou usar o serviço, você concorda com estes termos.
           </p>
@@ -66,7 +66,7 @@ const TermsOfService = () => {
           </ul>
           <p>
             Todo o conteúdo (vídeos, marcas, materiais) pertence ao RastaHale
-            Academy ou aos seus instrutores e é protegido por direitos autorais.
+            Club ou aos seus instrutores e é protegido por direitos autorais.
           </p>
         </Section>
 
@@ -74,7 +74,7 @@ const TermsOfService = () => {
           <p>
             As aulas envolvem atividade física. Pratique dentro dos seus limites
             e, se necessário, consulte um profissional de saúde antes de treinar.
-            O RastaHale Academy não se responsabiliza por lesões decorrentes da
+            O RastaHale Club não se responsabiliza por lesões decorrentes da
             prática dos exercícios.
           </p>
         </Section>

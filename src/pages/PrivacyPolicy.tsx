@@ -18,13 +18,13 @@ const PrivacyPolicy = () => {
         <header className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Política de Privacidade</h1>
           <p className="text-sm text-muted-foreground">
-            RastaHale Academy · Última atualização: {LAST_UPDATED}
+            RastaHale Club · Última atualização: {LAST_UPDATED}
           </p>
         </header>
 
         <Section title="1. Quem somos">
           <p>
-            O RastaHale Academy é um aplicativo de aulas e treinos em vídeo.
+            O RastaHale Club é um aplicativo de aulas e treinos em vídeo.
             Esta política explica quais dados coletamos, por quê, e quais são os
             seus direitos, em conformidade com a Lei Geral de Proteção de Dados
             (LGPD — Lei nº 13.709/2018).

@@ -4,7 +4,7 @@
          com reticencias por volta de 12 caracteres. O nome completo fica na
          ficha da Play Store e em title_activity_main. -->
     <string name="app_name">RastaHale</string>
-    <string name="title_activity_main">RastaHale Academy</string>
+    <string name="title_activity_main">RastaHale Club</string>
     <string name="package_name">com.rastahale.academy</string>
     <string name="custom_url_scheme">com.rastahale.academy</string>
 </resources>

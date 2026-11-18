@@ -68,6 +68,8 @@ export interface Database {
           stripe_product_id: string | null;
           stripe_price_id: string | null;
           stripe_price_history: string[] | null;
+          // Migration 019: Product ID do plano na App Store / Google Play.
+          iap_product_id?: string | null;
         };
         Insert: Omit<Database["public"]["Tables"]["plans"]["Row"], "created_at" | "stripe_product_id" | "stripe_price_id" | "stripe_price_history"> &
           Partial<Pick<Database["public"]["Tables"]["plans"]["Row"], "stripe_product_id" | "stripe_price_id" | "stripe_price_history">>;
@@ -108,6 +110,8 @@ export interface Database {
           stripe_subscription_id: string | null;
           subscription_status: string | null;
           current_period_end: string | null;
+          // Migration 019: 'app_store' | 'play_store' quando comprada no app.
+          subscription_source?: string | null;
         };
         // Só id, email e name são obrigatórios; o resto tem default no banco
         // (migration 001). Exigir tudo fazia o insert de um perfil novo, que

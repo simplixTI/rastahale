@@ -219,6 +219,12 @@
     "support": "Suporte",
     "privacy": "Política de Privacidade",
     "deleteAccount": "Excluir minha conta",
+    "deleteAccountTitle": "Excluir conta?",
+    "deleteAccountDesc": "Sua conta, progresso, favoritos e conquistas serão apagados permanentemente. Esta ação não pode ser desfeita. Uma assinatura ativa não é cancelada — cancele antes onde você assinou.",
+    "deleteAccountConfirm": "Excluir definitivamente",
+    "deleteAccountKeep": "Manter conta",
+    "deleteAccountSuccess": "Conta excluída. Sentiremos sua falta!",
+    "deleteAccountError": "Não foi possível excluir a conta. Tente novamente.",
     "terms": "Termos de Uso"
   },
   "plan": {
@@ -248,7 +254,23 @@
     "changeViaPortalHint": "A troca é feita no portal seguro do Stripe.",
     "changeViaCheckoutHint": "Você será direcionado para o pagamento do plano escolhido.",
     "checkoutSuccess": "Pagamento confirmado! Bem-vindo(a) ao clube.",
-    "checkoutCancelled": "Pagamento não concluído."
+    "checkoutCancelled": "Pagamento não concluído.",
+    "nativeManageNotice": "Não é possível assinar nem alterar o plano por este aplicativo.",
+    "noSubscription": "Sem assinatura",
+    "iapChoose": "Escolha seu plano",
+    "iapSubscribe": "Assinar",
+    "iapRestore": "Restaurar compras",
+    "iapRestored": "Assinatura restaurada! Liberando seu acesso…",
+    "iapNothingToRestore": "Nenhuma assinatura encontrada nesta conta da loja.",
+    "iapSuccess": "Assinatura ativada! Liberando seu acesso…",
+    "iapError": "Não foi possível concluir a compra. Tente novamente.",
+    "iapLoadError": "Não foi possível carregar os planos. Tente novamente.",
+    "iapNoPackages": "Nenhum plano disponível no momento.",
+    "iapManage": "Gerenciar assinatura",
+    "iapManagedElsewhere": "Sua assinatura não foi feita por este aplicativo e não pode ser alterada por aqui.",
+    "iapLegal": "A assinatura é renovada automaticamente pelo mesmo valor e período até ser cancelada. Você pode cancelar quando quiser nas configurações da sua conta da loja, até 24 horas antes da renovação.",
+    "iapTerms": "Termos de Serviço",
+    "iapPrivacy": "Política de Privacidade"
   },
   "video": {
     "notFound": "Vídeo não encontrado",
@@ -265,6 +287,7 @@
     "related": "Vídeos Relacionados",
     "lockedTitle": "Aula exclusiva para assinantes",
     "lockedText": "Assine um plano para assistir a esta e a todas as outras aulas.",
+    "lockedTextNative": "Esta aula está disponível apenas para contas com plano ativo.",
     "lockedCta": "Ver planos",
     "stillProcessing": "Este vídeo ainda está sendo processado. Ele começa sozinho quando ficar pronto.",
     "retry": "Tentar novamente"
@@ -306,7 +329,7 @@
   },
   "install": {
     "installedTitle": "App já instalado!",
-    "installedDesc": "O RastaHale Academy já está instalado no seu dispositivo. Você pode abri-lo pela tela inicial.",
+    "installedDesc": "O RastaHale Club já está instalado no seu dispositivo. Você pode abri-lo pela tela inicial.",
     "goToApp": "Ir para o app",
     "title": "Instalar App",
     "appSubtitle": "Jiu-Jitsu e Luta Livre",
@@ -341,7 +364,7 @@
     "tipDesc": "No Chrome, pode aparecer um banner automático de instalação na parte inferior da tela. Toque nele para instalar ainda mais rápido!",
     "whySafariTitle": "ℹ️ Por que só pelo Safari?",
     "whySafariDesc": "A Apple restringe a instalação de PWAs ao Safari. Abra o link no Safari e siga os passos acima.",
-    "footer": "RastaHale Academy · Jiu-Jitsu e Luta Livre"
+    "footer": "RastaHale Club · Jiu-Jitsu e Luta Livre"
   },
   "notFound": {
     "message": "Ops! Página não encontrada",

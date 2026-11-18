@@ -3,6 +3,8 @@ import type Hls from "hls.js";
 import { ArrowLeft, Heart, CheckCircle, Lock, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Capacitor } from "@capacitor/core";
+import { isIapAvailable } from "@/lib/purchases";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideoById, useVideos } from "@/hooks/useVideos";
 import { useInstructor } from "@/hooks/useInstructors";
@@ -247,13 +249,21 @@ function LockedMessage() {
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/80 px-6 text-center">
       <Lock size={28} className="text-white" />
       <p className="text-sm font-semibold text-white">{t("video.lockedTitle")}</p>
-      <p className="text-xs text-white/80">{t("video.lockedText")}</p>
-      <button
-        onClick={() => navigate("/perfil/plano")}
-        className="mt-1 rounded-full btn-press bg-white px-4 py-2 text-xs font-medium text-black"
-      >
-        {t("video.lockedCta")}
-      </button>
+      {/* App das lojas sem compra no app configurada: sem convite para assinar
+          (Apple guideline 3.1.1). Com a compra no app, o botão leva ao plano. */}
+      {Capacitor.isNativePlatform() && !isIapAvailable() ? (
+        <p className="text-xs text-white/80">{t("video.lockedTextNative")}</p>
+      ) : (
+        <>
+          <p className="text-xs text-white/80">{t("video.lockedText")}</p>
+          <button
+            onClick={() => navigate("/perfil/plano")}
+            className="mt-1 rounded-full btn-press bg-white px-4 py-2 text-xs font-medium text-black"
+          >
+            {t("video.lockedCta")}
+          </button>
+        </>
+      )}
     </div>
   );
 }

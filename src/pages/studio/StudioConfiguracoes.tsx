@@ -89,7 +89,7 @@ const StudioConfiguracoes = () => {
           </div>
           <div className="rounded-xl border border-border bg-card px-4">
             <div className="py-3 border-b border-border">
-              <p className="text-sm font-medium text-foreground">RastaHale Academy</p>
+              <p className="text-sm font-medium text-foreground">RastaHale Club</p>
               <p className="mt-0.5 text-xs text-muted-foreground">Versão 1.0.0 · Studio do Instrutor</p>
             </div>
             <div className="py-3">

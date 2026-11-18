@@ -65,11 +65,13 @@ const hybridProvider: AuthProvider = {
   },
 
   async signInWithApple() {
-    const { idToken, email, name, photoUrl } = await signInWithAppleFirebase();
+    const { idToken, email, name, photoUrl, nonce } = await signInWithAppleFirebase();
 
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: "apple",
       token: idToken,
+      // No iOS o token traz o hash do nonce; sem o original o Supabase recusa.
+      ...(nonce ? { nonce } : {}),
     });
 
     if (error) {

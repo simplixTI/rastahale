@@ -32,6 +32,8 @@ export interface Profile {
   stripeSubscriptionId?: string | null;
   subscriptionStatus?: string | null;
   currentPeriodEnd?: string | null;
+  /** 'app_store' | 'play_store' quando a assinatura foi comprada dentro do app. */
+  subscriptionSource?: string | null;
 }
 
 const PROGRESS_KEY = "rasta_progress";
@@ -134,6 +136,7 @@ export function useProfile(userId: string) {
           stripeSubscriptionId: data.stripe_subscription_id ?? null,
           subscriptionStatus:   data.subscription_status ?? null,
           currentPeriodEnd:     data.current_period_end ?? null,
+          subscriptionSource:   data.subscription_source ?? null,
         } as Profile;
       }
       return buildMockProfile(userId);

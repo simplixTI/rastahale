@@ -56,10 +56,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { notification: { title: "RastaHale Academy", body: event.data.text() } };
+    payload = { notification: { title: "RastaHale Club", body: event.data.text() } };
   }
   const notification = payload.notification || {};
-  const title = notification.title || "RastaHale Academy";
+  const title = notification.title || "RastaHale Club";
   event.waitUntil(
     self.registration.showNotification(title, {
       body: notification.body || "",

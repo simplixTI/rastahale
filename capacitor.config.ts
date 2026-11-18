@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.rastahale.academy",
-  appName: "RastaHale Academy",
+  appName: "RastaHale Club",
   webDir: "dist",
 
   // "production" força Logger.error dos plugins a escrever no logcat mesmo em

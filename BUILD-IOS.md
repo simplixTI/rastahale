@@ -27,8 +27,9 @@ npx cap sync ios     # copia o dist/ e instala os pods
 npx cap open ios     # abre o Xcode
 ```
 
-O projeto fica em `ios/App/App.xcworkspace` — **sempre abra o .xcworkspace,
-não o .xcodeproj** (o CocoaPods exige o workspace).
+O projeto é `ios/App/App.xcodeproj` — o Capacitor 8 gerencia os plugins via
+Swift Package Manager (`ios/App/CapApp-SPM`), então **não existe mais
+`.xcworkspace`** (isso era da época do CocoaPods, que não é usado).
 
 **Esquecer o `cap sync` é o erro mais comum** (igual ao Android): sem ele o
 Xcode empacota a versão anterior do app.
@@ -42,9 +43,14 @@ Xcode empacota a versão anterior do app.
 3. **Bundle Identifier**: `com.rastahale.academy` (mesmo do Android) —
    ele é definitivo depois do primeiro envio
 4. Marque **Automatically manage signing**
-5. Em **+ Capability**, adicione **Sign in with Apple**
-   (obrigatório — o app tem login Google, guideline 4.8)
-6. **Version** `1.0.5` e **Build** `1` — o Build precisa aumentar a cada envio
+5. As capabilities **Sign in with Apple** e **Push Notifications** já estão
+   declaradas em `ios/App/App/App.entitlements` (referenciado pelo
+   `CODE_SIGN_ENTITLEMENTS` no projeto) — ao escolher o Team, o Xcode
+   provisiona automaticamente. Se alguma aparecer com erro, adicione manualmente
+   em **+ Capability**. Sign in with Apple é obrigatório (o app tem login
+   Google, guideline 4.8).
+6. **Version** `1.0.5` (já configurado no projeto) e **Build** `1` — o Build
+   precisa aumentar a cada envio
 
 ### GoogleService-Info.plist (login Google + push no iOS)
 
@@ -68,10 +74,12 @@ O equivalente iOS do `google-services.json`:
   `com.rastahale.academy` em Authorized Client IDs
 
 ### Notificações push (APNs)
-- Firebase Console → Project settings → Cloud Messaging → **APNs Authentication
-  Key** (gerar em Apple Developer → Keys → APNs) e subir lá
-- Xcode → + Capability → **Push Notifications** e **Background Modes →
-  Remote notifications**
+- O app já está preparado: entitlement `aps-environment` em
+  `ios/App/App/App.entitlements`, `UIBackgroundModes → remote-notification`
+  no `Info.plist` e o repasse do token APNs no `AppDelegate.swift`.
+- Falta só a chave no Firebase: Apple Developer → Keys → **APNs key** →
+  Firebase Console → Project settings → Cloud Messaging → **APNs Authentication
+  Key**.
 
 ---
 
@@ -111,13 +119,14 @@ Checklist da ficha:
 - [ ] Classificação indicativa
 - [ ] TestFlight: adicionar testadores internos antes de submeter à revisão
 
-### Faturamento — o mesmo aviso do Android vale aqui
+### Faturamento — já tratado no código
 
 A Apple exige **In-App Purchase** para assinatura de conteúdo digital vendida
-dentro do app. O checkout Stripe só pode existir na **versão web**; no app iOS
-a tela de plano deve ficar informativa (sem link de pagamento), igual ao que
-faremos no Android. Submeter com checkout Stripe no app é reprovação quase
-certa (guideline 3.1.1).
+dentro do app (guideline 3.1.1). Por isso `src/pages/MyPlan.tsx` detecta
+`Capacitor.isNativePlatform()` e, no app, esconde todos os botões de
+assinar/trocar/gerenciar — no lugar aparece um aviso apontando para a versão
+web (texto puro, sem link: link externo de compra também reprova). O checkout
+Stripe continua funcionando normalmente na versão web.
 
 ---
 
@@ -126,5 +135,7 @@ certa (guideline 3.1.1).
 - [ ] Login Google, Apple e email/senha testados em aparelho real via TestFlight
 - [ ] Vídeos do catálogo com URL configurada (sem aulas placeholder)
 - [ ] Ícone e splash novos aparecendo
-- [ ] Configurações → Excluir minha conta abrindo a página
-- [ ] Tela de plano sem checkout Stripe dentro do app
+- [ ] Configurações → Excluir minha conta excluindo de verdade (edge function
+      `delete-account` deployada: `npx supabase functions deploy delete-account --no-verify-jwt`)
+- [ ] Tela de plano sem checkout Stripe dentro do app (automático: bloqueado
+      em `Capacitor.isNativePlatform()`)

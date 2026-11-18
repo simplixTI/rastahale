@@ -219,6 +219,12 @@
     "support": "Soporte",
     "privacy": "Política de Privacidad",
     "deleteAccount": "Eliminar mi cuenta",
+    "deleteAccountTitle": "¿Eliminar cuenta?",
+    "deleteAccountDesc": "Tu cuenta, progreso, favoritos y logros se eliminarán permanentemente. Esta acción no se puede deshacer. Una suscripción activa no se cancela — cancélala primero donde la contrataste.",
+    "deleteAccountConfirm": "Eliminar definitivamente",
+    "deleteAccountKeep": "Mantener cuenta",
+    "deleteAccountSuccess": "Cuenta eliminada. ¡Te vamos a extrañar!",
+    "deleteAccountError": "No se pudo eliminar la cuenta. Inténtalo de nuevo.",
     "terms": "Términos de Uso"
   },
   "plan": {
@@ -248,7 +254,23 @@
     "changeViaPortalHint": "El cambio se realiza en el portal seguro de Stripe.",
     "changeViaCheckoutHint": "Serás redirigido al pago del plan seleccionado.",
     "checkoutSuccess": "¡Pago confirmado! Bienvenido(a).",
-    "checkoutCancelled": "El pago no se completó."
+    "checkoutCancelled": "El pago no se completó.",
+    "nativeManageNotice": "No es posible suscribirse ni cambiar el plan desde esta aplicación.",
+    "noSubscription": "Sin suscripción",
+    "iapChoose": "Elige tu plan",
+    "iapSubscribe": "Suscribirse",
+    "iapRestore": "Restaurar compras",
+    "iapRestored": "¡Suscripción restaurada! Liberando tu acceso…",
+    "iapNothingToRestore": "No se encontró ninguna suscripción en esta cuenta de la tienda.",
+    "iapSuccess": "¡Suscripción activada! Liberando tu acceso…",
+    "iapError": "No se pudo completar la compra. Inténtalo de nuevo.",
+    "iapLoadError": "No se pudieron cargar los planes. Inténtalo de nuevo.",
+    "iapNoPackages": "No hay planes disponibles por ahora.",
+    "iapManage": "Gestionar suscripción",
+    "iapManagedElsewhere": "Tu suscripción no se hizo en esta aplicación y no se puede cambiar desde aquí.",
+    "iapLegal": "La suscripción se renueva automáticamente por el mismo precio y periodo hasta que se cancele. Puedes cancelar cuando quieras en los ajustes de tu cuenta de la tienda, hasta 24 horas antes de la renovación.",
+    "iapTerms": "Términos de Servicio",
+    "iapPrivacy": "Política de Privacidad"
   },
   "video": {
     "notFound": "Video no encontrado",
@@ -265,6 +287,7 @@
     "related": "Videos Relacionados",
     "lockedTitle": "Clase exclusiva para suscriptores",
     "lockedText": "Suscríbete a un plan para ver esta y todas las demás clases.",
+    "lockedTextNative": "Esta clase solo está disponible para cuentas con un plan activo.",
     "lockedCta": "Ver planes",
     "stillProcessing": "Este video todavía se está procesando. Empezará solo cuando esté listo.",
     "retry": "Intentar de nuevo"
@@ -306,7 +329,7 @@
   },
   "install": {
     "installedTitle": "¡App ya instalada!",
-    "installedDesc": "RastaHale Academy ya está instalada en tu dispositivo. Puedes abrirla desde la pantalla de inicio.",
+    "installedDesc": "RastaHale Club ya está instalada en tu dispositivo. Puedes abrirla desde la pantalla de inicio.",
     "goToApp": "Ir a la app",
     "title": "Instalar App",
     "appSubtitle": "Jiu-Jitsu y Luta Livre",
@@ -341,7 +364,7 @@
     "tipDesc": "En Chrome puede aparecer automáticamente un banner de instalación en la parte inferior de la pantalla. ¡Tócalo para instalar aún más rápido!",
     "whySafariTitle": "ℹ️ ¿Por qué solo en Safari?",
     "whySafariDesc": "Apple restringe la instalación de PWAs a Safari. Abre el enlace en Safari y sigue los pasos de arriba.",
-    "footer": "RastaHale Academy · Jiu-Jitsu y Luta Livre"
+    "footer": "RastaHale Club · Jiu-Jitsu y Luta Livre"
   },
   "notFound": {
     "message": "¡Ups! Página no encontrada",

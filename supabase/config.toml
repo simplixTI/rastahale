@@ -20,6 +20,11 @@ verify_jwt = true
 
 # bunny-stream e admin-instructors validam a sessão por conta própria (ver o
 # comentário no início de cada uma).
+# revenuecat-webhook é chamado pelo RevenueCat (compra dentro do app); a função
+# confere o segredo do header Authorization por conta própria.
+[functions.revenuecat-webhook]
+verify_jwt = false
+
 [functions.bunny-stream]
 verify_jwt = false
 

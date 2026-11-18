@@ -20,6 +20,11 @@ export interface AppleSignInResult {
   email: string;
   name: string;
   photoUrl: string | null;
+  /**
+   * Nonce em texto puro usado no fluxo nativo. O token da Apple carrega o
+   * hash dele, e o Supabase recusa o token se não receber o original junto.
+   */
+  nonce?: string;
 }
 
 export async function signInWithAppleFirebase(): Promise<AppleSignInResult> {
@@ -36,6 +41,7 @@ export async function signInWithAppleFirebase(): Promise<AppleSignInResult> {
         email: user?.email ?? "",
         name: user?.displayName ?? user?.email ?? "",
         photoUrl: user?.photoUrl ?? null,
+        nonce: result.credential?.nonce ?? undefined,
       };
     } catch (err) {
       if (err instanceof AuthError) throw err;

@@ -7,7 +7,18 @@ import MobileLayout from "@/components/MobileLayout";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { enablePushNotifications, disablePushNotifications } from "@/lib/push";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useTheme, type Theme } from "@/hooks/useTheme";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 interface ToggleItemProps {
@@ -54,7 +65,7 @@ function loadSettings() {
 const Settings = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const saved = loadSettings();
 
@@ -94,6 +105,32 @@ const Settings = () => {
         void disablePushNotifications();
       }
     };
+
+  // Exclusão de conta — exigência das lojas (Apple 5.1.1(v), Google Play):
+  // o usuário inicia a exclusão de dentro do app, sem precisar de e-mail.
+  // A edge function delete-account usa a service role para apagar o auth user;
+  // profiles, progresso, favoritos, tokens e comentários caem por cascade.
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      if (!isSupabaseConfigured) throw new Error("Supabase não configurado");
+      const { data, error } = await supabase.functions.invoke("delete-account");
+      if (error) throw new Error(data?.error ?? error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success(t("settings.deleteAccountSuccess"));
+      setShowDeleteDialog(false);
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      toast.error((err as Error)?.message || t("settings.deleteAccountError"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <MobileLayout>
@@ -235,11 +272,12 @@ const Settings = () => {
                 <p className="text-sm text-foreground">{t("settings.terms")}</p>
               </div>
             </button>
-            {/* Exigência da App Store (5.1.1): app com criação de conta precisa
-                deixar o usuário iniciar a exclusão de dentro do app. */}
+            {/* Exigência das lojas (Apple 5.1.1(v), Google Play): a exclusão
+                é iniciada aqui dentro, com confirmação — a página pública
+                /excluir-conta continua existindo como instrução. */}
             <button
               type="button"
-              onClick={() => navigate("/excluir-conta")}
+              onClick={() => setShowDeleteDialog(true)}
               className="flex w-full items-center justify-between py-3"
             >
               <div className="flex items-center gap-2">
@@ -250,6 +288,32 @@ const Settings = () => {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("settings.deleteAccountTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("settings.deleteAccountDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t("settings.deleteAccountKeep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteAccount();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "…" : t("settings.deleteAccountConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileLayout>
   );
 };

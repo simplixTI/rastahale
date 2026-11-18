@@ -1,4 +1,5 @@
-// Exclusão de conta — rota pública (sem login), exigida pela Play Store.
+// Exclusão de conta — rota pública (sem login), exigida pelas lojas
+// (App Store e Google Play) como referência fora do app.
 // A URL final é https://<dominio-do-app>/excluir-conta.
 // Ajuste CONTACT_EMAIL para o e-mail real de contato/encarregado de dados.
 const CONTACT_EMAIL = "contato@rastahale.com";
@@ -13,7 +14,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 const DeleteAccount = () => {
   const mailto =
     `mailto:${CONTACT_EMAIL}` +
-    `?subject=${encodeURIComponent("Pedido de exclusão de conta — RastaHale Academy")}` +
+    `?subject=${encodeURIComponent("Pedido de exclusão de conta — RastaHale Club")}` +
     `&body=${encodeURIComponent(
       "Olá,\n\nQuero solicitar a exclusão da minha conta e dos meus dados.\n\nE-mail cadastrado no app: \nNome: \n\nObrigado(a)."
     )}`;
@@ -23,23 +24,25 @@ const DeleteAccount = () => {
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-8">
         <header className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Exclusão de conta</h1>
-          <p className="text-sm text-muted-foreground">RastaHale Academy</p>
+          <p className="text-sm text-muted-foreground">RastaHale Club</p>
         </header>
 
         <Section title="Como pedir a exclusão">
           <p>
-            Para excluir sua conta e os dados associados, envie um e-mail para{" "}
+            Direto no app: vá em <strong>Configurações → Excluir minha conta</strong> e
+            confirme. A exclusão é feita na hora.
+          </p>
+          <p>
+            Não consegue acessar o app? Envie um e-mail para{" "}
             <a className="text-primary underline" href={mailto}>
               {CONTACT_EMAIL}
             </a>{" "}
             a partir do e-mail cadastrado no app, com o assunto{" "}
-            <strong>“Pedido de exclusão de conta”</strong>.
-          </p>
-          <p>
+            <strong>“Pedido de exclusão de conta”</strong> (
             <a className="text-primary underline" href={mailto}>
-              Clique aqui para abrir o e-mail já preenchido
+              clique aqui para abrir o e-mail já preenchido
             </a>
-            .
+            ).
           </p>
         </Section>
 
@@ -53,18 +56,18 @@ const DeleteAccount = () => {
 
         <Section title="Prazos e retenção">
           <p>
-            A exclusão é processada em até <strong>30 dias</strong> após a
-            confirmação do pedido. Registros fiscais de pagamento podem ser
-            mantidos pelo prazo exigido por lei, sem vínculo com uma conta
-            ativa.
+            Feita pelo app, a exclusão é <strong>imediata</strong>; por e-mail,
+            processada em até <strong>30 dias</strong> após a confirmação do
+            pedido. Registros fiscais de pagamento podem ser mantidos pelo prazo
+            exigido por lei, sem vínculo com uma conta ativa.
           </p>
         </Section>
 
         <Section title="Assinatura ativa">
           <p>
             Excluir a conta <strong>não cancela</strong> uma assinatura ativa.
-            Cancele antes pela loja onde assinou (Google Play → Perfil →
-            Pagamentos e assinaturas) para evitar novas cobranças.
+            Cancele antes na plataforma onde assinou (site, App Store ou Google
+            Play) para evitar novas cobranças.
           </p>
         </Section>
       </div>
