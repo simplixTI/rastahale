@@ -45,7 +45,8 @@ npm run preview   # Preview do build
 npm run lint      # ESLint
 npm run test      # Vitest (unitários, jsdom)
 npm run verify    # Tipos + lint + testes. A Vercel roda isto antes do build: se falhar, nada é publicado
-npx playwright test  # E2E (requer npx playwright install antes)
+npm run e2e:local    # E2E hermético (modo demo, celular + desktop + proteção de rotas); não toca em backend real
+npx playwright test  # E2E contra o dev server de 8080 (requer npx playwright install antes)
 npx cap sync android # Sincroniza web build + plugins com o projeto Android
 ```
 
@@ -152,8 +153,14 @@ src/
 **Instrutores autenticam via Supabase Auth**
 Desde a migration 015, `instructors.user_id` vincula ao `auth.users`; a coluna `login_password` foi removida (existia em plaintext, exposta via anon key). SELECT de `instructors` é restrito a `authenticated`.
 
-**Viewport fixo em 430px (aluno)**
-O layout mobile não foi desenhado para desktop; não expandir breakpoints sem refatoração dos layouts.
+**Layout responsivo: celular, tablet e desktop (aluno e admin)**
+- Celular (<768px): coluna de 430px com a barra de navegação embaixo — o desenho original, intacto.
+- Tablet (≥768px): coluna de até 768px, barra embaixo.
+- Desktop (≥1024px): menu lateral fixo (aluno: `BottomTabBar`, 240px; admin: `AdminLayout`, 256px) e conteúdo em coluna centralizada (aluno: até 1024px; admin: até 1152px).
+- Telas do aluno usam a classe `.app-page` (`src/index.css`) em vez de repetir `max-w-[430px]`, e o `pb-*` que reserva espaço para a barra inferior é zerado no desktop com `lg:pb-10`. O `App` reserva a largura do menu com `lg:pl-60` quando a barra aparece. Telas de formulário/configurações ficam estreitas no desktop (`MobileLayout narrow` ou `lg:max-w-2xl`).
+- `VideoCard` tem `size="fluid"` para preencher células de grade; `sm`/`md` são larguras fixas de carrossel (no desktop os carrosséis da Home quebram linha com `lg:flex-wrap`).
+- Ainda 430px: a área do instrutor (`/studio`, `StudioBottomBar`) e a tela `/instalar`. Ao mexer nelas, siga o mesmo padrão.
+- Novas páginas: sempre `.app-page` (aluno) ou `AdminLayout` (admin) e confira com `npm run e2e:local`, que testa celular e desktop.
 
 **ESLint: `no-unused-vars` desativado**
 Proposital para o ritmo de prototipagem. Warnings `react-refresh/only-export-components` são conhecidos.

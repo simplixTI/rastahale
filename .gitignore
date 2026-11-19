@@ -55,3 +55,6 @@ playwright-report/
 
 # Config do Firebase no iOS (baixado do console, nao versionar)
 ios/App/App/GoogleService-Info.plist
+
+# Capturas das telas geradas pelo e2e local (npm run e2e:local)
+e2e-shots/

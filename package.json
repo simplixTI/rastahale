@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:demo": "node scripts/dev-demo.mjs",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -13,6 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "verify": "npm run typecheck && npm run lint && npm run test",
+    "e2e": "playwright test",
+    "e2e:local": "playwright test -c playwright.mock.config.ts",
     "push": "node scripts/send-push.mjs"
   },
   "dependencies": {
