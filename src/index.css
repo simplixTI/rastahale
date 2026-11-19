@@ -45,16 +45,34 @@
 
     --gradient-sunset-from: 30 100% 85%;
     --gradient-sunset-to: 25 95% 55%;
+
+    /* As três faixas do logo. Usadas como assinatura (indicador da aba ativa,
+       barra de progresso de faixa) — nunca como cor de texto. */
+    --brand-red: 4 74% 50%;
+    --brand-yellow: 44 92% 56%;
+    --brand-green: 105 40% 40%;
+
+    /* Movimento: três durações e duas curvas para o app inteiro. */
+    --dur-fast: 130ms;
+    --dur-base: 240ms;
+    --dur-slow: 460ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+
+    /* Elevação: no escuro a luz vem de cima (filete claro) + sombra profunda. */
+    --elev-1: inset 0 1px 0 hsl(0 0% 100% / 0.04), 0 1px 2px hsl(0 0% 0% / 0.4);
+    --elev-2: inset 0 1px 0 hsl(0 0% 100% / 0.05), 0 10px 28px -12px hsl(0 0% 0% / 0.7);
+    --elev-dock: inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 14px 34px -10px hsl(0 0% 0% / 0.8);
   }
 
   /* Tema claro — ativado pela classe `light` no <html> (ver hooks/useTheme).
      Botões ficam pretos (--primary escuro) e a logo escura é usada
      (componente Logo). O padrão continua sendo o escuro acima. */
   .light {
-    --background: 0 0% 100%;
+    --background: 40 20% 96.5%;
     --foreground: 0 0% 10%;
 
-    --card: 0 0% 97%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
@@ -63,11 +81,11 @@
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 92%;
+    --secondary: 40 10% 91%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 12% 93%;
+    --muted-foreground: 30 4% 38%;
 
     --accent: 20 90% 42%;
     --accent-foreground: 0 0% 100%;
@@ -75,9 +93,13 @@
     --destructive: 0 84.2% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
+    --border: 35 12% 87%;
+    --input: 35 12% 87%;
     --ring: 0 0% 9%;
+
+    --elev-1: 0 1px 2px hsl(30 20% 20% / 0.05), 0 6px 16px -10px hsl(30 20% 20% / 0.14);
+    --elev-2: 0 2px 4px hsl(30 20% 20% / 0.05), 0 16px 32px -16px hsl(30 20% 20% / 0.22);
+    --elev-dock: 0 2px 6px hsl(30 20% 20% / 0.06), 0 18px 40px -14px hsl(30 20% 20% / 0.28);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 10%;
@@ -97,6 +119,25 @@
 
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* O que o navegador desenha sozinho também é do app. */
+  ::selection {
+    background: hsl(var(--brand-yellow) / 0.45);
+    color: hsl(var(--foreground));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
   }
 
   /* Empurra todo o app para baixo da barra de status. Aplicado uma vez aqui em
@@ -143,5 +184,126 @@
   }
   .btn-press:active {
     transform: scale(0.97);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Profundidade e movimento
+   ══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Todo cartão do app é "bg-card + border". Em vez de editar cada tela dos
+     três perfis, a elevação entra aqui: o cartão passa a descolar do fundo. */
+  .bg-card.border {
+    box-shadow: var(--elev-1);
+  }
+  /* Cartões clicáveis respondem ao toque: sobem no hover, afundam no press. */
+  :is(button, a).bg-card.border {
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+  @media (hover: hover) {
+    :is(button, a).bg-card.border:hover {
+      box-shadow: var(--elev-2);
+      transform: translateY(-1px);
+    }
+  }
+  :is(button, a).bg-card.border:active,
+  button.bg-primary:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: var(--elev-1);
+  }
+  button.bg-primary {
+    transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+  }
+
+  /* Números que mudam não devem fazer a linha dançar. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* ── Troca de tela ───────────────────────────────────────────────────────
+     Abas e login só fazem fade (sem transform, que desancoraria os elementos
+     fixed da tela). Entrar numa tela mais funda vem da direita; voltar, da
+     esquerda — a direção diz onde o usuário está na hierarquia. */
+  .page-enter-fade {
+    animation: page-fade var(--dur-base) var(--ease-out) both;
+  }
+  .page-enter-push {
+    animation: page-push var(--dur-slow) var(--ease-out) both;
+  }
+  .page-enter-pop {
+    animation: page-pop var(--dur-slow) var(--ease-out) both;
+  }
+
+  /* ── Listas que chegam como lista ───────────────────────────────────────
+     Os filhos sobem em cascata, com teto: do 9º em diante entram juntos. */
+  .stagger > * {
+    animation: rise var(--dur-slow) var(--ease-out) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 20ms; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger > *:nth-child(4) { animation-delay: 140ms; }
+  .stagger > *:nth-child(5) { animation-delay: 180ms; }
+  .stagger > *:nth-child(6) { animation-delay: 220ms; }
+  .stagger > *:nth-child(7) { animation-delay: 260ms; }
+  .stagger > *:nth-child(8) { animation-delay: 300ms; }
+  .stagger > *:nth-child(n + 9) { animation-delay: 340ms; }
+
+  /* Barra de progresso de faixa: a faixa "se estende" da esquerda. */
+  .belt-fill {
+    transform-origin: left center;
+    animation: belt-fill 900ms var(--ease-out) 180ms both;
+  }
+
+  /* Placeholder enquanto carrega. */
+  .shimmer {
+    background: linear-gradient(100deg, hsl(var(--muted)) 30%, hsl(var(--card)) 50%, hsl(var(--muted)) 70%);
+    background-size: 220% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes page-fade {
+  from { opacity: 0; }
+}
+@keyframes page-push {
+  from { opacity: 0; transform: translate3d(22px, 0, 0); }
+}
+@keyframes page-pop {
+  from { opacity: 0; transform: translate3d(-22px, 0, 0); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+}
+@keyframes belt-fill {
+  from { transform: scaleX(0); }
+}
+@keyframes shimmer {
+  to { background-position: -220% 0; }
+}
+
+/* Quem pediu menos movimento continua vendo as mudanças de estado, só sem
+   deslocamento: as telas e listas trocam com um fade curto. */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-push,
+  .page-enter-pop,
+  .stagger > * {
+    animation: page-fade 160ms linear both;
+    animation-delay: 0ms !important;
+  }
+  .belt-fill,
+  .shimmer {
+    animation: none;
+  }
+  :is(button, a).bg-card.border:hover,
+  :is(button, a).bg-card.border:active,
+  button.bg-primary:active:not(:disabled) {
+    transform: none;
   }
 }

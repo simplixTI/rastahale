@@ -1,75 +1,33 @@
 import { ReactNode } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  LayoutDashboard, Users, CreditCard, Video, DollarSign, LogOut, ChevronLeft, UserCircle2, Trophy,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
 import Logo from "@/components/Logo";
 
-const navItems = [
-  { path: "/admin",               icon: LayoutDashboard, label: "Painel"      },
-  { path: "/admin/videos",        icon: Video,           label: "Vídeos"      },
-  { path: "/admin/instrutores",   icon: UserCircle2,     label: "Instrutores" },
-  { path: "/admin/usuarios",      icon: Users,           label: "Usuários"    },
-  { path: "/admin/pagamentos",    icon: CreditCard,      label: "Pagamentos"  },
-  { path: "/admin/planos",        icon: DollarSign,      label: "Planos"      },
-  { path: "/admin/temporada",     icon: Trophy,          label: "Temporada"   },
-];
-
+// A navegação inferior e o "Sair" moram no AdminTabBar, montado no App fora da
+// área que anima na troca de tela.
 const AdminLayout = ({ children, title, showBack = false, backTo }: { children: ReactNode; title: string; showBack?: boolean; backTo?: string }) => {
-  const { logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-20">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
       {/* Header — top-safe (e não top-0) para o header sticky parar abaixo da
           barra de status em vez de deslizar por baixo dela ao rolar. */}
       <header className="top-safe sticky z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {(showBack || backTo) && (
-              <button onClick={() => (backTo ? navigate(backTo) : navigate(-1))} className="text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => (backTo ? navigate(backTo) : navigate(-1))} aria-label="Voltar" className="-ml-1 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
                 <ChevronLeft size={20} />
               </button>
             )}
             <Logo className="h-8 rounded-lg" />
             <span className="text-sm font-bold text-foreground">{title}</span>
           </div>
-          <button
-            onClick={async () => { await logout(); navigate("/login"); }}
-            className="flex items-center gap-1 text-xs text-muted-foreground"
-          >
-            <LogOut size={14} /> Sair
-          </button>
         </div>
       </header>
 
       {/* Content */}
       <div className="px-4 pt-4">{children}</div>
-
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-[430px] items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {navItems.map(({ path, icon: Icon, label }) => {
-            const isActive = location.pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <Icon size={21} strokeWidth={isActive ? 2 : 1.5} />
-                <span className={cn("font-medium", isActive && "font-semibold")}>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 };

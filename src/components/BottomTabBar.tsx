@@ -1,47 +1,24 @@
 import { Home, Search, Users, Heart, Trophy, User } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import TabBar, { type TabItem } from "@/components/TabBar";
 
-const tabs = [
-  { path: "/", icon: Home, labelKey: "nav.home" },
-  { path: "/buscar", icon: Search, labelKey: "nav.search" },
-  { path: "/professores", icon: Users, labelKey: "nav.teachers" },
-  { path: "/favoritos", icon: Heart, labelKey: "nav.favorites" },
-  { path: "/progresso", icon: Trophy, labelKey: "nav.ranking" },
-  { path: "/perfil", icon: User, labelKey: "nav.profile" },
-];
+const under = (...prefixes: string[]) => (pathname: string) =>
+  prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
+/** Navegação do aluno. As telas internas mantêm acesa a aba de onde vieram. */
 const BottomTabBar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { t } = useTranslation();
 
-  return (
-    <nav aria-label={t("nav.bottomNavigation")} className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-lg">
-      <div className="mx-auto flex max-w-[430px] items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        {tabs.map(({ path, icon: Icon, labelKey }) => {
-          const isActive = location.pathname === path;
-          const label = t(labelKey);
-          return (
-            <button
-              key={path}
-              onClick={() => navigate(path)}
-              aria-label={label}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex flex-1 min-w-0 flex-col items-center gap-0.5 px-1 py-1 text-[10px] transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Icon size={23} strokeWidth={isActive ? 2 : 1.5} aria-hidden="true" />
-              <span className={cn("max-w-full truncate font-medium", isActive && "font-semibold")}>{label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
+  const items: TabItem[] = [
+    { path: "/",            icon: Home,   label: t("nav.home") },
+    { path: "/buscar",      icon: Search, label: t("nav.search") },
+    { path: "/professores", icon: Users,  label: t("nav.teachers"), match: under("/professores", "/instrutor", "/atleta") },
+    { path: "/favoritos",   icon: Heart,  label: t("nav.favorites") },
+    { path: "/progresso",   icon: Trophy, label: t("nav.ranking") },
+    { path: "/perfil",      icon: User,   label: t("nav.profile"), match: under("/perfil") },
+  ];
+
+  return <TabBar items={items} ariaLabel={t("nav.bottomNavigation")} />;
 };
 
 export default BottomTabBar;

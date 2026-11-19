@@ -310,7 +310,7 @@ const StudioDashboard = () => {
         </div>
 
         {/* stats */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="stagger grid grid-cols-3 gap-2">
           <div className="rounded-lg border border-border bg-card p-2.5 text-center">
             <BookOpen size={14} className="mx-auto text-primary" />
             <p className="mt-1 text-lg font-bold text-foreground">{myVideos.length}</p>

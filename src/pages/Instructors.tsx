@@ -6,6 +6,7 @@ import LoadError from "@/components/LoadError";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useVideos } from "@/hooks/useVideos";
+import AvatarImage from "@/components/AvatarImage";
 
 const Instructors = () => {
   const navigate = useNavigate();
@@ -41,17 +42,17 @@ const Instructors = () => {
           <p className="mt-2 text-sm text-muted-foreground">{t("instructors.empty")}</p>
         </div>
       ) : (
-        <div className="mt-4 space-y-2 px-4">
+        <div className="stagger mt-4 space-y-2 px-4">
           {cards.map((inst) => (
             <button
               key={inst.id}
               onClick={() => navigate(`/instrutor/${inst.id}`)}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left hover:border-primary/30 transition-colors"
             >
-              <img
+              <AvatarImage
                 src={inst.avatar}
-                alt={inst.name}
-                className="h-14 w-14 flex-shrink-0 rounded-full border border-border object-cover"
+                name={inst.name}
+                className="h-14 w-14 flex-shrink-0 rounded-full border border-border text-base"
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-foreground truncate">{inst.name}</p>

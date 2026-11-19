@@ -108,11 +108,19 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
             <span>{t("ranking.towards", { belt: t(`belt.${next.key}`) })}</span>
             <span className="font-semibold text-foreground">{t("ranking.pointsToNext", { count: pointsToNext })}</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-secondary">
+          {/* A barra é uma faixa: se estende da esquerda ao abrir a tela e
+              termina nas três cores da marca. */}
+          <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
             <div
-              className="h-full rounded-full bg-primary transition-all"
-              style={{ width: `${progressPct}%` }}
-            />
+              className="belt-fill relative h-full rounded-full bg-primary"
+              style={{ width: progressPct > 0 ? `${Math.max(progressPct, 8)}%` : 0 }}
+            >
+              <span aria-hidden="true" className="absolute inset-y-0 right-0 flex w-4 overflow-hidden rounded-r-full">
+                <span className="flex-1 bg-[hsl(var(--brand-red))]" />
+                <span className="flex-1 bg-[hsl(var(--brand-yellow))]" />
+                <span className="flex-1 bg-[hsl(var(--brand-green))]" />
+              </span>
+            </div>
           </div>
         </div>
       ) : (
@@ -189,7 +197,7 @@ const StudentRanking = () => {
 
       {me && <MyBeltCard me={me} />}
 
-      <div className="space-y-2">
+      <div className="stagger space-y-2">
         {top.map((student) => (
           <RankRow key={student.id} student={student} isMe={student.id === user?.id} />
         ))}

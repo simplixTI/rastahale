@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,6 +42,7 @@ import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
 import Settings from "./pages/Settings";
 import BottomTabBar from "./components/BottomTabBar";
+import AdminTabBar from "./components/AdminTabBar";
 import { LoadingScreen } from "./components/LoadingScreen";
 import Install from "./pages/Install";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -79,6 +80,37 @@ const ProtectedRoute = ({ children, adminOnly = false, instructorOnly = false }:
   return <>{children}</>;
 };
 
+// Raízes de aba: trocar entre elas é um movimento lateral, não de profundidade.
+const TAB_ROOTS = new Set([
+  "/", "/buscar", "/professores", "/favoritos", "/progresso", "/perfil",
+  "/admin", "/admin/videos", "/admin/usuarios", "/admin/pagamentos",
+  "/studio", "/studio/feedback", "/studio/perfil",
+  "/login", "/esqueci-senha", "/reset-senha",
+]);
+
+/**
+ * Anima a troca de tela. Entre abas (e no login) é só um fade. Entrar numa
+ * tela mais funda vem da direita, voltar vem da esquerda — a direção mostra a
+ * hierarquia. A barra inferior fica FORA deste wrapper: um ancestral com
+ * transform desancora elementos `fixed`.
+ */
+const RouteTransition = ({ children }: { children: React.ReactNode }) => {
+  const { pathname } = useLocation();
+  const navType = useNavigationType();
+  const kind = TAB_ROOTS.has(pathname) ? "fade" : navType === "POP" ? "pop" : "push";
+
+  // Tela nova começa do topo; ao voltar, o navegador cuida da posição.
+  useEffect(() => {
+    if (navType !== "POP") window.scrollTo(0, 0);
+  }, [pathname, navType]);
+
+  return (
+    <div key={pathname} className={`page-enter-${kind}`}>
+      {children}
+    </div>
+  );
+};
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -111,6 +143,7 @@ const AppRoutes = () => {
   if (loading) return <LoadingScreen />;
   return (
     <>
+      <RouteTransition>
       <Routes>
         <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
         <Route path="/esqueci-senha" element={<ForgotPassword />} />
@@ -149,7 +182,9 @@ const AppRoutes = () => {
         <Route path="/suporte" element={<Support />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </RouteTransition>
       {showTabBar  && <BottomTabBar />}
+      {isAdmin && user?.role === "admin" && <AdminTabBar />}
       {isStudio    && <StudioBottomBar />}
     </>
   );

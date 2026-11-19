@@ -26,7 +26,7 @@ const AdminDashboard = () => {
     <AdminLayout title="Painel Admin">
       <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="stagger mt-4 grid grid-cols-2 gap-3">
         {cards.map((c) => (
           <button
             key={c.label}
@@ -62,7 +62,12 @@ const AdminDashboard = () => {
       </div>
 
       <h3 className="mt-6 text-sm font-bold text-foreground">Últimos pagamentos</h3>
-      <div className="mt-2 space-y-2">
+      <div className="stagger mt-2 space-y-2">
+        {recentPayments.length === 0 && (
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Nenhum pagamento registrado ainda. As vendas aparecem aqui assim que entram.
+          </p>
+        )}
         {recentPayments.map((p) => (
           <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
             <div>

@@ -56,7 +56,7 @@ const ProgressPage = () => {
         <h2 className="text-base font-bold text-foreground">{t("progress.myProgress")}</h2>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 px-4">
+      <div className="stagger mt-3 grid grid-cols-3 gap-2 px-4">
         {stats.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col items-center rounded-xl border border-border bg-card p-3">
             <Icon size={20} className="text-primary" />

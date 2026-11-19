@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { BookOpen } from "lucide-react";
+import AvatarImage from "@/components/AvatarImage";
 
 export interface AthleteCardData {
   id: string;
@@ -17,14 +18,14 @@ const AthleteCard = ({ athlete }: { athlete: AthleteCardData }) => {
   return (
     <button
       onClick={() => navigate(`/atleta/${athlete.id}`)}
-      className="group w-40 min-w-[160px] flex-shrink-0 snap-start text-left transition-transform duration-300 ease-out hover:-translate-y-1"
+      className="group w-40 min-w-[160px] flex-shrink-0 snap-start text-left transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 active:scale-[0.97]"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-border/50 shadow-md transition-shadow duration-300 group-hover:shadow-xl group-hover:shadow-primary/10">
-        <img
+        <AvatarImage
           src={athlete.avatar}
-          alt={athlete.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
+          name={athlete.name}
+          className="h-full w-full text-3xl"
+          imgClassName="transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 

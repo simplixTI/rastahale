@@ -259,7 +259,7 @@ const AdminUsers = () => {
 
       <h2 className="text-lg font-bold text-foreground">Gerenciar Usuários</h2>
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="stagger mt-3 grid grid-cols-3 gap-2">
         {[
           { icon: UserCheck, color: "text-emerald-400", value: totalActive,   label: "Ativos"    },
           { icon: Clock,     color: "text-amber-400",   value: totalPending,  label: "Pendentes" },
@@ -303,7 +303,7 @@ const AdminUsers = () => {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="stagger mt-4 space-y-3">
           {filtered.map((u) => {
             const isExpanded  = expandedUser === u.id;
             const userPayments = payments.filter((p) => p.user_id === u.id);
