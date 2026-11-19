@@ -57,7 +57,7 @@ const schema = z.object({
   bio:           z.string().min(10, "Mínimo 10 caracteres"),
   avatar:        z.string().min(1, "Adicione uma foto"),
   loginEmail:    z.string().email("Email inválido").or(z.literal("")).optional(),
-  loginPassword: z.string().min(6, "Mínimo 6 caracteres").or(z.literal("")).optional(),
+  loginPassword: z.string().min(8, "Mínimo 8 caracteres").or(z.literal("")).optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -234,7 +234,7 @@ function InstructorFormModal({ open, onOpenChange, instructor, onSubmit, isPendi
               <div className="relative">
                 {/* new-password: sem isso o navegador preenche a senha do próprio admin. */}
                 <input {...register("loginPassword")} type={showPass ? "text" : "password"} autoComplete="new-password"
-                  className={cn(fieldCls, "pr-8")} placeholder={hasLogin ? "Nova senha (opcional)" : "Mínimo 6 caracteres"} />
+                  className={cn(fieldCls, "pr-8")} placeholder={hasLogin ? "Nova senha (opcional)" : "Mínimo 8 caracteres"} />
                 <button type="button" onClick={() => setShowPass((v) => !v)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                   {showPass ? <EyeOff size={12} /> : <Eye size={12} />}

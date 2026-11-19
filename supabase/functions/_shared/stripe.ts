@@ -1,6 +1,7 @@
 // Cliente Stripe compartilhado entre todas as edge functions.
 // Usa fetch nativo do Deno (não precisa do adaptador Node do SDK).
 import Stripe from "https://esm.sh/stripe@18.5.0?target=deno";
+import { pickAppUrl } from "./appUrl.ts";
 
 const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 if (!STRIPE_SECRET_KEY) {
@@ -13,16 +14,14 @@ export const stripe = new Stripe(STRIPE_SECRET_KEY ?? "", {
 });
 
 // URL base pra redirecionar o usuário depois do checkout/portal.
-// Preferência: origem da requisição (Origin/Referer) — assim funciona em
-// localhost E em produção sem trocar secret. Fallback pro APP_URL do env.
+// Usa a origem da requisição só se ela estiver na lista de origens conhecidas
+// (produção e localhost:8080); qualquer outra cai no APP_URL. Ver appUrl.ts.
 export function resolveAppUrl(req: Request): string {
-  const origin = req.headers.get("Origin");
-  if (origin && /^https?:\/\//.test(origin)) return origin.replace(/\/$/, "");
-  const referer = req.headers.get("Referer");
-  if (referer) {
-    try { return new URL(referer).origin; } catch { /* ignora */ }
-  }
-  return (Deno.env.get("APP_URL") ?? "http://localhost:8080").replace(/\/$/, "");
+  return pickAppUrl({
+    origin:    req.headers.get("Origin"),
+    referer:   req.headers.get("Referer"),
+    envAppUrl: Deno.env.get("APP_URL"),
+  });
 }
 
 export const APP_URL = Deno.env.get("APP_URL") ?? "http://localhost:8080";

@@ -28,7 +28,9 @@ async function buildUser(u: SupabaseUser): Promise<AuthUser> {
     .eq("id", u.id)
     .single();
 
-  let role = (profile?.role ?? u.user_metadata?.role ?? "user") as UserRole;
+  // `user_metadata` é gravado pelo próprio usuário (signUp / updateUser), então
+  // não pode decidir o papel nem como último recurso: sem perfil, é aluno.
+  let role = (profile?.role ?? "user") as UserRole;
 
   // Instrutor é um usuário real do Supabase Auth vinculado à tabela
   // `instructors` pela coluna user_id (migration 015). Se o perfil ainda não

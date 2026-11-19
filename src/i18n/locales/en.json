@@ -101,7 +101,7 @@
     "submitting": "Saving...",
     "success": "Password updated. Redirecting...",
     "errorMismatch": "Passwords don't match.",
-    "errorShort": "Password must be at least 6 characters.",
+    "errorShort": "Password must be at least {{min}} characters.",
     "errorInvalidLink": "Invalid or expired link. Request a new email.",
     "errorGeneric": "Couldn't update the password. Please try again.",
     "backToLogin": "Back to sign in"

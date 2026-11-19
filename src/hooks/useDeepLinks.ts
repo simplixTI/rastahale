@@ -7,6 +7,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { App as CapacitorApp } from "@capacitor/app";
+import { toInternalPath } from "@/lib/deepLink";
 
 export function useDeepLinks(): void {
   const navigate = useNavigate();
@@ -19,13 +20,10 @@ export function useDeepLinks(): void {
       try {
         // Ao clicar num link do domínio quando o app já está aberto/no bg
         const listener = await CapacitorApp.addListener("appUrlOpen", (event) => {
-          try {
-            const url = new URL(event.url);
-            const path = url.pathname + url.search + url.hash;
-            navigate(path || "/", { replace: false });
-          } catch (err) {
-            console.warn("[useDeepLinks] URL inválida:", event.url, err);
-          }
+          // toInternalPath garante que o destino é uma rota do app (nunca "//host").
+          const path = toInternalPath(event.url);
+          if (path) navigate(path, { replace: false });
+          else console.warn("[useDeepLinks] URL ignorada:", event.url);
         });
         if (cancelled) listener.remove();
         else handle = listener;

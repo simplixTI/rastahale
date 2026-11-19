@@ -23,6 +23,10 @@ function parseRecoveryTokens(hash: string): { accessToken: string; refreshToken:
   return null;
 }
 
+// Mesmo mínimo configurado no Supabase (Authentication → provedor Email →
+// "Minimum password length"). Se mudar aqui, mude lá, e vice-versa.
+const MIN_PASSWORD_LENGTH = 8;
+
 const ResetPassword = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -66,8 +70,8 @@ const ResetPassword = () => {
     e.preventDefault();
     setError("");
 
-    if (password.length < 6) {
-      setError(t("resetPassword.errorShort"));
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(t("resetPassword.errorShort", { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {

@@ -101,7 +101,7 @@
     "submitting": "Guardando...",
     "success": "Contraseña actualizada. Redirigiendo...",
     "errorMismatch": "Las contraseñas no coinciden.",
-    "errorShort": "La contraseña debe tener al menos 6 caracteres.",
+    "errorShort": "La contraseña debe tener al menos {{min}} caracteres.",
     "errorInvalidLink": "Enlace inválido o caducado. Solicita un nuevo email.",
     "errorGeneric": "No se pudo actualizar la contraseña. Inténtalo de nuevo.",
     "backToLogin": "Volver al inicio de sesión"

@@ -41,6 +41,14 @@ function clearPersistedUser() {
 }
 
 function restoreLocalUser(): AuthUser | null {
+  // O sessionStorage é do próprio usuário: ele edita `rasta_auth_user` no
+  // DevTools e escolhe o papel que quiser. Fora do modo demo ninguém pode ser
+  // restaurado daqui — a sessão real vem sempre do Supabase (instrutores também
+  // têm sessão desde a migration 015). Hoje o `INITIAL_SESSION` do Supabase
+  // costuma zerar um usuário forjado logo em seguida (e2e/guards.offline.spec.ts
+  // confirma que nenhuma tela protegida chega a abrir), mas depender dessa
+  // ordem de eventos não é uma proteção: o fallback só existe para o modo demo.
+  if (!isMockModeEnabled) return null;
   try {
     const raw = sessionStorage.getItem(AUTH_KEY);
     if (!raw) return null;

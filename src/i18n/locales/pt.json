@@ -101,7 +101,7 @@
     "submitting": "Salvando...",
     "success": "Senha atualizada. Redirecionando...",
     "errorMismatch": "As senhas não coincidem.",
-    "errorShort": "A senha precisa ter pelo menos 6 caracteres.",
+    "errorShort": "A senha precisa ter pelo menos {{min}} caracteres.",
     "errorInvalidLink": "Link inválido ou expirado. Solicite um novo email.",
     "errorGeneric": "Não foi possível atualizar a senha. Tente novamente.",
     "backToLogin": "Voltar para o login"

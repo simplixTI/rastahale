@@ -58,7 +58,7 @@ const BUNNY_LIBRARY_ID = Deno.env.get("BUNNY_STREAM_LIBRARY_ID") ?? "";
 const BUNNY_API_KEY    = Deno.env.get("BUNNY_STREAM_API_KEY") ?? "";
 const BUNNY_PLAYLIST   = /^https:\/\/[^/]+\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/playlist\.m3u8/i;
 
-const MIN_PASSWORD = 6;
+const MIN_PASSWORD = 8;
 const PAYING_STATUSES = ["active", "trialing"];
 // Tabelas que apontam para instructors(id).
 const TABLES_WITH_INSTRUCTOR = ["videos", "studio_sessions", "instructor_comments"];
