@@ -462,9 +462,18 @@ const VideoDetail = () => {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
+    // Celular: coluna única de 430px, como o resto do app. Computador (lg+): a
+    // página abre até 72rem, o player ocupa a coluna larga e os relacionados
+    // vão para a lateral — antes o vídeo ficava preso num quadro de celular.
+    // Sem aulas relacionadas não há coluna lateral: o player fica centralizado.
+    <div className={cn(
+      "mx-auto min-h-screen max-w-[430px] bg-background pb-24 lg:px-6 lg:pt-6",
+      related.length > 0 ? "lg:max-w-6xl" : "lg:max-w-4xl"
+    )}>
+     <div className={cn(related.length > 0 && "lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-8")}>
+      <div className="min-w-0">
       {/* Player */}
-      <div className="relative w-full">
+      <div className="relative w-full overflow-hidden lg:rounded-2xl">
         {canWatch ? (
           <VideoPlayer
             lessonId={video.id}
@@ -493,10 +502,10 @@ const VideoDetail = () => {
       </div>
 
       {/* Info */}
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 lg:px-0 lg:pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-foreground">{video.title}</h1>
+            <h1 className="text-lg font-bold text-foreground lg:text-2xl">{video.title}</h1>
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <span>{video.subcategory}</span>
               <span>·</span>
@@ -509,7 +518,7 @@ const VideoDetail = () => {
         </div>
 
         {/* Actions */}
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex gap-3 lg:max-w-md">
           <button
             onClick={handleToggleFavorite}
             disabled={toggleFavoriteMutation.isPending}
@@ -566,18 +575,21 @@ const VideoDetail = () => {
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{video.description}</p>
         </div>
 
-        {/* Related */}
-        {related.length > 0 && (
-          <div className="mt-6">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">{t("video.related")}</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {related.map((v) => (
-                <VideoCard key={v.id} video={v} size="sm" />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+      </div>
+
+      {/* Related — carrossel no celular, coluna lateral no computador */}
+      {related.length > 0 && (
+        <aside className="mt-6 px-4 lg:mt-0 lg:px-0">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">{t("video.related")}</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0">
+            {related.map((v) => (
+              <VideoCard key={v.id} video={v} size="sm" />
+            ))}
+          </div>
+        </aside>
+      )}
+     </div>
     </div>
   );
 };
