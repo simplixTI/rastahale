@@ -8,13 +8,20 @@ import { Pill, levelColor } from "@/components/Pill";
 
 interface VideoCardProps {
   video: VideoWithProgress;
-  size?: "sm" | "md";
+  /** sm/md: largura fixa (carrosséis). fluid: preenche a célula da grade. */
+  size?: "sm" | "md" | "fluid";
 }
+
+const CARD_WIDTH = {
+  sm:    "min-w-[144px] w-36",
+  md:    "min-w-[176px] w-44",
+  fluid: "w-full min-w-0",
+} as const;
 
 const VideoCard = ({ video, size = "md" }: VideoCardProps) => {
   const navigate = useNavigate();
   const labels   = useLabels();
-  const w = size === "sm" ? "min-w-[144px] w-36" : "min-w-[176px] w-44";
+  const w = CARD_WIDTH[size];
 
   return (
     <button

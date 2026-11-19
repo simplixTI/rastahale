@@ -26,7 +26,7 @@ const AdminDashboard = () => {
     <AdminLayout title="Painel Admin">
       <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map((c) => (
           <button
             key={c.label}
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2">
+      <div className="mt-6 grid grid-cols-2 gap-2 lg:grid-cols-3">
         <button
           onClick={() => navigate("/admin/videos")}
           className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary"
@@ -55,50 +55,55 @@ const AdminDashboard = () => {
         </button>
         <button
           onClick={() => navigate("/admin/loja")}
-          className="col-span-2 flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary"
+          className="col-span-2 flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary lg:col-span-1"
         >
           <ShoppingBag size={16} /> Banner da Loja (carrossel da Home)
         </button>
       </div>
 
-      <h3 className="mt-6 text-sm font-bold text-foreground">Últimos pagamentos</h3>
-      <div className="mt-2 space-y-2">
-        {recentPayments.map((p) => (
-          <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
-            <div>
-              <p className="text-xs font-medium text-foreground">{p.user_name}</p>
-              <p className="text-[10px] text-muted-foreground">{p.date} · {p.method}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-foreground">R$ {Number(p.amount).toFixed(2)}</p>
-              <span className={cn("inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold", getStatusColor(p.status))}>
-                {p.status}
-              </span>
-            </div>
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <section>
+          <h3 className="mt-6 text-sm font-bold text-foreground">Últimos pagamentos</h3>
+          <div className="mt-2 space-y-2">
+            {recentPayments.map((p) => (
+              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
+                <div>
+                  <p className="text-xs font-medium text-foreground">{p.user_name}</p>
+                  <p className="text-[10px] text-muted-foreground">{p.date} · {p.method}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-foreground">R$ {Number(p.amount).toFixed(2)}</p>
+                  <span className={cn("inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold", getStatusColor(p.status))}>
+                    {p.status}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <h3 className="mt-6 text-sm font-bold text-foreground">Top Alunos</h3>
-      <div className="mt-2 space-y-2">
-        {topUsers.map((u, i) => (
-          <div key={u.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
-              {i + 1}
-            </span>
-            <img
-              src={resolveAvatarUrl(u.avatar_url)}
-              onError={handleAvatarError}
-              alt={u.name}
-              className="h-8 w-8 rounded-full object-cover"
-            />
-            <div className="flex-1">
-              <p className="text-xs font-medium text-foreground">{u.name}</p>
-              <p className="text-[10px] text-muted-foreground">{u.videos_watched} aulas · {u.total_hours}h</p>
-            </div>
-            <TrendingUp size={14} className="text-emerald-400" />
+        </section>
+        <section>
+          <h3 className="mt-6 text-sm font-bold text-foreground">Top Alunos</h3>
+          <div className="mt-2 space-y-2">
+            {topUsers.map((u, i) => (
+              <div key={u.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                  {i + 1}
+                </span>
+                <img
+                  src={resolveAvatarUrl(u.avatar_url)}
+                  onError={handleAvatarError}
+                  alt={u.name}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-foreground">{u.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{u.videos_watched} aulas · {u.total_hours}h</p>
+                </div>
+                <TrendingUp size={14} className="text-emerald-400" />
+              </div>
+            ))}
           </div>
-        ))}
+        </section>
       </div>
     </AdminLayout>
   );

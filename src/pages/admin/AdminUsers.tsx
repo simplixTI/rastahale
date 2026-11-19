@@ -303,7 +303,7 @@ const AdminUsers = () => {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
           {filtered.map((u) => {
             const isExpanded  = expandedUser === u.id;
             const userPayments = payments.filter((p) => p.user_id === u.id);

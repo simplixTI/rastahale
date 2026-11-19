@@ -132,6 +132,16 @@
 }
 
 @layer components {
+  /* Coluna principal das telas do aluno.
+     - celular: 430px (o desenho original); tablet: 3xl;
+     - desktop (≥1024px): até 5xl, centralizada na área à direita do menu lateral
+       (o App reserva o menu com lg:pl-60 quando a barra de navegação aparece).
+     O espaço de baixo (pb-*) que cada página reserva para a barra inferior é
+     zerado no desktop com lg:pb-10, porque lá a navegação fica na lateral. */
+  .app-page {
+    @apply mx-auto min-h-screen max-w-[430px] md:max-w-3xl lg:max-w-5xl;
+  }
+
   /* Feedback tátil moderno/minimalista para botões: leve brilho no hover e
      "afundar" ao toque. Usa transição própria para animar transform/filter
      mesmo em botões que já tenham transition-colors. */

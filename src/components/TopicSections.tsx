@@ -68,7 +68,7 @@ const TopicSections = () => {
           <section className="mt-6">
             <h2 className="mb-3 px-4 text-base font-bold tracking-tight text-foreground">{topic}</h2>
             <div
-              className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+              className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory lg:flex-wrap"
               style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
             >
               {items.map((v) => (

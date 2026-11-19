@@ -462,7 +462,7 @@ const VideoDetail = () => {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
+    <div className="app-page lg:pb-10 bg-background pb-24">
       {/* Player */}
       <div className="relative w-full">
         {canWatch ? (

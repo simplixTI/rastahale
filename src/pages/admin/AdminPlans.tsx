@@ -118,7 +118,7 @@ const AdminPlans = () => {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
           {plans.map((p) => {
             const isExpanded = expandedPlan === p.id;
             const levelOrder = { Iniciante: 1, Intermediário: 2, Avançado: 3 } as Record<string, number>;

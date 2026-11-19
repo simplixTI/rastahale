@@ -34,7 +34,7 @@ const AthleteModuleLessons = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="app-page lg:pb-10 bg-background pb-28">
       {/* header */}
       <header className="flex items-center gap-3 px-4 pt-4">
         <button

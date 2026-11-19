@@ -133,7 +133,7 @@ const Settings = () => {
   };
 
   return (
-    <MobileLayout>
+    <MobileLayout narrow>
       <header className="flex items-center gap-3 px-4 pt-4">
         <button onClick={() => navigate(-1)} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary">
           <ArrowLeft size={20} />

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,45 +9,55 @@ import { ProfileOverrideProvider } from "@/contexts/ProfileContext";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { useAndroidBackButton } from "@/hooks/useAndroidBackButton";
 import { useDeepLinks } from "@/hooks/useDeepLinks";
-import Index from "./pages/Index";
-import Search from "./pages/Search";
-import Favorites from "./pages/Favorites";
-import ProgressPage from "./pages/ProgressPage";
-import Profile from "./pages/Profile";
-import VideoDetail from "./pages/VideoDetail";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminVideos from "./pages/admin/AdminVideos";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminPayments from "./pages/admin/AdminPayments";
-import AdminPlans from "./pages/admin/AdminPlans";
-import AdminInstructors from "./pages/admin/AdminInstructors";
-import AdminModules from "./pages/admin/AdminModules";
-import AdminSeason from "./pages/admin/AdminSeason";
-import AdminStore from "./pages/admin/AdminStore";
-import InstructorSection from "./pages/InstructorSection";
-import Instructors from "./pages/Instructors";
-import AthleteModules from "./pages/AthleteModules";
-import AthleteModuleLessons from "./pages/AthleteModuleLessons";
-import StudioDashboard from "./pages/studio/StudioDashboard";
-import StudioFeedback from "./pages/studio/StudioFeedback";
-import StudioPerfil from "./pages/studio/StudioPerfil";
-import StudioEditPerfil from "./pages/studio/StudioEditPerfil";
-import StudioConfiguracoes from "./pages/studio/StudioConfiguracoes";
-import StudioBottomBar from "./components/StudioBottomBar";
-import NotFound from "./pages/NotFound";
-import EditProfile from "./pages/EditProfile";
-import MyPlan from "./pages/MyPlan";
-import Settings from "./pages/Settings";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import BottomTabBar from "./components/BottomTabBar";
+import StudioBottomBar from "./components/StudioBottomBar";
 import { LoadingScreen } from "./components/LoadingScreen";
-import Install from "./pages/Install";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import DeleteAccount from "./pages/DeleteAccount";
-import TermsOfService from "./pages/TermsOfService";
-import Support from "./pages/Support";
+
+// Primeira tela de quem entra (visitante → Login, aluno → Index): vão no pacote
+// principal. O resto é carregado por rota — o celular do aluno não baixa o painel
+// de admin, o Studio, os gráficos nem o Firebase de telas que ele nunca abre.
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+
+const Search               = lazyWithRetry(() => import("./pages/Search"));
+const Favorites            = lazyWithRetry(() => import("./pages/Favorites"));
+const ProgressPage         = lazyWithRetry(() => import("./pages/ProgressPage"));
+const Profile              = lazyWithRetry(() => import("./pages/Profile"));
+const VideoDetail          = lazyWithRetry(() => import("./pages/VideoDetail"));
+const ForgotPassword       = lazyWithRetry(() => import("./pages/ForgotPassword"));
+const ResetPassword        = lazyWithRetry(() => import("./pages/ResetPassword"));
+const EditProfile          = lazyWithRetry(() => import("./pages/EditProfile"));
+const MyPlan               = lazyWithRetry(() => import("./pages/MyPlan"));
+const Settings             = lazyWithRetry(() => import("./pages/Settings"));
+const InstructorSection    = lazyWithRetry(() => import("./pages/InstructorSection"));
+const Instructors          = lazyWithRetry(() => import("./pages/Instructors"));
+const AthleteModules       = lazyWithRetry(() => import("./pages/AthleteModules"));
+const AthleteModuleLessons = lazyWithRetry(() => import("./pages/AthleteModuleLessons"));
+const Install              = lazyWithRetry(() => import("./pages/Install"));
+const PrivacyPolicy        = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const DeleteAccount        = lazyWithRetry(() => import("./pages/DeleteAccount"));
+const TermsOfService       = lazyWithRetry(() => import("./pages/TermsOfService"));
+const Support              = lazyWithRetry(() => import("./pages/Support"));
+const NotFound             = lazyWithRetry(() => import("./pages/NotFound"));
+
+const AdminDashboard   = lazyWithRetry(() => import("./pages/admin/AdminDashboard"));
+const AdminVideos      = lazyWithRetry(() => import("./pages/admin/AdminVideos"));
+const AdminUsers       = lazyWithRetry(() => import("./pages/admin/AdminUsers"));
+const AdminPayments    = lazyWithRetry(() => import("./pages/admin/AdminPayments"));
+const AdminPlans       = lazyWithRetry(() => import("./pages/admin/AdminPlans"));
+const AdminInstructors = lazyWithRetry(() => import("./pages/admin/AdminInstructors"));
+const AdminModules     = lazyWithRetry(() => import("./pages/admin/AdminModules"));
+const AdminSeason      = lazyWithRetry(() => import("./pages/admin/AdminSeason"));
+const AdminStore       = lazyWithRetry(() => import("./pages/admin/AdminStore"));
+
+const StudioDashboard     = lazyWithRetry(() => import("./pages/studio/StudioDashboard"));
+const StudioFeedback      = lazyWithRetry(() => import("./pages/studio/StudioFeedback"));
+const StudioPerfil        = lazyWithRetry(() => import("./pages/studio/StudioPerfil"));
+const StudioEditPerfil    = lazyWithRetry(() => import("./pages/studio/StudioEditPerfil"));
+const StudioConfiguracoes = lazyWithRetry(() => import("./pages/studio/StudioConfiguracoes"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,17 +77,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const ProtectedRoute = ({ children, adminOnly = false, instructorOnly = false }: {
-  children: React.ReactNode; adminOnly?: boolean; instructorOnly?: boolean;
-}) => {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
-  if (adminOnly      && user.role !== "admin")      return <Navigate to="/" replace />;
-  if (instructorOnly && user.role !== "instructor") return <Navigate to="/" replace />;
-  return <>{children}</>;
-};
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -111,44 +110,51 @@ const AppRoutes = () => {
   if (loading) return <LoadingScreen />;
   return (
     <>
-      <Routes>
-        <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
-        <Route path="/esqueci-senha" element={<ForgotPassword />} />
-        <Route path="/reset-senha" element={<ResetPassword />} />
-        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-        <Route path="/buscar" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-        <Route path="/favoritos" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-        <Route path="/progresso" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
-        <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/perfil/editar" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-        <Route path="/perfil/plano" element={<ProtectedRoute><MyPlan /></ProtectedRoute>} />
-        <Route path="/perfil/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/video/:id" element={<ProtectedRoute><VideoDetail /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/videos" element={<ProtectedRoute adminOnly><AdminVideos /></ProtectedRoute>} />
-        <Route path="/admin/usuarios" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
-        <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
-        <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
-        <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
-        <Route path="/admin/modulos"     element={<ProtectedRoute adminOnly><AdminModules /></ProtectedRoute>} />
-        <Route path="/admin/temporada"   element={<ProtectedRoute adminOnly><AdminSeason /></ProtectedRoute>} />
-        <Route path="/admin/loja"        element={<ProtectedRoute adminOnly><AdminStore /></ProtectedRoute>} />
-        <Route path="/professores" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
-        <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
-        <Route path="/atleta/:id" element={<ProtectedRoute><AthleteModules /></ProtectedRoute>} />
-        <Route path="/atleta/:id/modulo/:modulo" element={<ProtectedRoute><AthleteModuleLessons /></ProtectedRoute>} />
-        <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
-        <Route path="/studio/feedback" element={<ProtectedRoute instructorOnly><StudioFeedback /></ProtectedRoute>} />
-        <Route path="/studio/perfil"              element={<ProtectedRoute instructorOnly><StudioPerfil        /></ProtectedRoute>} />
-        <Route path="/studio/perfil/editar"      element={<ProtectedRoute instructorOnly><StudioEditPerfil   /></ProtectedRoute>} />
-        <Route path="/studio/perfil/configuracoes" element={<ProtectedRoute instructorOnly><StudioConfiguracoes /></ProtectedRoute>} />
-        <Route path="/instalar" element={<Install />} />
-        <Route path="/privacidade" element={<PrivacyPolicy />} />
-        <Route path="/excluir-conta" element={<DeleteAccount />} />
-        <Route path="/termos" element={<TermsOfService />} />
-        <Route path="/suporte" element={<Support />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {/* lg:pl-60 reserva a largura do menu lateral (BottomTabBar no desktop). */}
+      <div className={showTabBar ? "lg:pl-60" : undefined}>
+      <RouteErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes>
+            <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
+            <Route path="/esqueci-senha" element={<ForgotPassword />} />
+            <Route path="/reset-senha" element={<ResetPassword />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/buscar" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+            <Route path="/favoritos" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+            <Route path="/progresso" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/perfil/editar" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+            <Route path="/perfil/plano" element={<ProtectedRoute><MyPlan /></ProtectedRoute>} />
+            <Route path="/perfil/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/video/:id" element={<ProtectedRoute><VideoDetail /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/videos" element={<ProtectedRoute adminOnly><AdminVideos /></ProtectedRoute>} />
+            <Route path="/admin/usuarios" element={<ProtectedRoute adminOnly><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
+            <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
+            <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
+            <Route path="/admin/modulos"     element={<ProtectedRoute adminOnly><AdminModules /></ProtectedRoute>} />
+            <Route path="/admin/temporada"   element={<ProtectedRoute adminOnly><AdminSeason /></ProtectedRoute>} />
+            <Route path="/admin/loja"        element={<ProtectedRoute adminOnly><AdminStore /></ProtectedRoute>} />
+            <Route path="/professores" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
+            <Route path="/instrutor/:id" element={<ProtectedRoute><InstructorSection /></ProtectedRoute>} />
+            <Route path="/atleta/:id" element={<ProtectedRoute><AthleteModules /></ProtectedRoute>} />
+            <Route path="/atleta/:id/modulo/:modulo" element={<ProtectedRoute><AthleteModuleLessons /></ProtectedRoute>} />
+            <Route path="/studio"          element={<ProtectedRoute instructorOnly><StudioDashboard /></ProtectedRoute>} />
+            <Route path="/studio/feedback" element={<ProtectedRoute instructorOnly><StudioFeedback /></ProtectedRoute>} />
+            <Route path="/studio/perfil"              element={<ProtectedRoute instructorOnly><StudioPerfil        /></ProtectedRoute>} />
+            <Route path="/studio/perfil/editar"      element={<ProtectedRoute instructorOnly><StudioEditPerfil   /></ProtectedRoute>} />
+            <Route path="/studio/perfil/configuracoes" element={<ProtectedRoute instructorOnly><StudioConfiguracoes /></ProtectedRoute>} />
+            <Route path="/instalar" element={<Install />} />
+            <Route path="/privacidade" element={<PrivacyPolicy />} />
+            <Route path="/excluir-conta" element={<DeleteAccount />} />
+            <Route path="/termos" element={<TermsOfService />} />
+            <Route path="/suporte" element={<Support />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </RouteErrorBoundary>
+      </div>
       {showTabBar  && <BottomTabBar />}
       {isStudio    && <StudioBottomBar />}
     </>

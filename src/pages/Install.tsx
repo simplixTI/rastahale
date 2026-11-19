@@ -82,7 +82,7 @@ const Install = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-10">
+    <div className="app-page lg:pb-10 bg-background pb-10">
       {/* header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-2">
         <button onClick={() => { if (history.length > 1) navigate(-1); else navigate("/perfil"); }}

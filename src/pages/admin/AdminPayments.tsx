@@ -90,7 +90,7 @@ const AdminPayments = () => {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2 xl:grid xl:grid-cols-2 xl:items-start xl:gap-2 xl:space-y-0">
           {filtered.map((p) => {
             const StatusIcon = p.status === "pago" ? CheckCircle : p.status === "pendente" ? AlertCircle : XCircle;
             const iconColor = p.status === "pago" ? "text-emerald-400" : p.status === "pendente" ? "text-amber-400" : "text-red-400";

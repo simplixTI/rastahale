@@ -73,7 +73,7 @@ const StoreBanner = () => {
                 <img
                   src={b.imageUrl}
                   alt={t("store.imageAlt")}
-                  className="aspect-[16/9] w-full object-cover"
+                  className="aspect-[16/9] w-full object-cover lg:aspect-[21/9]"
                   loading="lazy"
                 />
               </a>

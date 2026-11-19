@@ -120,7 +120,7 @@ const MyPlan = () => {
   const busyExternal = checkout.isPending || billingPortal.isPending;
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
+    <div className="app-page lg:pb-10 lg:max-w-2xl bg-background pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
         <button

@@ -49,7 +49,7 @@ const Section = ({ title, children, delay = 0 }: { title: string; children: Reac
     <section className="mt-6">
       <h2 className="mb-3 px-4 text-base font-bold tracking-tight text-foreground">{title}</h2>
       <div
-        className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+        className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory lg:flex-wrap"
         style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
       >
         {children}
@@ -123,7 +123,7 @@ const Index = () => {
             <img
               src={featured.thumbnail}
               alt={featured.title}
-              className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 lg:aspect-[21/9]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
@@ -172,7 +172,7 @@ const Index = () => {
               </button>
             </div>
             <div
-              className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory"
+              className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x snap-mandatory lg:flex-wrap"
               style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x", overflowX: "scroll" }}
             >
               {athletes.map((a) => (

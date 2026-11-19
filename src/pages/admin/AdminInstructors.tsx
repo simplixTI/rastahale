@@ -565,7 +565,7 @@ const AdminInstructors = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
           {instructors.map((inst) => (
             <InstructorCard key={inst.id} instructor={inst} videoCount={videoCount(inst.id)}
               onEdit={() => setEditing(inst)} onDelete={() => setDeleting(inst)} />

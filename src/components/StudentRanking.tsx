@@ -34,6 +34,8 @@ function Avatar({ student }: { student: RankedStudent }) {
       <img
         src={student.avatarUrl}
         alt={student.name}
+        loading="lazy"
+        decoding="async"
         className="h-10 w-10 flex-shrink-0 rounded-full border border-border object-cover"
       />
     );

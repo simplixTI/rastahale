@@ -41,7 +41,7 @@ const Instructors = () => {
           <p className="mt-2 text-sm text-muted-foreground">{t("instructors.empty")}</p>
         </div>
       ) : (
-        <div className="mt-4 space-y-2 px-4">
+        <div className="mt-4 space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {cards.map((inst) => (
             <button
               key={inst.id}
@@ -51,6 +51,8 @@ const Instructors = () => {
               <img
                 src={inst.avatar}
                 alt={inst.name}
+                loading="lazy"
+                decoding="async"
                 className="h-14 w-14 flex-shrink-0 rounded-full border border-border object-cover"
               />
               <div className="flex-1 min-w-0">
