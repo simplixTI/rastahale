@@ -22,9 +22,9 @@ const Favorites = () => {
           <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         </div>
       ) : favorites.length > 0 ? (
-        <div className="mt-4 grid grid-cols-2 gap-3 px-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5 xl:grid-cols-5">
           {favorites.map((v) => (
-            <VideoCard key={v.id} video={v} size="sm" />
+            <VideoCard key={v.id} video={v} size="sm" fluid />
           ))}
         </div>
       ) : (

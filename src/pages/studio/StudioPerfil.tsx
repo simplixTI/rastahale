@@ -24,7 +24,7 @@ const StudioPerfil = () => {
   ];
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-narrow pb-28">
       <header className="px-4 pt-4">
         <h1 className="text-xl font-bold text-foreground">Perfil</h1>
       </header>

@@ -42,7 +42,7 @@ const Instructors = () => {
           <p className="mt-2 text-sm text-muted-foreground">{t("instructors.empty")}</p>
         </div>
       ) : (
-        <div className="stagger mt-4 space-y-2 px-4">
+        <div className="stagger mt-4 space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
           {cards.map((inst) => (
             <button
               key={inst.id}

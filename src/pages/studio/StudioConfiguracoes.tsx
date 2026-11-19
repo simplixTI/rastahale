@@ -31,7 +31,7 @@ const StudioConfiguracoes = () => {
   const [dark,   setDark]   = useState(true);
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-narrow pb-28">
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
         <button onClick={() => navigate("/studio/perfil")}
           className="rounded-full bg-card border border-border p-2 text-foreground">

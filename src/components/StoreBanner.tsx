@@ -47,7 +47,7 @@ const StoreBanner = () => {
   }, [banners.length]);
 
   return (
-    <section className="mt-6 px-4">
+    <section className="mt-6 px-4 lg:mt-5">
       <div className="mb-3 flex items-center gap-1.5">
         <ShoppingBag size={16} className="text-primary" />
         <h2 className="text-base font-bold tracking-tight text-foreground">{t("store.title")}</h2>

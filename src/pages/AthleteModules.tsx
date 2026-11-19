@@ -47,7 +47,7 @@ const AthleteModules = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-medium pb-28">
       {/* hero */}
       <div className="relative">
         <div

@@ -121,6 +121,9 @@ const AppRoutes = () => {
                    || location.pathname === "/esqueci-senha"
                    || location.pathname === "/reset-senha";
   const showTabBar = !isAdmin && !isLogin && !isStudio;
+  // Só há navegação para quem está logado (visitante em /termos, /suporte etc.
+  // via a barra do aluno sem poder usar nenhuma aba).
+  const hasNav = !!user && !isLogin;
 
   // Botão voltar do Android navega no histórico em vez de fechar o app.
   useAndroidBackButton();
@@ -143,6 +146,8 @@ const AppRoutes = () => {
   if (loading) return <LoadingScreen />;
   return (
     <>
+      {/* No computador o menu lateral ocupa 15rem à esquerda. */}
+      <div className={hasNav ? "lg:pl-60" : undefined}>
       <RouteTransition>
       <Routes>
         <Route path="/login" element={user ? <Navigate to={user.role === "admin" ? "/admin" : user.role === "instructor" ? "/studio" : "/"} replace /> : <Login />} />
@@ -183,7 +188,8 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </RouteTransition>
-      {showTabBar  && <BottomTabBar />}
+      </div>
+      {showTabBar && hasNav && <BottomTabBar />}
       {isAdmin && user?.role === "admin" && <AdminTabBar />}
       {isStudio    && <StudioBottomBar />}
     </>

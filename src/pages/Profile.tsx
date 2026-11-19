@@ -33,7 +33,7 @@ const Profile = () => {
   ];
 
   return (
-    <MobileLayout>
+    <MobileLayout width="narrow">
       <header className="px-4 pt-4">
         <h1 className="text-xl font-bold text-foreground">{t("profile.title")}</h1>
       </header>

@@ -269,6 +269,24 @@
   }
 }
 
+/* ── Computador ────────────────────────────────────────────────────────────
+   Toda tela nasce como coluna de 430px (max-w-[430px]). A partir de lg ela
+   abre: larga para catálogos, média para painéis de uma coluna, estreita para
+   formulários. Telas que já definem a própria largura (lg:max-w-*) ficam fora. */
+@media (min-width: 1024px) {
+  .min-h-screen.max-w-\[430px\]:not([class*="lg:max-w-"]) {
+    max-width: 76rem;
+    padding-inline: 1.5rem;
+    padding-top: 0.5rem;
+  }
+  .min-h-screen.max-w-\[430px\].page-medium {
+    max-width: 52rem;
+  }
+  .min-h-screen.max-w-\[430px\].page-narrow {
+    max-width: 36rem;
+  }
+}
+
 @keyframes page-fade {
   from { opacity: 0; }
 }

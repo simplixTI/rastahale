@@ -34,6 +34,18 @@ const AdminTabBar = () => {
     { icon: Menu, label: "Mais", match: () => inMore || open, onSelect: () => setOpen(true) },
   ];
 
+  // Computador: cabe tudo no menu lateral, então nada fica escondido em "Mais".
+  const desktopItems: TabItem[] = [
+    ...items.slice(0, 4),
+    ...moreItems.map(({ path, icon, label }) => ({ path, icon, label, match: (p: string) => p.startsWith(path) })),
+  ];
+
+  const signOut = async () => {
+    setOpen(false);
+    await logout();
+    navigate("/login");
+  };
+
   const go = (path: string) => {
     setOpen(false);
     navigate(path);
@@ -41,7 +53,21 @@ const AdminTabBar = () => {
 
   return (
     <>
-      <TabBar items={items} ariaLabel="Navegação do painel" />
+      <TabBar
+        items={items}
+        desktopItems={desktopItems}
+        desktopTitle="Painel"
+        ariaLabel="Navegação do painel"
+        desktopFooter={
+          <button
+            type="button"
+            onClick={signOut}
+            className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/5 hover:text-destructive"
+          >
+            <LogOut size={19} aria-hidden="true" /> Sair da conta
+          </button>
+        }
+      />
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="mx-auto max-w-[430px] rounded-t-3xl border-border bg-background px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -80,7 +106,7 @@ const AdminTabBar = () => {
           {/* Sair fica separado da navegação, e com cor de ação destrutiva. */}
           <button
             type="button"
-            onClick={async () => { setOpen(false); await logout(); navigate("/login"); }}
+            onClick={signOut}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/5"
           >
             <LogOut size={16} aria-hidden="true" /> Sair da conta

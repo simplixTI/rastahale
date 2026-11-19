@@ -34,7 +34,7 @@ const AthleteModuleLessons = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-medium pb-28">
       {/* header */}
       <header className="flex items-center gap-3 px-4 pt-4">
         <button

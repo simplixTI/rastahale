@@ -84,7 +84,7 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-24">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-narrow pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
         <button

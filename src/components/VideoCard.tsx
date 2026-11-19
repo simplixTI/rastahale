@@ -9,12 +9,15 @@ import { Pill, levelColor } from "@/components/Pill";
 interface VideoCardProps {
   video: VideoWithProgress;
   size?: "sm" | "md";
+  /** Ocupa toda a largura da célula em vez da largura fixa de carrossel. */
+  fluid?: boolean;
 }
 
-const VideoCard = ({ video, size = "md" }: VideoCardProps) => {
+const VideoCard = ({ video, size = "md", fluid = false }: VideoCardProps) => {
   const navigate = useNavigate();
   const labels   = useLabels();
-  const w = size === "sm" ? "min-w-[144px] w-36" : "min-w-[176px] w-44";
+  // fluid: ocupa a célula da grade (busca, favoritos); senão, largura fixa de carrossel.
+  const w = fluid ? "w-full min-w-0" : size === "sm" ? "min-w-[144px] w-36" : "min-w-[176px] w-44";
 
   return (
     <button

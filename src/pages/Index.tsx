@@ -110,10 +110,13 @@ const Index = () => {
               {firstName} <span className="align-middle">🤙</span>
             </h1>
           </div>
-          <Logo className="h-11 w-auto shrink-0 object-contain" />
+          {/* No computador o logo já está no menu lateral. */}
+          <Logo className="h-11 w-auto shrink-0 object-contain lg:hidden" />
         </header>
       </FadeInSection>
 
+      {/* Computador: destaque e vitrine da loja lado a lado. */}
+      <div className="lg:grid lg:grid-cols-[1.7fr_1fr] lg:items-start lg:gap-2">
       {featured && (
         <FadeInSection delay={100}>
           <button
@@ -123,7 +126,7 @@ const Index = () => {
             <img
               src={featured.thumbnail}
               alt={featured.title}
-              className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 lg:aspect-[16/9]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
@@ -133,7 +136,7 @@ const Index = () => {
 
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 text-left">
               <div className="min-w-0">
-                <h2 className="truncate text-lg font-bold leading-tight tracking-tight text-white">{featured.title}</h2>
+                <h2 className="truncate text-lg font-bold leading-tight tracking-tight text-white lg:text-3xl">{featured.title}</h2>
                 <p className="mt-1 text-xs font-medium text-white/60">{featured.duration}</p>
               </div>
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/15 backdrop-blur-md transition-all duration-300 group-hover:border-primary group-hover:bg-primary">
@@ -149,6 +152,7 @@ const Index = () => {
       <FadeInSection delay={150}>
         <StoreBanner />
       </FadeInSection>
+      </div>
 
       {continueWatching.length > 0 && (
         <Section title={t("home.continueWatching")} delay={200}>

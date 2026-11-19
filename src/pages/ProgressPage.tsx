@@ -42,7 +42,7 @@ const ProgressPage = () => {
   ];
 
   return (
-    <MobileLayout>
+    <MobileLayout width="medium">
       <header className="px-4 pt-4">
         <h1 className="text-xl font-bold text-foreground">{t("progress.title")}</h1>
         <p className="mt-0.5 text-xs text-muted-foreground">{t("progress.subtitle")}</p>

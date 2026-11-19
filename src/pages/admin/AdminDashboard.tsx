@@ -23,10 +23,10 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <AdminLayout title="Painel Admin">
+    <AdminLayout title="Painel Admin" width="wide">
       <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
 
-      <div className="stagger mt-4 grid grid-cols-2 gap-3">
+      <div className="stagger mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map((c) => (
           <button
             key={c.label}
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2">
+      <div className="mt-6 grid grid-cols-2 gap-2 lg:max-w-xl">
         <button
           onClick={() => navigate("/admin/videos")}
           className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-xs font-medium text-primary"

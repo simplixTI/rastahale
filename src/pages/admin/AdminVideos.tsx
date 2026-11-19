@@ -84,7 +84,7 @@ const AdminVideos = () => {
   }, [filtered]);
 
   return (
-    <AdminLayout title="Vídeos">
+    <AdminLayout title="Vídeos" width="wide">
       <VideoFormModal
         open={showUpload}
         onOpenChange={setShowUpload}

@@ -9,6 +9,6 @@ const items: TabItem[] = [
   { path: "/studio/perfil",   icon: UserCircle,    label: "Perfil",   match: (p) => p.startsWith("/studio/perfil") },
 ];
 
-const StudioBottomBar = () => <TabBar items={items} ariaLabel="Navegação do Studio" />;
+const StudioBottomBar = () => <TabBar items={items} desktopTitle="Studio" ariaLabel="Navegação do Studio" />;
 
 export default StudioBottomBar;

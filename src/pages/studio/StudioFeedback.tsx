@@ -8,7 +8,7 @@ const StudioFeedback = () => {
   const { comments } = useInstructorComments(user?.id ?? "");
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background pb-28">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background page-medium pb-28">
       {/* header */}
       <header className="top-safe sticky z-50 border-b border-border bg-card/95 backdrop-blur-lg px-4 py-3">
         <div className="flex items-center gap-2">
