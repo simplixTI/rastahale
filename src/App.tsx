@@ -24,6 +24,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminInstructors from "./pages/admin/AdminInstructors";
+import AdminInstructorDetail from "./pages/admin/AdminInstructorDetail";
 import AdminModules from "./pages/admin/AdminModules";
 import AdminSeason from "./pages/admin/AdminSeason";
 import AdminStore from "./pages/admin/AdminStore";
@@ -168,6 +169,7 @@ const AppRoutes = () => {
         <Route path="/admin/pagamentos" element={<ProtectedRoute adminOnly><AdminPayments /></ProtectedRoute>} />
         <Route path="/admin/planos" element={<ProtectedRoute adminOnly><AdminPlans /></ProtectedRoute>} />
         <Route path="/admin/instrutores" element={<ProtectedRoute adminOnly><AdminInstructors /></ProtectedRoute>} />
+        <Route path="/admin/instrutores/:id" element={<ProtectedRoute adminOnly><AdminInstructorDetail /></ProtectedRoute>} />
         <Route path="/admin/modulos"     element={<ProtectedRoute adminOnly><AdminModules /></ProtectedRoute>} />
         <Route path="/admin/temporada"   element={<ProtectedRoute adminOnly><AdminSeason /></ProtectedRoute>} />
         <Route path="/admin/loja"        element={<ProtectedRoute adminOnly><AdminStore /></ProtectedRoute>} />

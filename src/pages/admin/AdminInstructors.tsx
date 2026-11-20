@@ -7,7 +7,7 @@ import { z } from "zod";
 import {
   Plus, Edit2, Trash2, Upload, LinkIcon, Check, X,
   Loader2, ImageIcon, BookOpen, Users2, ExternalLink,
-  KeyRound, Eye, EyeOff, ShieldCheck,
+  KeyRound, Eye, EyeOff, ShieldCheck, Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -373,9 +373,10 @@ function InstructorCard({ instructor, videoCount, onEdit, onDelete }: {
           className="flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground border-r border-border hover:bg-secondary/50 transition-colors">
           <Edit2 size={12} /> Editar
         </button>
-        <button onClick={() => navigate(`/instrutor/${instructor.id}`)}
+        {/* Perfil do professor no admin: módulos, ordem das aulas e "ver como aluno". */}
+        <button onClick={() => navigate(`/admin/instrutores/${instructor.id}`)}
           className="flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-primary border-r border-border hover:bg-primary/10 transition-colors">
-          <ExternalLink size={12} /> Sessão
+          <Layers size={12} /> Módulos
         </button>
         <button onClick={onDelete}
           className="flex flex-1 items-center justify-center gap-1 py-2.5 text-[11px] font-medium text-red-400 hover:bg-red-500/10 transition-colors">
