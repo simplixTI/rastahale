@@ -1,13 +1,17 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowDown, ArrowUp, BookOpen, Check, ChevronDown, ExternalLink, EyeOff, FolderOpen,
-  FolderPlus, Layers, Pencil, Plus, ShieldCheck, Trash2, X,
+  FolderPlus, ImagePlus, Layers, Pencil, Plus, ShieldCheck, Trash2, X,
 } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { uploadMedia } from "@/lib/storageUpload";
 import AdminLayout from "@/components/AdminLayout";
 import AvatarImage from "@/components/AvatarImage";
 import { useAdminInstructors, useAdminVideos } from "@/hooks/useAdminData";
-import { useStudioSessions, type StudioSession } from "@/hooks/useStudioSessions";
+import { useStudioSessions, type SessionExtras, type StudioSession } from "@/hooks/useStudioSessions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -61,6 +65,147 @@ function LessonRow({ lesson, index, children }: { lesson: Lesson; index?: number
 const iconBtn =
   "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent";
 
+// ── Envio de imagem (capa do módulo, foto do professor) ─────────────────────
+
+function ImagePicker({ value, onChange, folder, label, shape = "wide" }: {
+  value: string | null;
+  onChange: (url: string | null) => void;
+  folder: string;
+  label: string;
+  shape?: "wide" | "round";
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const pick = async (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Escolha um arquivo de imagem (JPG ou PNG)."); return; }
+    setUploading(true);
+    try {
+      onChange(await uploadMedia(file, folder));
+    } catch (err) {
+      toast.error((err as Error).message || "Não foi possível enviar a imagem. Tente de novo.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          "flex flex-shrink-0 items-center justify-center overflow-hidden border border-border bg-secondary text-muted-foreground",
+          shape === "round" ? "h-16 w-16 rounded-full" : "h-16 w-28 rounded-lg"
+        )}
+      >
+        {value
+          ? <img src={value} alt="" className="h-full w-full object-cover" />
+          : <ImagePlus size={20} aria-hidden="true" />}
+      </div>
+      <div className="min-w-0">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          aria-label={label}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ""; }}
+        />
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-60"
+        >
+          {uploading ? "Enviando…" : value ? "Trocar imagem" : "Enviar imagem"}
+        </button>
+        {value && !uploading && (
+          <button type="button" onClick={() => onChange(null)} className="ml-3 text-sm text-muted-foreground underline underline-offset-4 hover:text-destructive">
+            Remover
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Editar perfil do professor ──────────────────────────────────────────────
+
+function ProfileDialog({ instructor, onClose }: {
+  instructor: { id: string; name: string; bio: string; avatar: string };
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [name, setName]     = useState(instructor.name);
+  const [bio, setBio]       = useState(instructor.bio ?? "");
+  const [avatar, setAvatar] = useState<string | null>(instructor.avatar || null);
+  const [touched, setTouched] = useState(false);
+  const nameError = touched && name.trim().length < 2 ? "Informe o nome do professor." : "";
+
+  // Só nome, descrição e foto. E-mail e senha do Studio continuam no cartão
+  // da lista (Editar), porque passam pela função que cria o login.
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!isSupabaseConfigured) throw new Error("Banco não configurado neste ambiente.");
+      const { error } = await supabase
+        .from("instructors")
+        .update({ name: name.trim(), bio: bio.trim(), avatar_url: avatar ?? "" })
+        .eq("id", instructor.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructors"] });
+      qc.invalidateQueries({ queryKey: ["instructor", instructor.id] });
+      toast.success("Perfil atualizado");
+      onClose();
+    },
+    onError: (err) => toast.error((err as Error).message || "Não foi possível salvar o perfil. Tente de novo."),
+  });
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-border bg-background sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-foreground">Editar perfil</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => { e.preventDefault(); setTouched(true); if (name.trim().length >= 2) save.mutate(); }}
+          className="space-y-4"
+        >
+          <div>
+            <span className={labelCls}>Foto</span>
+            <ImagePicker value={avatar} onChange={setAvatar} folder="avatars" label="Foto do professor" shape="round" />
+          </div>
+          <div>
+            <label htmlFor="prof-name" className={labelCls}>Nome</label>
+            <input
+              id="prof-name" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => setTouched(true)}
+              aria-invalid={!!nameError} aria-describedby={nameError ? "prof-name-error" : undefined} className={fieldCls}
+            />
+            {nameError && <p id="prof-name-error" role="alert" className="mt-1 text-xs text-destructive">{nameError}</p>}
+          </div>
+          <div>
+            <label htmlFor="prof-bio" className={labelCls}>Descrição</label>
+            <textarea
+              id="prof-bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={3}
+              placeholder="Graduação, equipe, títulos — o que o aluno lê no perfil"
+              className={cn(fieldCls, "resize-none")}
+            />
+          </div>
+          <DialogFooter className="gap-2 pt-1">
+            <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary">
+              Cancelar
+            </button>
+            <button type="submit" disabled={save.isPending} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+              {save.isPending ? "Salvando…" : "Salvar perfil"}
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Formulário de módulo (criar / editar) ───────────────────────────────────
 
 function ModuleDialog({ open, module, lessons, onClose, onSave }: {
@@ -68,8 +213,9 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
   module: StudioSession | null;
   lessons: Lesson[];
   onClose: () => void;
-  onSave: (title: string, description: string, videoIds: string[]) => void;
+  onSave: (title: string, description: string, videoIds: string[], extras: SessionExtras) => void;
 }) {
+  const [cover, setCover]             = useState<string | null>(module?.coverUrl ?? null);
   const [title, setTitle]             = useState(module?.title ?? "");
   const [description, setDescription] = useState(module?.description ?? "");
   const [picked, setPicked]           = useState<string[]>(module?.videoIds ?? []);
@@ -87,7 +233,7 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
     // Mantém a ordem já definida e joga as aulas recém-marcadas para o fim.
     const kept = (module?.videoIds ?? []).filter((id) => picked.includes(id));
     const added = picked.filter((id) => !kept.includes(id));
-    onSave(title.trim(), description.trim(), [...kept, ...added]);
+    onSave(title.trim(), description.trim(), [...kept, ...added], { coverUrl: cover });
   };
 
   return (
@@ -127,6 +273,12 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
               placeholder="O que o aluno aprende neste módulo"
               className={cn(fieldCls, "resize-none")}
             />
+          </div>
+
+          <div>
+            <span className={labelCls}>Capa <span className="font-normal text-muted-foreground">(opcional)</span></span>
+            <ImagePicker value={cover} onChange={setCover} folder="modules" label="Capa do módulo" />
+            <p className="mt-1.5 text-xs text-muted-foreground">Sem capa, o aluno vê a miniatura da primeira aula.</p>
           </div>
 
           <fieldset>
@@ -182,10 +334,16 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
 
 // ── Cartão de módulo ────────────────────────────────────────────────────────
 
-function ModuleCard({ module, lessonsById, defaultOpen, onEdit, onDelete, onReorder, onRemoveLesson }: {
+function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMoveDown, onMoveModule, onMoveLesson, onEdit, onDelete, onReorder, onRemoveLesson }: {
   module: StudioSession;
   lessonsById: Map<string, Lesson>;
   defaultOpen: boolean;
+  /** Os outros módulos do professor, para "mover aula para…". */
+  others: StudioSession[];
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveModule: (direction: -1 | 1) => void;
+  onMoveLesson: (videoId: string, toModuleId: string) => void;
   onEdit: () => void;
   onDelete: () => void;
   onReorder: (videoIds: string[]) => void;
@@ -213,9 +371,13 @@ function ModuleCard({ module, lessonsById, defaultOpen, onEdit, onDelete, onReor
           aria-controls={panelId}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1.5 text-left"
         >
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary text-foreground">
-            <FolderOpen size={18} aria-hidden="true" />
-          </span>
+          {module.coverUrl ? (
+            <img src={module.coverUrl} alt="" className="h-10 w-16 flex-shrink-0 rounded-lg object-cover" />
+          ) : (
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary text-foreground">
+              <FolderOpen size={18} aria-hidden="true" />
+            </span>
+          )}
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-foreground">{module.title}</span>
             <span className="tabular block truncate text-xs text-muted-foreground">
@@ -228,6 +390,12 @@ function ModuleCard({ module, lessonsById, defaultOpen, onEdit, onDelete, onReor
             aria-hidden="true"
             className={cn("flex-shrink-0 text-muted-foreground transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]", open && "rotate-180")}
           />
+        </button>
+        <button type="button" onClick={() => onMoveModule(-1)} disabled={!canMoveUp} aria-label={`Subir o módulo ${module.title}`} className={iconBtn}>
+          <ArrowUp size={16} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={() => onMoveModule(1)} disabled={!canMoveDown} aria-label={`Descer o módulo ${module.title}`} className={iconBtn}>
+          <ArrowDown size={16} aria-hidden="true" />
         </button>
         <button type="button" onClick={onEdit} aria-label={`Editar o módulo ${module.title}`} className={iconBtn}>
           <Pencil size={16} aria-hidden="true" />
@@ -253,6 +421,17 @@ function ModuleCard({ module, lessonsById, defaultOpen, onEdit, onDelete, onReor
                 return (
                   <li key={id}>
                     <LessonRow lesson={lesson} index={index}>
+                      {others.length > 0 && (
+                        <select
+                          aria-label={`Mover "${lesson.title}" para outro módulo`}
+                          value=""
+                          onChange={(e) => { if (e.target.value) onMoveLesson(id, e.target.value); }}
+                          className="hidden max-w-[8.5rem] flex-shrink-0 rounded-lg border border-border bg-background px-2 py-2 text-xs font-medium text-foreground outline-none focus:ring-2 focus:ring-ring sm:block"
+                        >
+                          <option value="">Mover para…</option>
+                          {others.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+                        </select>
+                      )}
                       <button type="button" onClick={() => move(index, index - 1)} disabled={index === 0} aria-label={`Subir "${lesson.title}"`} className={iconBtn}>
                         <ArrowUp size={16} aria-hidden="true" />
                       </button>
@@ -281,10 +460,11 @@ const AdminInstructorDetail = () => {
   const navigate = useNavigate();
   const { data: instructors = [], isLoading } = useAdminInstructors();
   const { data: videos = [] } = useAdminVideos();
-  const { sessions, create, update, remove, addVideo } = useStudioSessions(id);
+  const { sessions, create, update, remove, addVideo, reorder, moveVideo } = useStudioSessions(id);
 
   const [dialog, setDialog]     = useState<{ module: StudioSession | null } | null>(null);
   const [deleting, setDeleting] = useState<StudioSession | null>(null);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const instructor = instructors.find((i) => i.id === id);
 
@@ -324,14 +504,28 @@ const AdminInstructorDetail = () => {
     );
   }
 
-  const save = (title: string, description: string, videoIds: string[]) => {
-    if (dialog?.module) update(dialog.module.id, title, description, videoIds);
-    else create(title, description, videoIds);
+  const save = (title: string, description: string, videoIds: string[], extras: SessionExtras) => {
+    if (dialog?.module) update(dialog.module.id, title, description, videoIds, extras);
+    else create(title, description, videoIds, extras);
     setDialog(null);
+  };
+
+  const moveModule = (index: number, direction: -1 | 1) => {
+    const ids = sessions.map((s) => s.id);
+    const [item] = ids.splice(index, 1);
+    ids.splice(index + direction, 0, item);
+    reorder(ids);
   };
 
   return (
     <AdminLayout title={instructor.name} backTo="/admin/instrutores" width="wide">
+      {editingProfile && (
+        <ProfileDialog
+          instructor={{ id: instructor.id, name: instructor.name, bio: instructor.bio ?? "", avatar: instructor.avatar ?? "" }}
+          onClose={() => setEditingProfile(false)}
+        />
+      )}
+
       {dialog && (
         <ModuleDialog
           // key: reabrir para outro módulo recomeça o formulário do zero
@@ -381,13 +575,22 @@ const AdminInstructorDetail = () => {
             {instructor.loginEmail && <span className="truncate">{instructor.loginEmail}</span>}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate(`/atleta/${instructor.id}`)}
-          className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          <ExternalLink size={15} aria-hidden="true" /> Ver como aluno
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setEditingProfile(true)}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <Pencil size={15} aria-hidden="true" /> Editar perfil
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/atleta/${instructor.id}`)}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <ExternalLink size={15} aria-hidden="true" /> Ver como aluno
+          </button>
+        </div>
       </section>
 
       <dl className="stagger mt-3 grid grid-cols-3 gap-2 lg:max-w-xl">
@@ -410,7 +613,7 @@ const AdminInstructorDetail = () => {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 id="modules-heading" className="text-base font-bold text-foreground">Módulos</h3>
-              <p className="text-xs text-muted-foreground">É assim que o aluno encontra as aulas deste professor.</p>
+              <p className="text-xs text-muted-foreground">Na ordem em que o aluno vê na página do professor.</p>
             </div>
             <button
               type="button"
@@ -440,6 +643,11 @@ const AdminInstructorDetail = () => {
                   module={module}
                   lessonsById={lessonsById}
                   defaultOpen={index === 0}
+                  others={sessions.filter((s) => s.id !== module.id)}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < sessions.length - 1}
+                  onMoveModule={(direction) => moveModule(index, direction)}
+                  onMoveLesson={(videoId, toId) => moveVideo(module.id, toId, videoId)}
                   onEdit={() => setDialog({ module })}
                   onDelete={() => setDeleting(module)}
                   onReorder={(videoIds) => update(module.id, module.title, module.description, videoIds)}

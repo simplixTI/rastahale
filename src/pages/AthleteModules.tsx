@@ -7,6 +7,8 @@ import { useVideos } from "@/hooks/useVideos";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
 import { totalMinutes } from "@/lib/duration";
+import { useStudioSessions } from "@/hooks/useStudioSessions";
+import { LOOSE_MODULE_KEY } from "@/lib/modules";
 
 const AthleteModules = () => {
   const { id }   = useParams<{ id: string }>();
@@ -20,14 +22,41 @@ const AthleteModules = () => {
 
   const videos = allVideos.filter((v) => v.instructorId === id);
 
-  // Módulo = subcategoria das aulas do atleta (gerenciável em /admin/modulos).
-  const modules = Object.values(
-    videos.reduce<Record<string, { name: string; videos: typeof videos }>>((acc, v) => {
-      if (!acc[v.subcategory]) acc[v.subcategory] = { name: v.subcategory, videos: [] };
-      acc[v.subcategory].videos.push(v);
-      return acc;
-    }, {})
-  ).sort((a, b) => a.name.localeCompare(b.name, currentLocale()));
+  // Módulos curados (studio_sessions): montados pelo professor no Studio ou
+  // pelo admin em /admin/instrutores/:id — com ordem, descrição e capa.
+  const { sessions } = useStudioSessions(id ?? "");
+
+  type Mod = { key: string; name: string; description?: string; cover?: string; videos: typeof videos };
+
+  const curated: Mod[] = sessions
+    .map((s) => {
+      const list = s.videoIds
+        .map((vid) => videos.find((v) => v.id === vid))
+        .filter((v): v is (typeof videos)[number] => !!v);
+      return { key: `s:${s.id}`, name: s.title, description: s.description, cover: s.coverUrl ?? list[0]?.thumbnail, videos: list };
+    })
+    .filter((m) => m.videos.length > 0);
+
+  let modules: Mod[];
+  if (curated.length > 0) {
+    // Aula fora de qualquer módulo não pode sumir da página do professor.
+    const placed = new Set(curated.flatMap((m) => m.videos.map((v) => v.id)));
+    const loose  = videos.filter((v) => !placed.has(v.id));
+    modules = loose.length > 0
+      ? [...curated, { key: LOOSE_MODULE_KEY, name: t("athlete.otherLessons"), cover: loose[0]?.thumbnail, videos: loose }]
+      : curated;
+  } else {
+    // Sem módulos curados: agrupa pela subcategoria das aulas (comportamento antigo).
+    modules = Object.values(
+      videos.reduce<Record<string, Mod>>((acc, v) => {
+        if (!acc[v.subcategory]) acc[v.subcategory] = { key: v.subcategory, name: v.subcategory, videos: [] };
+        acc[v.subcategory].videos.push(v);
+        return acc;
+      }, {})
+    )
+      .map((m) => ({ ...m, cover: m.videos[0]?.thumbnail }))
+      .sort((a, b) => a.name.localeCompare(b.name, currentLocale()));
+  }
 
   if (loadInst || loadVid) {
     return (
@@ -109,14 +138,14 @@ const AthleteModules = () => {
             <p className="text-sm text-muted-foreground">{t("athlete.noModules")}</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="stagger space-y-2">
             {modules.map((mod) => {
-              const cover    = mod.videos[0]?.thumbnail;
+              const cover    = mod.cover;
               const minutes  = totalMinutes(mod.videos.map((v) => v.duration));
               return (
                 <button
-                  key={mod.name}
-                  onClick={() => navigate(`/atleta/${instructor.id}/modulo/${encodeURIComponent(mod.name)}`)}
+                  key={mod.key}
+                  onClick={() => navigate(`/atleta/${instructor.id}/modulo/${encodeURIComponent(mod.key)}`)}
                   className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/30"
                 >
                   {cover && (
@@ -129,6 +158,9 @@ const AthleteModules = () => {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-foreground">{mod.name}</p>
+                    {mod.description && (
+                      <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{mod.description}</p>
+                    )}
                     <div className="mt-1 flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <BookOpen size={10} className="text-primary" />

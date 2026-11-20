@@ -10,6 +10,15 @@ export interface StudioSession {
   description:  string;
   videoIds:     string[];
   createdAt:    string;
+  /** Ordem do módulo na página do professor (migration 020). */
+  position:     number;
+  /** Capa escolhida; sem ela, usa-se a miniatura da primeira aula. */
+  coverUrl:     string | null;
+}
+
+/** Campos opcionais de um módulo. `undefined` = não mexer; `null` = remover. */
+export interface SessionExtras {
+  coverUrl?: string | null;
 }
 
 const KEY = "rasta_studio_sessions";
@@ -55,6 +64,7 @@ export function useStudioSessions(instructorId: string) {
             .from("studio_sessions")
             .select("*")
             .eq("instructor_id", instructorId)
+            .order("position", { ascending: true })
             .order("created_at", { ascending: true });
           if (!error && data) {
             return data.map((row) => ({
@@ -64,6 +74,8 @@ export function useStudioSessions(instructorId: string) {
               description:  row.description,
               videoIds:     row.video_ids ?? [],
               createdAt:    row.created_at,
+              position:     row.position ?? 0,
+              coverUrl:     row.cover_url ?? null,
             }));
           }
           if (error && !isMissingTableError(error)) throw error;
@@ -86,15 +98,19 @@ export function useStudioSessions(instructorId: string) {
   const onSuccess = () => qc.invalidateQueries({ queryKey });
 
   const createMutation = useMutation({
-    mutationFn: async ({ title, description, videoIds }: {
-      title: string; description: string; videoIds: string[];
+    mutationFn: async ({ title, description, videoIds, extras }: {
+      title: string; description: string; videoIds: string[]; extras?: SessionExtras;
     }) => {
+      // Módulo novo entra no fim da lista.
+      const position = sessions.reduce((max, s) => Math.max(max, s.position), 0) + 1;
       if (isSupabaseConfigured) {
         const { error } = await supabase.from("studio_sessions").insert({
           instructor_id: instructorId,
           title:         title.trim(),
           description:   description.trim(),
           video_ids:     videoIds,
+          position,
+          cover_url:     extras?.coverUrl ?? null,
         });
         if (!error) return;
         if (!isMissingTableError(error)) throw error;
@@ -106,6 +122,8 @@ export function useStudioSessions(instructorId: string) {
         description:  description.trim(),
         videoIds,
         createdAt:    new Date().toISOString(),
+        position,
+        coverUrl:     extras?.coverUrl ?? null,
       }]);
     },
     onSuccess,
@@ -113,20 +131,24 @@ export function useStudioSessions(instructorId: string) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, title, description, videoIds }: {
-      id: string; title: string; description: string; videoIds: string[];
+    mutationFn: async ({ id, title, description, videoIds, extras }: {
+      id: string; title: string; description: string; videoIds: string[]; extras?: SessionExtras;
     }) => {
       if (isSupabaseConfigured) {
         const { error } = await supabase.from("studio_sessions").update({
           title:       title.trim(),
           description: description.trim(),
           video_ids:   videoIds,
+          ...(extras?.coverUrl !== undefined ? { cover_url: extras.coverUrl } : {}),
         }).eq("id", id);
         if (!error) return;
         if (!isMissingTableError(error)) throw error;
       }
       persistLocal(instructorId, (all) => all.map((s) =>
-        s.id === id ? { ...s, title: title.trim(), description: description.trim(), videoIds } : s
+        s.id === id
+          ? { ...s, title: title.trim(), description: description.trim(), videoIds,
+              ...(extras?.coverUrl !== undefined ? { coverUrl: extras.coverUrl } : {}) }
+          : s
       ));
     },
     onSuccess,
@@ -146,16 +168,74 @@ export function useStudioSessions(instructorId: string) {
     onError,
   });
 
+  // Reordenar módulos: grava a posição de cada um (são poucos por professor).
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      if (isSupabaseConfigured) {
+        const results = await Promise.all(
+          orderedIds.map((id, index) =>
+            supabase.from("studio_sessions").update({ position: index + 1 }).eq("id", id)
+          )
+        );
+        const failed = results.find((r) => r.error);
+        if (!failed) return;
+        if (!isMissingTableError(failed.error)) throw failed.error;
+      }
+      persistLocal(instructorId, (all) => all.map((s) => {
+        const index = orderedIds.indexOf(s.id);
+        return index >= 0 ? { ...s, position: index + 1 } : s;
+      }));
+    },
+    // Otimista: a lista troca de lugar na hora, sem esperar o banco.
+    onMutate: async (orderedIds: string[]) => {
+      await qc.cancelQueries({ queryKey });
+      const previous = qc.getQueryData<StudioSession[]>(queryKey);
+      qc.setQueryData<StudioSession[]>(queryKey, (cur = []) =>
+        orderedIds
+          .map((id, index) => {
+            const s = cur.find((x) => x.id === id);
+            return s ? { ...s, position: index + 1 } : null;
+          })
+          .filter((s): s is StudioSession => !!s)
+      );
+      return { previous };
+    },
+    onError: (error, _ids, context) => {
+      if (context?.previous) qc.setQueryData(queryKey, context.previous);
+      onError(error);
+    },
+    onSettled: onSuccess,
+  });
+
   const create = useCallback(
-    (title: string, description: string, videoIds: string[]) =>
-      createMutation.mutate({ title, description, videoIds }),
+    (title: string, description: string, videoIds: string[], extras?: SessionExtras) =>
+      createMutation.mutate({ title, description, videoIds, extras }),
     [createMutation]
   );
 
   const update = useCallback(
-    (id: string, title: string, description: string, videoIds: string[]) =>
-      updateMutation.mutate({ id, title, description, videoIds }),
+    (id: string, title: string, description: string, videoIds: string[], extras?: SessionExtras) =>
+      updateMutation.mutate({ id, title, description, videoIds, extras }),
     [updateMutation]
+  );
+
+  const reorder = useCallback(
+    (orderedIds: string[]) => reorderMutation.mutate(orderedIds),
+    [reorderMutation]
+  );
+
+  /** Tira a aula de um módulo e põe em outro, numa ação só. */
+  const moveVideo = useCallback(
+    (fromId: string, toId: string, videoId: string) => {
+      const from = sessions.find((s) => s.id === fromId);
+      const to   = sessions.find((s) => s.id === toId);
+      if (!from || !to || fromId === toId) return;
+      updateMutation.mutate({ id: fromId, title: from.title, description: from.description, videoIds: from.videoIds.filter((v) => v !== videoId) });
+      if (!to.videoIds.includes(videoId)) {
+        updateMutation.mutate({ id: toId, title: to.title, description: to.description, videoIds: [...to.videoIds, videoId] });
+      }
+    },
+    [sessions, updateMutation]
   );
 
   const remove = useCallback(
@@ -181,5 +261,5 @@ export function useStudioSessions(instructorId: string) {
     [sessions, update]
   );
 
-  return { sessions, create, update, remove, addVideo, removeVideo };
+  return { sessions, create, update, remove, addVideo, removeVideo, reorder, moveVideo };
 }

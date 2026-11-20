@@ -241,10 +241,15 @@ export interface Database {
           description: string;
           video_ids: string[];
           created_at: string;
+          // Migration 020: ordem do módulo na página do professor e capa.
+          position: number;
+          cover_url: string | null;
         };
-        // id e created_at têm default no banco.
-        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at"> & {
+        // id, created_at, position e cover_url têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at" | "position" | "cover_url"> & {
           id?: string;
+          position?: number;
+          cover_url?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["studio_sessions"]["Insert"]>;
         Relationships: [];

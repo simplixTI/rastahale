@@ -321,7 +321,8 @@
     "notFound": "Atleta não encontrado",
     "fullProfile": "Ver perfil completo",
     "modules": "Módulos",
-    "noModules": "Nenhum módulo disponível ainda"
+    "noModules": "Nenhum módulo disponível ainda",
+    "otherLessons": "Outras aulas"
   },
   "moduleLessons": {
     "with": "com {{name}}",

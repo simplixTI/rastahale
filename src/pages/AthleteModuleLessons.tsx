@@ -9,6 +9,8 @@ import { totalMinutes } from "@/lib/duration";
 import { getLevelColor } from "@/data/mockData";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useStudioSessions } from "@/hooks/useStudioSessions";
+import { LOOSE_MODULE_KEY, SESSION_KEY_PREFIX } from "@/lib/modules";
 
 const AthleteModuleLessons = () => {
   const { id, modulo } = useParams<{ id: string; modulo: string }>();
@@ -17,12 +19,29 @@ const AthleteModuleLessons = () => {
   const { t }          = useTranslation();
   const labels         = useLabels();
 
-  const moduleName = decodeURIComponent(modulo ?? "");
+  const moduleKey = decodeURIComponent(modulo ?? "");
 
   const { data: instructor, isLoading: loadInst }    = useInstructor(id ?? "");
   const { data: allVideos = [], isLoading: loadVid } = useVideos(user?.id ?? "");
 
-  const videos  = allVideos.filter((v) => v.instructorId === id && v.subcategory === moduleName);
+  const { sessions } = useStudioSessions(id ?? "");
+  const mine = allVideos.filter((v) => v.instructorId === id);
+
+  // A chave diz que tipo de módulo é (ver src/lib/modules.ts).
+  let moduleName = moduleKey;
+  let videos     = mine.filter((v) => v.subcategory === moduleKey);
+  if (moduleKey.startsWith(SESSION_KEY_PREFIX)) {
+    const session = sessions.find((s) => s.id === moduleKey.slice(SESSION_KEY_PREFIX.length));
+    moduleName = session?.title ?? "";
+    // Na ordem definida no módulo, não na ordem do catálogo.
+    videos = (session?.videoIds ?? [])
+      .map((vid) => mine.find((v) => v.id === vid))
+      .filter((v): v is (typeof mine)[number] => !!v);
+  } else if (moduleKey === LOOSE_MODULE_KEY) {
+    const placed = new Set(sessions.flatMap((s) => s.videoIds));
+    moduleName = t("athlete.otherLessons");
+    videos = mine.filter((v) => !placed.has(v.id));
+  }
   const minutes = totalMinutes(videos.map((v) => v.duration));
 
   if (loadInst || loadVid) {
