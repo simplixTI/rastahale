@@ -242,6 +242,7 @@ export function useAdminVideos() {
           visible:          v.visible,
           unlockByProgress: v.unlock_by_progress,
           requiredProgress: v.required_progress,
+          releaseAt:        v.release_at ?? null,
         }));
       }
       return mockVideos.map((v) => ({ ...v, videoUrl: v.videoUrl ?? null }));
@@ -336,6 +337,7 @@ export function useCreateVideo() {
           visible:            data.visible ?? true,
           unlock_by_progress: data.unlockByProgress ?? false,
           required_progress:  data.requiredProgress ?? 0,
+          release_at:         data.releaseAt ?? null,
         };
         const { error } = await supabase.from("videos").insert(row);
         // Em modo Supabase NÃO caímos para o mock em caso de erro: isso
@@ -373,6 +375,7 @@ export function useUpdateVideo() {
       if (data.visible     !== undefined) updates.visible             = data.visible;
       if (data.unlockByProgress !== undefined) updates.unlock_by_progress = data.unlockByProgress;
       if (data.requiredProgress !== undefined) updates.required_progress  = data.requiredProgress;
+      if (data.releaseAt        !== undefined) updates.release_at         = data.releaseAt;
 
       if (!isMockMode()) {
         // Trocou o vídeo da aula: guarda o anterior para removê-lo do Bunny depois.

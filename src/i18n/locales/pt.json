@@ -300,6 +300,10 @@
     "lockedText": "Assine um plano para assistir a esta e a todas as outras aulas.",
     "lockedTextNative": "Esta aula está disponível apenas para contas com plano ativo.",
     "lockedCta": "Ver planos",
+    "upcoming": "Em breve",
+    "releaseOn": "Libera {{date}}",
+    "upcomingTitle": "Esta aula ainda não foi liberada",
+    "upcomingText": "Ela fica disponível em {{date}}.",
     "stillProcessing": "Este vídeo ainda está sendo processado. Ele começa sozinho quando ficar pronto.",
     "retry": "Tentar novamente"
   },

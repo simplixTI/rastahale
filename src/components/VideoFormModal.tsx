@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, ImageIcon, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } from "lucide-react";
+import { Upload, CalendarClock, Video as VideoIcon, X, Loader2, LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, UploadError } from "@/lib/storageUpload";
@@ -11,6 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { fromLocalInput, toLocalInput } from "@/lib/release";
 import { type Video } from "@/data/mockData";
 import { useModules, moduleNames, modalityOfModule, DEFAULT_MODALITY } from "@/hooks/useModules";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -53,9 +54,12 @@ function uploadErrorToast(err: unknown, fallback: string) {
 
 const schema = z.object({
   title:            z.string().min(3,  "Mínimo 3 caracteres"),
-  // Opcionais por enquanto: aula sem capa usa uma imagem neutra no app.
   description:      z.string().optional().default(""),
+  // Sem campo na tela: aula nova não tem capa (o app usa uma imagem neutra) e
+  // a edição preserva a capa que já existia.
   thumbnail:        z.string().optional().default(""),
+  // <input type="datetime-local">; vazio = liberada já.
+  releaseAt:        z.string().optional().default(""),
   videoUrl:         z.string().optional(),
   duration:         z.string().min(1,  "Ex: 12:30"),
   category:         z.string(), // interno: herdado da categoria ao salvar
@@ -70,7 +74,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const FIELD_LABELS: Partial<Record<keyof FormValues, string>> = {
-  title: "Título", description: "Descrição", thumbnail: "Thumbnail", videoUrl: "Vídeo", duration: "Duração",
+  title: "Título", description: "Descrição", thumbnail: "Capa", releaseAt: "Liberar em", videoUrl: "Vídeo", duration: "Duração",
   subcategory: "Categoria", level: "Nível", instructorId: "Instrutor", requiredProgress: "Progresso mínimo",
 };
 
@@ -80,7 +84,8 @@ interface Props {
   open:           boolean;
   onOpenChange:   (v: boolean) => void;
   video?:         VideoWithUrl | null;
-  onSubmit:       (values: FormValues) => void;
+  /** releaseAt já vem em ISO (ou null = liberada já). */
+  onSubmit:       (values: Omit<FormValues, "releaseAt"> & { releaseAt: string | null }) => void;
   isPending?:     boolean;
   onDelete?:      () => void;
   isDeleting?:    boolean;
@@ -207,7 +212,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
+      title: "", description: "", thumbnail: "", releaseAt: "", videoUrl: "", duration: "",
       category: DEFAULT_MODALITY, subcategory: "",
       level: "Iniciante", instructorId: instructors[0]?.id ?? "",
       visible: true, unlockByProgress: false, requiredProgress: 50,
@@ -247,18 +252,14 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     }
   }, [open, instructors, currentInstructor, setValue]);
 
-  const [thumbMode,      setThumbMode]      = useState<"url" | "file">("url");
   const [videoMode,      setVideoMode]      = useState<"url" | "file">("url");
-  const [thumbUploading, setThumbUploading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoFileName,  setVideoFileName]  = useState<string>("");
-  const [thumbProgress,  setThumbProgress]  = useState(0);
   const [videoProgress,  setVideoProgress]  = useState(0);
   const [confirmDelete,  setConfirmDelete]  = useState(false);
   // A duração não saiu dos metadados (MKV/AVI costumam não abrir no navegador):
   // o campo vira digitável, senão não haveria como preencher e salvar.
   const [durationFailed, setDurationFailed] = useState(false);
-  const thumbAbort = useRef<AbortController | null>(null);
   const videoAbort = useRef<AbortController | null>(null);
   // Vídeo enviado ao Bunny neste formulário e ainda não confirmado numa aula salva.
   const unsavedBunnyId = useRef<string | null>(null);
@@ -274,23 +275,19 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   // o upload seguia em segundo plano e o resultado se perdia.
   useEffect(() => {
     if (open) return;
-    thumbAbort.current?.abort();
     videoAbort.current?.abort();
     discardUnsavedBunnyVideo();
   }, [open, discardUnsavedBunnyVideo]);
   useEffect(() => () => {
-    thumbAbort.current?.abort();
     videoAbort.current?.abort();
     discardUnsavedBunnyVideo();
   }, [discardUnsavedBunnyVideo]);
 
   useEffect(() => {
     if (open) {
-      setThumbMode("url");
       setVideoMode("url");
       setVideoFileName("");
       setDurationFailed(false);
-      setThumbProgress(0);
       setVideoProgress(0);
       setConfirmDelete(false);
       reset(
@@ -298,6 +295,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           ? {
               title: video.title, description: video.description,
               thumbnail: video.thumbnail === "/placeholder.svg" ? "" : video.thumbnail, videoUrl: video.videoUrl ?? "",
+              releaseAt: toLocalInput(video.releaseAt),
               duration: video.duration, category: video.category,
               subcategory: video.subcategory, level: video.level,
               instructorId: video.instructorId,
@@ -306,7 +304,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               requiredProgress: video.requiredProgress ?? 50,
             }
           : {
-              title: "", description: "", thumbnail: "", videoUrl: "", duration: "",
+              title: "", description: "", thumbnail: "", releaseAt: "", videoUrl: "", duration: "",
               category: DEFAULT_MODALITY, subcategory: "",
               // Precisa vir preenchido aqui: este reset roda depois do efeito de
               // instrutores acima e, sem o <select> na tela (Studio), o campo
@@ -322,34 +320,9 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
   }, [open, video, reset]);
 
   const unlockByProgress = watch("unlockByProgress");
-  const thumbValue       = watch("thumbnail");
+  const releaseValue     = watch("releaseAt");
   const videoValue       = watch("videoUrl");
   const durationValue    = watch("duration");
-
-  async function handleThumbFile(file: File) {
-    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem (PNG, JPG, WEBP)"); return; }
-    if (file.size > 10 * 1024 * 1024)    { toast.error("Imagem muito grande (máx. 10 MB)"); return; }
-    const controller = new AbortController();
-    thumbAbort.current = controller;
-    setThumbUploading(true);
-    setThumbProgress(0);
-    try {
-      let url: string;
-      if (isMockMode()) {
-        // Blob URL — funciona em memória para qualquer tamanho
-        url = URL.createObjectURL(file);
-        setThumbProgress(100);
-      } else {
-        url = await uploadMedia(file, "thumbnails", { onProgress: setThumbProgress, signal: controller.signal });
-      }
-      setValue("thumbnail", url, { shouldValidate: true });
-    } catch (err) {
-      uploadErrorToast(err, "Erro ao enviar thumbnail");
-    } finally {
-      if (thumbAbort.current === controller) thumbAbort.current = null;
-      setThumbUploading(false);
-    }
-  }
 
   async function handleVideoFile(file: File) {
     if (!file.type.startsWith("video/") && !VIDEO_EXT.test(file.name)) { toast.error("Selecione um arquivo de vídeo"); return; }
@@ -389,7 +362,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
     }
   }
 
-  const busy = thumbUploading || videoUploading || !!isPending;
+  const busy = videoUploading || !!isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -406,7 +379,11 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             // o banco responder, e esse fechamento não pode apagá-lo do Bunny.
             unsavedBunnyId.current = null;
             // A modalidade interna acompanha a categoria escolhida.
-            onSubmit({ ...values, category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY) });
+            onSubmit({
+              ...values,
+              category: modalityOfModule(modules, values.subcategory, values.category || DEFAULT_MODALITY),
+              releaseAt: fromLocalInput(values.releaseAt),
+            });
           }, (invalid) => {
             // Sem isto, um campo fora da tela reprovava e o botão parecia não fazer nada.
             const fields = Object.keys(invalid).map((f) => FIELD_LABELS[f as keyof FormValues] ?? f);
@@ -427,49 +404,6 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             <label className={labelCls}>Descrição <span className="font-normal normal-case tracking-normal opacity-70">(opcional)</span></label>
             <textarea {...register("description")} rows={2} className={cn(fieldCls, "resize-none")} placeholder="Descreva o conteúdo da aula…" />
             {errors.description && <p className="mt-0.5 text-[10px] text-red-400">{errors.description.message}</p>}
-          </div>
-
-          {/* Thumbnail */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className={cn(labelCls, "mb-0 flex items-center gap-1")}>
-                <ImageIcon size={11} /> Thumbnail <span className="font-normal normal-case tracking-normal opacity-70">(opcional)</span>
-              </label>
-              <ModeTabs mode={thumbMode} onChange={setThumbMode} />
-            </div>
-
-            {thumbMode === "url" ? (
-              <input {...register("thumbnail")} className={fieldCls} placeholder="https://..." />
-            ) : (
-              <UploadZone
-                accept="image/*"
-                label="Clique ou arraste uma imagem"
-                hint="PNG, JPG, WEBP • máx. 10 MB"
-                uploading={thumbUploading}
-                progress={thumbProgress}
-                onFile={handleThumbFile}
-                onCancel={() => thumbAbort.current?.abort()}
-              />
-            )}
-
-            {thumbValue && (
-              <div className="relative mt-1.5 h-28 w-full overflow-hidden rounded-lg border border-border">
-                <img
-                  src={thumbValue}
-                  alt="preview"
-                  className="h-full w-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setValue("thumbnail", "", { shouldValidate: true })}
-                  className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1"
-                >
-                  <X size={10} className="text-white" />
-                </button>
-              </div>
-            )}
-            {errors.thumbnail && <p className="mt-0.5 text-[10px] text-red-400">{errors.thumbnail.message}</p>}
           </div>
 
           {/* Duração — automática quando o vídeo é um arquivo enviado; digitada
@@ -569,6 +503,30 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             )}
           </div>
 
+          {/* Liberação agendada */}
+          <div>
+            <label htmlFor="release-at" className={cn(labelCls, "flex items-center gap-1")}>
+              <CalendarClock size={11} aria-hidden="true" /> Liberar em <span className="font-normal normal-case tracking-normal opacity-70">(opcional)</span>
+            </label>
+            <div className="flex gap-2">
+              <input id="release-at" type="datetime-local" {...register("releaseAt")} className={cn(fieldCls, "min-w-0 flex-1")} />
+              {releaseValue && (
+                <button
+                  type="button"
+                  onClick={() => setValue("releaseAt", "")}
+                  className="flex-shrink-0 rounded-lg border border-border px-3 text-[11px] font-medium text-muted-foreground hover:bg-secondary"
+                >
+                  Liberar já
+                </button>
+              )}
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {releaseValue
+                ? "Até essa data o aluno vê a aula em cinza, com \"Em breve\"."
+                : "Em branco, a aula fica disponível assim que for salva."}
+            </p>
+          </div>
+
           {/* Toggles */}
           <div className="rounded-lg border border-border bg-card p-3 space-y-2.5">
             <label className="flex cursor-pointer items-center justify-between">
@@ -641,7 +599,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
               disabled={busy}
               className="rounded-full btn-press bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
-              {thumbUploading || videoUploading ? "Enviando…" : isPending ? "Salvando…" : isEdit ? "Salvar" : "Adicionar"}
+              {videoUploading ? "Enviando…" : isPending ? "Salvando…" : isEdit ? "Salvar" : "Adicionar"}
             </button>
           </DialogFooter>
         </form>

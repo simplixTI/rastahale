@@ -18,6 +18,7 @@ export interface VideoWithProgress {
   visible: boolean;
   unlockByProgress: boolean;
   requiredProgress: number;
+  releaseAt: string | null;
   progress: number;
   watched: boolean;
   isFavorite: boolean;
@@ -95,6 +96,7 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
       visible:          v.visible,
       unlockByProgress: v.unlock_by_progress,
       requiredProgress: v.required_progress,
+      releaseAt:        v.release_at ?? null,
       progress:         p?.progress    ?? 0,
       watched:          p?.watched     ?? false,
       isFavorite:       p?.is_favorite ?? false,
@@ -122,6 +124,7 @@ function buildMockVideoList(userId: string): VideoWithProgress[] {
       visible:          v.visible ?? true,
       unlockByProgress: v.unlockByProgress ?? false,
       requiredProgress: v.requiredProgress ?? 0,
+      releaseAt:        v.releaseAt ?? null,
       progress:         store[v.id]?.progress ?? v.progress  ?? 0,
       watched:          store[v.id]?.watched  ?? v.watched   ?? false,
       isFavorite:       favorites.has(v.id),

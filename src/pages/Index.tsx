@@ -14,6 +14,7 @@ import { useVideos } from "@/hooks/useVideos";
 import { useInstructors } from "@/hooks/useInstructors";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/Logo";
+import { isUpcoming } from "@/lib/release";
 
 const FadeInSection = ({ children, delay = 0 }: { children: ReactNode; delay?: number }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -67,7 +68,8 @@ const Index = () => {
   const { data: instructors = [] }            = useInstructors();
 
   const firstName        = user?.name?.split(" ")[0] ?? t("home.fallbackName");
-  const featured         = videos.find((v) => v.id === "v5") ?? videos[0];
+  // Destaque nunca é uma aula agendada: o aluno não teria como assistir.
+  const featured         = videos.find((v) => v.id === "v5") ?? videos.find((v) => !isUpcoming(v.releaseAt)) ?? videos[0];
   // Aulas começadas e ainda não terminadas.
   const continueWatching = videos.filter(
     (v) => !v.watched && (v.progress ?? 0) > 0 && (v.progress ?? 0) < 100

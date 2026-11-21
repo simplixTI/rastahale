@@ -300,6 +300,10 @@
     "lockedText": "Subscribe to a plan to watch this and every other lesson.",
     "lockedTextNative": "This lesson is only available to accounts with an active plan.",
     "lockedCta": "See plans",
+    "upcoming": "Coming soon",
+    "releaseOn": "Unlocks {{date}}",
+    "upcomingTitle": "This lesson isn't available yet",
+    "upcomingText": "It unlocks on {{date}}.",
     "stillProcessing": "This video is still processing. It will start on its own when it's ready.",
     "retry": "Try again"
   },

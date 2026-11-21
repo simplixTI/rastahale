@@ -35,6 +35,8 @@ export interface Database {
           visible: boolean;
           unlock_by_progress: boolean;
           required_progress: number;
+          // Migration 021: liberação agendada. Nulo = já liberada.
+          release_at?: string | null;
           created_at: string;
         };
         // Obrigatórios pelo schema: id, title, duration, category, subcategory,

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload, Layers } from "lucide-react";
+import { CalendarClock, Eye, EyeOff, Lock, Unlock, Edit2, Plus, Image, ChevronDown, Video as VideoIcon, FolderOpen, Check, X, Upload, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import AdminLayout from "@/components/AdminLayout";
@@ -8,6 +8,7 @@ import { useAdminVideos, useToggleVideoVisibility, useToggleVideoLock, useCreate
 import { getLevelColor } from "@/data/mockData";
 import { useModules, moduleNames } from "@/hooks/useModules";
 import { cn } from "@/lib/utils";
+import { formatRelease, isUpcoming } from "@/lib/release";
 import VideoFormModal from "@/components/VideoFormModal";
 
 const levels = ["Todos", "Iniciante", "Intermediário", "Avançado"] as const;
@@ -239,6 +240,11 @@ const AdminVideos = () => {
                             {v.unlockByProgress && (
                               <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
                                 🔒 {v.requiredProgress}%
+                              </span>
+                            )}
+                            {isUpcoming(v.releaseAt) && v.releaseAt && (
+                              <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
+                                <CalendarClock size={10} aria-hidden="true" /> {formatRelease(v.releaseAt, "pt-BR")}
                               </span>
                             )}
                           </div>

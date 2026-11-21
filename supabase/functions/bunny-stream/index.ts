@@ -140,7 +140,7 @@ async function videoState(guid: string): Promise<{ state: "ready" | "processing"
 async function playback(caller: Caller, lessonId: string): Promise<Response> {
   const { data: lesson, error } = await admin
     .from("videos")
-    .select("video_url, visible")
+    .select("*")
     .eq("id", lessonId)
     .maybeSingle();
   if (error) return json({ error: error.message }, 500);
@@ -148,6 +148,11 @@ async function playback(caller: Caller, lessonId: string): Promise<Response> {
   const staff = isStaff(caller);
   if (!lesson || (!lesson.visible && !staff)) return json({ error: "Aula não encontrada" }, 404);
   if (!staff && caller.status !== "ativo") return json({ error: "Assinatura necessária" }, 403);
+  // Liberação agendada (migration 021): antes da data só a equipe assiste.
+  const releaseAt = (lesson as { release_at?: string | null }).release_at;
+  if (!staff && releaseAt && Date.parse(releaseAt) > Date.now()) {
+    return json({ error: "Aula ainda não liberada", releaseAt }, 403);
+  }
 
   const url  = String(lesson.video_url ?? "");
   const guid = url.match(BUNNY_PLAYLIST)?.[1];

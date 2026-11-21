@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type Hls from "hls.js";
-import { ArrowLeft, Heart, CheckCircle, Lock, Play, Video as VideoIcon } from "lucide-react";
+import { ArrowLeft, CalendarClock, Heart, CheckCircle, Lock, Play, Video as VideoIcon } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Capacitor } from "@capacitor/core";
@@ -15,6 +15,7 @@ import LoadError from "@/components/LoadError";
 import { useLabels } from "@/i18n/labels";
 import { getLevelColor } from "@/data/mockData";
 import { canWatchLessons } from "@/lib/access";
+import { formatRelease, isUpcoming } from "@/lib/release";
 import { bunnyVideoIdFromUrl, getBunnyPlayback, isHlsUrl, type BunnyPlayback } from "@/lib/bunnyStream";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -373,6 +374,21 @@ function LockedPlayer({ thumbnail, title }: { thumbnail: string; title: string }
   );
 }
 
+/** Aula com liberação agendada: o aluno vê a capa em cinza e a data. */
+function UpcomingPlayer({ thumbnail, title, releaseAt }: { thumbnail: string; title: string; releaseAt: string }) {
+  const { t, i18n } = useTranslation();
+  return (
+    <div className="relative aspect-video w-full bg-black">
+      <img src={thumbnail} alt={title} className="h-full w-full object-cover opacity-50 grayscale" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/70 px-6 text-center">
+        <CalendarClock size={28} className="text-white" aria-hidden="true" />
+        <p className="text-sm font-semibold text-white">{t("video.upcomingTitle")}</p>
+        <p className="text-xs text-white/80">{t("video.upcomingText", { date: formatRelease(releaseAt, i18n.language) })}</p>
+      </div>
+    </div>
+  );
+}
+
 const VideoDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -433,6 +449,9 @@ const VideoDetail = () => {
 
   // Modo demo (sem Supabase) não tem assinatura para conferir.
   const canWatch  = !isSupabaseConfigured || canWatchLessons(user?.role, profile?.status);
+  // A equipe assiste antes da data, para conferir a aula agendada.
+  const isStaff   = user?.role === "admin" || user?.role === "instructor";
+  const upcoming  = !isStaff && isUpcoming(video.releaseAt);
   const isFav     = video.isFavorite ?? false;
   const isWatched = video.watched ?? false;
   const related   = allVideos.filter((v) => v.subcategory === video.subcategory && v.id !== video.id).slice(0, 5);
@@ -474,7 +493,9 @@ const VideoDetail = () => {
       <div className="min-w-0">
       {/* Player */}
       <div className="relative w-full overflow-hidden lg:rounded-2xl">
-        {canWatch ? (
+        {upcoming ? (
+          <UpcomingPlayer thumbnail={video.thumbnail} title={video.title} releaseAt={video.releaseAt as string} />
+        ) : canWatch ? (
           <VideoPlayer
             lessonId={video.id}
             videoUrl={video.videoUrl ?? null}

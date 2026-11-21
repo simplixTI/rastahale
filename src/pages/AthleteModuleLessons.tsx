@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, Play } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarClock, Clock, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
@@ -9,6 +9,7 @@ import { totalMinutes } from "@/lib/duration";
 import { getLevelColor } from "@/data/mockData";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { formatRelease, isUpcoming } from "@/lib/release";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
 import { LOOSE_MODULE_KEY, SESSION_KEY_PREFIX } from "@/lib/modules";
 
@@ -16,7 +17,7 @@ const AthleteModuleLessons = () => {
   const { id, modulo } = useParams<{ id: string; modulo: string }>();
   const navigate       = useNavigate();
   const { user }       = useAuth();
-  const { t }          = useTranslation();
+  const { t, i18n }    = useTranslation();
   const labels         = useLabels();
 
   const moduleKey = decodeURIComponent(modulo ?? "");
@@ -102,9 +103,9 @@ const AthleteModuleLessons = () => {
                   {idx + 1}
                 </span>
                 <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-lg">
-                  <img src={v.thumbnail} alt={v.title} className="h-full w-full object-cover" loading="lazy" />
+                  <img src={v.thumbnail} alt={v.title} className={cn("h-full w-full object-cover", isUpcoming(v.releaseAt) && "opacity-60 grayscale")} loading="lazy" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <Play size={14} className="text-white" fill="currentColor" />
+                    {isUpcoming(v.releaseAt) ? <CalendarClock size={14} className="text-white" aria-label={t("video.upcoming")} /> : <Play size={14} className="text-white" fill="currentColor" />}
                   </div>
                   <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[9px] text-white">
                     {v.duration}
@@ -117,6 +118,11 @@ const AthleteModuleLessons = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-foreground">{v.title}</p>
+                    {isUpcoming(v.releaseAt) && v.releaseAt && (
+                      <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {t("video.upcoming")} · {t("video.releaseOn", { date: formatRelease(v.releaseAt, i18n.language) })}
+                      </p>
+                    )}
                   <span
                     className={cn(
                       "mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",

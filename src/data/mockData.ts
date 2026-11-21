@@ -24,6 +24,8 @@ export interface Video {
   visible?: boolean;
   unlockByProgress?: boolean;
   requiredProgress?: number;
+  /** ISO. Antes desta data a aula aparece como "Em breve" para o aluno. */
+  releaseAt?: string | null;
 }
 
 export interface MockUser {

@@ -30,13 +30,26 @@ describe("VideoFormModal no Studio (hideInstructor)", () => {
     render(<VideoFormModal open onOpenChange={() => {}} onSubmit={onSubmit} hideInstructor />);
 
     setField('input[name="title"]', "Guarda fechada");
-    setField('textarea[name="description"]', "Descrição com tamanho suficiente.");
-    setField('input[name="thumbnail"]', "https://exemplo.com/capa.png");
     setField('input[name="duration"]', "12:30");
 
     fireEvent.click(document.querySelector('button[type="submit"]') as HTMLButtonElement);
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: "Guarda fechada", subcategory: "Defesas" });
+    // Sem capa e sem data: a aula sai liberada na hora.
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: "Guarda fechada", subcategory: "Defesas", releaseAt: null });
+  });
+
+  it("converte a data de liberação para ISO", async () => {
+    const onSubmit = vi.fn();
+    render(<VideoFormModal open onOpenChange={() => {}} onSubmit={onSubmit} hideInstructor />);
+
+    setField('input[name="title"]', "Aula agendada");
+    setField('input[name="duration"]', "08:00");
+    setField('input[name="releaseAt"]', "2030-01-15T18:00");
+
+    fireEvent.click(document.querySelector('button[type="submit"]') as HTMLButtonElement);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0].releaseAt).toBe(new Date("2030-01-15T18:00").toISOString());
   });
 });

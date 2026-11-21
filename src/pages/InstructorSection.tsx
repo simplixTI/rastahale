@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarClock, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import VideoCard from "@/components/VideoCard";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { formatRelease, isUpcoming } from "@/lib/release";
 
 // Comentários ficam fora do app das lojas (iOS/Android): a Apple (guideline 1.2)
 // exige denúncia e bloqueio de usuários para conteúdo gerado por alunos, e isso
@@ -58,7 +59,7 @@ const InstructorSection = () => {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t }    = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels   = useLabels();
 
   const { data: instructor,  isLoading: loadInst } = useInstructor(id ?? "");
@@ -218,14 +219,19 @@ const InstructorSection = () => {
                 <button key={v.id} onClick={() => navigate(`/video/${v.id}`)}
                   className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left hover:border-primary/30 transition-colors">
                   <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-lg">
-                    <img src={v.thumbnail} alt={v.title} className="h-full w-full object-cover" />
+                    <img src={v.thumbnail} alt={v.title} className={cn("h-full w-full object-cover", isUpcoming(v.releaseAt) && "opacity-60 grayscale")} />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <Play size={14} className="text-white" fill="currentColor" />
+                      {isUpcoming(v.releaseAt) ? <CalendarClock size={14} className="text-white" aria-label={t("video.upcoming")} /> : <Play size={14} className="text-white" fill="currentColor" />}
                     </div>
                     <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[9px] text-white">{v.duration}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{v.title}</p>
+                    {isUpcoming(v.releaseAt) && v.releaseAt && (
+                      <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {t("video.upcoming")} · {t("video.releaseOn", { date: formatRelease(v.releaseAt, i18n.language) })}
+                      </p>
+                    )}
                     <p className="mt-0.5 text-[10px] text-muted-foreground">{v.subcategory}</p>
                     <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",
                       v.level === "Iniciante" ? "bg-emerald-500/20 text-emerald-400" :

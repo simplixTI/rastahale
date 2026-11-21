@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowDown, ArrowUp, BookOpen, Check, ChevronDown, ExternalLink, EyeOff, FolderOpen,
+  ArrowDown, ArrowUp, BookOpen, CalendarClock, Check, ChevronDown, ExternalLink, EyeOff, FolderOpen,
   FolderPlus, ImagePlus, Layers, Pencil, Plus, ShieldCheck, Trash2, X,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { formatRelease, isUpcoming } from "@/lib/release";
 
 // Página do professor no admin: perfil + gestão dos módulos dele.
 //
@@ -27,7 +28,7 @@ import { cn } from "@/lib/utils";
 // então reordenar não exige nada novo no banco. A policy studio_sessions_write
 // já libera o admin (public.is_admin()).
 
-type Lesson = { id: string; title: string; thumbnail: string; duration: string; visible: boolean };
+type Lesson = { id: string; title: string; thumbnail: string; duration: string; visible: boolean; releaseAt?: string | null };
 
 const fieldCls =
   "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring";
@@ -54,6 +55,11 @@ function LessonRow({ lesson, index, children }: { lesson: Lesson; index?: number
           {!lesson.visible && (
             <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
               <EyeOff size={11} aria-hidden="true" /> oculta para alunos
+            </span>
+          )}
+          {lesson.visible && isUpcoming(lesson.releaseAt) && lesson.releaseAt && (
+            <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
+              <CalendarClock size={11} aria-hidden="true" /> libera {formatRelease(lesson.releaseAt, "pt-BR")}
             </span>
           )}
         </p>
@@ -495,7 +501,7 @@ const AdminInstructorDetail = () => {
   const lessons: Lesson[] = useMemo(
     () => videos
       .filter((v) => v.instructorId === id)
-      .map((v) => ({ id: v.id, title: v.title, thumbnail: v.thumbnail, duration: v.duration, visible: v.visible !== false })),
+      .map((v) => ({ id: v.id, title: v.title, thumbnail: v.thumbnail, duration: v.duration, visible: v.visible !== false, releaseAt: v.releaseAt ?? null })),
     [videos, id]
   );
   const lessonsById = useMemo(() => new Map(lessons.map((l) => [l.id, l])), [lessons]);
