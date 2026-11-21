@@ -10,7 +10,8 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storageUpload";
 import AdminLayout from "@/components/AdminLayout";
 import AvatarImage from "@/components/AvatarImage";
-import { useAdminInstructors, useAdminVideos } from "@/hooks/useAdminData";
+import { useAdminInstructors, useAdminVideos, useCreateVideo } from "@/hooks/useAdminData";
+import VideoFormModal from "@/components/VideoFormModal";
 import { useStudioSessions, type SessionExtras, type StudioSession } from "@/hooks/useStudioSessions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -334,7 +335,7 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
 
 // ── Cartão de módulo ────────────────────────────────────────────────────────
 
-function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMoveDown, onMoveModule, onMoveLesson, onEdit, onDelete, onReorder, onRemoveLesson }: {
+function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMoveDown, onMoveModule, onMoveLesson, onAddLesson, onEdit, onDelete, onReorder, onRemoveLesson }: {
   module: StudioSession;
   lessonsById: Map<string, Lesson>;
   defaultOpen: boolean;
@@ -344,6 +345,8 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
   canMoveDown: boolean;
   onMoveModule: (direction: -1 | 1) => void;
   onMoveLesson: (videoId: string, toModuleId: string) => void;
+  /** Envia uma aula nova já dentro deste módulo. */
+  onAddLesson: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onReorder: (videoIds: string[]) => void;
@@ -410,9 +413,14 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
           {ids.length === 0 ? (
             <div className="px-4 py-5 text-center">
               <p className="text-sm text-muted-foreground">Módulo vazio. O aluno não o vê até ter pelo menos uma aula.</p>
-              <button type="button" onClick={onEdit} className="mt-2 text-sm font-semibold text-foreground underline underline-offset-4">
-                Escolher aulas
-              </button>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={onAddLesson} className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                  <Plus size={15} aria-hidden="true" /> Enviar nova aula
+                </button>
+                <button type="button" onClick={onEdit} className="rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary">
+                  Escolher aulas existentes
+                </button>
+              </div>
             </div>
           ) : (
             <ol className="divide-y divide-border">
@@ -447,6 +455,17 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
               })}
             </ol>
           )}
+          {ids.length > 0 && (
+            <div className="border-t border-border p-2">
+              <button
+                type="button"
+                onClick={onAddLesson}
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              >
+                <Plus size={15} aria-hidden="true" /> Nova aula neste módulo
+              </button>
+            </div>
+          )}
         </div>
       )}
     </li>
@@ -465,6 +484,9 @@ const AdminInstructorDetail = () => {
   const [dialog, setDialog]     = useState<{ module: StudioSession | null } | null>(null);
   const [deleting, setDeleting] = useState<StudioSession | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
+  // Envio de aula nova: moduleId = módulo de destino; null = fica sem módulo.
+  const [uploadTo, setUploadTo] = useState<{ moduleId: string | null } | null>(null);
+  const createVideo = useCreateVideo();
 
   const instructor = instructors.find((i) => i.id === id);
 
@@ -519,6 +541,30 @@ const AdminInstructorDetail = () => {
 
   return (
     <AdminLayout title={instructor.name} backTo="/admin/instrutores" width="wide">
+      {/* Mesmo formulário de envio de Vídeos, com o professor já fixado. A aula
+          nova entra no fim do módulo de onde o admin clicou. */}
+      <VideoFormModal
+        open={!!uploadTo}
+        onOpenChange={(v) => { if (!v) setUploadTo(null); }}
+        hideInstructor
+        isPending={createVideo.isPending}
+        onSubmit={(values) => {
+          const target = uploadTo?.moduleId ?? null;
+          createVideo.mutate(
+            { ...values, instructorId: instructor.id, videoUrl: values.videoUrl || null } as Parameters<typeof createVideo.mutate>[0],
+            {
+              onSuccess: ({ id: videoId }) => {
+                if (target) addVideo(target, videoId);
+                const name = sessions.find((s) => s.id === target)?.title;
+                toast.success(name ? `Aula enviada e adicionada a "${name}"` : "Aula enviada");
+                setUploadTo(null);
+              },
+              onError: (err) => toast.error((err as Error).message || "Não foi possível salvar a aula. Tente de novo."),
+            }
+          );
+        }}
+      />
+
       {editingProfile && (
         <ProfileDialog
           instructor={{ id: instructor.id, name: instructor.name, bio: instructor.bio ?? "", avatar: instructor.avatar ?? "" }}
@@ -648,6 +694,7 @@ const AdminInstructorDetail = () => {
                   canMoveDown={index < sessions.length - 1}
                   onMoveModule={(direction) => moveModule(index, direction)}
                   onMoveLesson={(videoId, toId) => moveVideo(module.id, toId, videoId)}
+                  onAddLesson={() => setUploadTo({ moduleId: module.id })}
                   onEdit={() => setDialog({ module })}
                   onDelete={() => setDeleting(module)}
                   onReorder={(videoIds) => update(module.id, module.title, module.description, videoIds)}
@@ -693,11 +740,13 @@ const AdminInstructorDetail = () => {
             </ul>
           )}
 
-          {lessons.length === 0 && (
-            <button type="button" onClick={() => navigate("/admin/videos")} className="mt-3 text-sm font-semibold text-foreground underline underline-offset-4">
-              Ir para Vídeos e enviar aulas
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setUploadTo({ moduleId: null })}
+            className="mt-3 flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <Plus size={15} aria-hidden="true" /> Enviar aula sem módulo
+          </button>
         </section>
       </div>
     </AdminLayout>
