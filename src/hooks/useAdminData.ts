@@ -232,7 +232,7 @@ export function useAdminVideos() {
           id:               v.id,
           title:            v.title,
           description:      v.description ?? "",
-          thumbnail:        v.thumbnail ?? "",
+          thumbnail:        v.thumbnail || "/placeholder.svg",
           videoUrl:         v.video_url ?? null,
           duration:         v.duration,
           category:         v.category as string,

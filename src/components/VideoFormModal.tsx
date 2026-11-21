@@ -53,8 +53,9 @@ function uploadErrorToast(err: unknown, fallback: string) {
 
 const schema = z.object({
   title:            z.string().min(3,  "Mínimo 3 caracteres"),
-  description:      z.string().min(10, "Mínimo 10 caracteres"),
-  thumbnail:        z.string().min(1,  "Adicione uma thumbnail"),
+  // Opcionais por enquanto: aula sem capa usa uma imagem neutra no app.
+  description:      z.string().optional().default(""),
+  thumbnail:        z.string().optional().default(""),
   videoUrl:         z.string().optional(),
   duration:         z.string().min(1,  "Ex: 12:30"),
   category:         z.string(), // interno: herdado da categoria ao salvar
@@ -296,7 +297,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         video
           ? {
               title: video.title, description: video.description,
-              thumbnail: video.thumbnail, videoUrl: video.videoUrl ?? "",
+              thumbnail: video.thumbnail === "/placeholder.svg" ? "" : video.thumbnail, videoUrl: video.videoUrl ?? "",
               duration: video.duration, category: video.category,
               subcategory: video.subcategory, level: video.level,
               instructorId: video.instructorId,
@@ -423,7 +424,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
 
           {/* Descrição */}
           <div>
-            <label className={labelCls}>Descrição</label>
+            <label className={labelCls}>Descrição <span className="font-normal normal-case tracking-normal opacity-70">(opcional)</span></label>
             <textarea {...register("description")} rows={2} className={cn(fieldCls, "resize-none")} placeholder="Descreva o conteúdo da aula…" />
             {errors.description && <p className="mt-0.5 text-[10px] text-red-400">{errors.description.message}</p>}
           </div>
@@ -432,7 +433,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <label className={cn(labelCls, "mb-0 flex items-center gap-1")}>
-                <ImageIcon size={11} /> Thumbnail
+                <ImageIcon size={11} /> Thumbnail <span className="font-normal normal-case tracking-normal opacity-70">(opcional)</span>
               </label>
               <ModeTabs mode={thumbMode} onChange={setThumbMode} />
             </div>
