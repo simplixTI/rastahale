@@ -10,7 +10,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storageUpload";
 import AdminLayout from "@/components/AdminLayout";
 import AvatarImage from "@/components/AvatarImage";
-import { useAdminInstructors, useAdminVideos, useCreateVideo } from "@/hooks/useAdminData";
+import { useAdminInstructors, useAdminVideos, useCreateVideo, useDeleteVideo } from "@/hooks/useAdminData";
 import VideoFormModal from "@/components/VideoFormModal";
 import { useStudioSessions, type SessionExtras, type StudioSession } from "@/hooks/useStudioSessions";
 import {
@@ -487,6 +487,8 @@ const AdminInstructorDetail = () => {
   // Envio de aula nova: moduleId = módulo de destino; null = fica sem módulo.
   const [uploadTo, setUploadTo] = useState<{ moduleId: string | null } | null>(null);
   const createVideo = useCreateVideo();
+  const deleteVideo = useDeleteVideo();
+  const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
 
   const instructor = instructors.find((i) => i.id === id);
 
@@ -599,6 +601,34 @@ const AdminInstructorDetail = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir módulo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletingLesson} onOpenChange={(v) => { if (!v && !deleteVideo.isPending) setDeletingLesson(null); }}>
+        <AlertDialogContent className="border-border bg-background">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir a aula "{deletingLesson?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A aula sai do catálogo e o vídeo é apagado do servidor. Não dá para desfazer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteVideo.isPending}>Manter aula</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteVideo.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deletingLesson) return;
+                deleteVideo.mutate(deletingLesson.id, {
+                  onSuccess: () => { toast.success("Aula excluída"); setDeletingLesson(null); },
+                  onError: (err) => toast.error((err as Error).message || "Não foi possível excluir a aula. Tente de novo."),
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteVideo.isPending ? "Excluindo…" : "Excluir aula"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -734,6 +764,14 @@ const AdminInstructorDetail = () => {
                         {sessions.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
                       </select>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setDeletingLesson(lesson)}
+                      aria-label={`Excluir a aula ${lesson.title}`}
+                      className={cn(iconBtn, "hover:bg-destructive/10 hover:text-destructive")}
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
                   </LessonRow>
                 </li>
               ))}
