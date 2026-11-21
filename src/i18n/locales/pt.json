@@ -112,7 +112,10 @@
     "featured": "Em destaque",
     "continueWatching": "Continuar Assistindo",
     "ourAthletes": "Nossos Atletas",
-    "seeAll": "Ver todos"
+    "seeAll": "Ver todos",
+    "catalogEmptyTitle": "As aulas estão chegando",
+    "catalogEmptyText": "Enquanto isso, conheça os professores da equipe.",
+    "meetTeachers": "Ver professores"
   },
   "store": {
     "title": "Nossa Loja",
@@ -127,13 +130,20 @@
     "level": "Nível",
     "allCategories": "Todas",
     "allLevels": "Todos",
-    "empty": "Nenhum resultado encontrado"
+    "empty": "Nenhum resultado encontrado",
+    "catalogEmptyTitle": "As aulas estão chegando",
+    "catalogEmptyText": "Assim que os professores publicarem, elas aparecem aqui.",
+    "noMatch": "Nada encontrado para “{{query}}”",
+    "tryOther": "Tente outra palavra ou tire os filtros.",
+    "clearFilters": "Limpar busca e filtros"
   },
   "favorites": {
     "title": "Favoritos",
     "saved_one": "{{count}} aula salva",
     "saved_other": "{{count}} aulas salvas",
-    "empty": "Nenhum favorito ainda"
+    "empty": "Nenhum favorito ainda",
+    "emptyHint": "Toque no coração de uma aula para guardar e assistir depois.",
+    "explore": "Explorar aulas"
   },
   "progress": {
     "title": "Ranking & Progresso",
@@ -270,7 +280,8 @@
     "iapManagedElsewhere": "Sua assinatura não foi feita por este aplicativo e não pode ser alterada por aqui.",
     "iapLegal": "A assinatura é renovada automaticamente pelo mesmo valor e período até ser cancelada. Você pode cancelar quando quiser nas configurações da sua conta da loja, até 24 horas antes da renovação.",
     "iapTerms": "Termos de Serviço",
-    "iapPrivacy": "Política de Privacidade"
+    "iapPrivacy": "Política de Privacidade",
+    "accessActive": "Seu acesso está liberado. Para mudar de plano, fale com a equipe RastaHale."
   },
   "video": {
     "notFound": "Vídeo não encontrado",

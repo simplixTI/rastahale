@@ -287,6 +287,19 @@
   }
 }
 
+/* ── Legibilidade ──────────────────────────────────────────────────────────
+   O app usava 9–11px em rótulos e textos de apoio, difícil de ler no celular
+   e minúsculo no computador. Piso de 11px em qualquer tela; no computador,
+   tudo sobe um degrau. */
+.text-\[9px\]  { font-size: 11px; }
+.text-\[10px\] { font-size: 11px; }
+@media (min-width: 1024px) {
+  .text-\[10px\] { font-size: 12px; }
+  .text-\[11px\] { font-size: 13px; }
+  .text-xs        { font-size: 0.8125rem; }
+  .text-sm        { font-size: 0.9375rem; }
+}
+
 @keyframes page-fade {
   from { opacity: 0; }
 }

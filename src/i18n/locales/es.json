@@ -112,7 +112,10 @@
     "featured": "Destacado",
     "continueWatching": "Seguir viendo",
     "ourAthletes": "Nuestros Atletas",
-    "seeAll": "Ver todos"
+    "seeAll": "Ver todos",
+    "catalogEmptyTitle": "Las clases están llegando",
+    "catalogEmptyText": "Mientras tanto, conoce a los profesores del equipo.",
+    "meetTeachers": "Ver profesores"
   },
   "store": {
     "title": "Nuestra Tienda",
@@ -127,13 +130,20 @@
     "level": "Nivel",
     "allCategories": "Todas",
     "allLevels": "Todos",
-    "empty": "No se encontraron resultados"
+    "empty": "No se encontraron resultados",
+    "catalogEmptyTitle": "Las clases están llegando",
+    "catalogEmptyText": "En cuanto los profesores las publiquen, aparecen aquí.",
+    "noMatch": "Nada encontrado para “{{query}}”",
+    "tryOther": "Prueba otra palabra o quita los filtros.",
+    "clearFilters": "Limpiar búsqueda y filtros"
   },
   "favorites": {
     "title": "Favoritos",
     "saved_one": "{{count}} clase guardada",
     "saved_other": "{{count}} clases guardadas",
-    "empty": "Aún no hay favoritos"
+    "empty": "Aún no hay favoritos",
+    "emptyHint": "Toca el corazón de una clase para guardarla y verla después.",
+    "explore": "Explorar clases"
   },
   "progress": {
     "title": "Ranking y Progreso",
@@ -270,7 +280,8 @@
     "iapManagedElsewhere": "Tu suscripción no se hizo en esta aplicación y no se puede cambiar desde aquí.",
     "iapLegal": "La suscripción se renueva automáticamente por el mismo precio y periodo hasta que se cancele. Puedes cancelar cuando quieras en los ajustes de tu cuenta de la tienda, hasta 24 horas antes de la renovación.",
     "iapTerms": "Términos de Servicio",
-    "iapPrivacy": "Política de Privacidad"
+    "iapPrivacy": "Política de Privacidad",
+    "accessActive": "Tu acceso está activo. Para cambiar de plan, habla con el equipo RastaHale."
   },
   "video": {
     "notFound": "Video no encontrado",

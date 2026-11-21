@@ -114,8 +114,27 @@ const Search = () => {
       )}
 
       {!isLoading && !isError && filtered.length === 0 && (
-        <div className="mt-16 text-center">
-          <p className="text-sm text-muted-foreground">{t("search.empty")}</p>
+        <div className="mx-auto mt-16 max-w-xs px-4 text-center">
+          {videos.length === 0 ? (
+            <>
+              <p className="text-sm font-semibold text-foreground">{t("search.catalogEmptyTitle")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("search.catalogEmptyText")}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-foreground">
+                {query ? t("search.noMatch", { query }) : t("search.empty")}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("search.tryOther")}</p>
+              <button
+                type="button"
+                onClick={() => { setQuery(""); setCategory("all"); setLevel("all"); }}
+                className="mt-4 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              >
+                {t("search.clearFilters")}
+              </button>
+            </>
+          )}
         </div>
       )}
     </MobileLayout>

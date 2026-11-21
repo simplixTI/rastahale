@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
@@ -6,6 +7,7 @@ import { useFavoriteVideos } from "@/hooks/useVideos";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Favorites = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { t }    = useTranslation();
   const { data: favorites = [], isLoading } = useFavoriteVideos(user?.id ?? "");
@@ -28,9 +30,19 @@ const Favorites = () => {
           ))}
         </div>
       ) : (
-        <div className="mt-24 flex flex-col items-center text-center">
-          <Heart size={40} className="text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">{t("favorites.empty")}</p>
+        <div className="mx-auto mt-20 flex max-w-xs flex-col items-center px-4 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+            <Heart size={24} className="text-muted-foreground" aria-hidden="true" />
+          </span>
+          <p className="mt-4 text-sm font-semibold text-foreground">{t("favorites.empty")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("favorites.emptyHint")}</p>
+          <button
+            type="button"
+            onClick={() => navigate("/buscar")}
+            className="mt-4 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
+            {t("favorites.explore")}
+          </button>
         </div>
       )}
     </MobileLayout>

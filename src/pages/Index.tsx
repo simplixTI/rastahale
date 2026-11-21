@@ -116,7 +116,7 @@ const Index = () => {
       </FadeInSection>
 
       {/* Computador: destaque e vitrine da loja lado a lado. */}
-      <div className="lg:grid lg:grid-cols-[1.7fr_1fr] lg:items-start lg:gap-2">
+      <div className={featured ? "lg:grid lg:grid-cols-[1.7fr_1fr] lg:items-start lg:gap-2" : "lg:max-w-3xl"}>
       {featured && (
         <FadeInSection delay={100}>
           <button
@@ -190,6 +190,20 @@ const Index = () => {
 
       {/* Tópicos por posição (Passagem de Guarda, Finalizações, etc.) — geridos
           no admin via Vídeos → Módulos, agrupados aqui por subcategoria. */}
+      {videos.length === 0 && (
+        <section className="mx-4 mt-6 rounded-2xl border border-dashed border-border px-5 py-6 text-center lg:max-w-xl">
+          <p className="text-sm font-semibold text-foreground">{t("home.catalogEmptyTitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("home.catalogEmptyText")}</p>
+          <button
+            type="button"
+            onClick={() => navigate("/professores")}
+            className="mt-4 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            {t("home.meetTeachers")}
+          </button>
+        </section>
+      )}
+
       <TopicSections />
 
     </MobileLayout>

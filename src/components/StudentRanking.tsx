@@ -10,10 +10,21 @@ import { cn } from "@/lib/utils";
 const VOUCHER_ACK_KEY = "rasta_voucher_ack";
 
 /** Medalha para o pódio; da 4ª posição em diante, o número no formato do idioma. */
-function positionLabel(pos: number, ordinal: (n: number) => string): string {
-  if (pos === 1) return "🥇";
-  if (pos === 2) return "🥈";
-  if (pos === 3) return "🥉";
+// Pódio em ouro, prata e bronze; do 4º em diante, só o número.
+const PODIUM = ["#d4a017", "#9ca3af", "#b45309"];
+
+function positionLabel(pos: number, ordinal: (n: number) => string): React.ReactNode {
+  if (pos <= 3) {
+    return (
+      <span
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white"
+        style={{ backgroundColor: PODIUM[pos - 1] }}
+        aria-label={ordinal(pos)}
+      >
+        {pos}
+      </span>
+    );
+  }
   return ordinal(pos);
 }
 
@@ -64,7 +75,7 @@ function RankRow({ student, isMe }: { student: RankedStudent; isMe: boolean }) {
           {isMe && <span className="ml-1 text-[10px] font-semibold text-primary">{t("ranking.you")}</span>}
         </p>
         <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-          <span aria-hidden="true">{student.belt.belt.emoji}</span>
+          <span aria-hidden="true" className="h-2 w-2 rounded-full ring-1 ring-foreground/15" style={{ backgroundColor: student.belt.belt.color }} />
           {t(`belt.${student.belt.belt.key}`)}
         </p>
       </div>
@@ -84,10 +95,14 @@ function MyBeltCard({ me }: { me: RankedStudent }) {
     <div className="mb-3 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-4">
       <div className="flex items-center gap-3">
         <div
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-xl"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: `${belt.color}22`, border: `2px solid ${belt.color}` }}
+          aria-hidden="true"
         >
-          {belt.emoji}
+          {/* A faixa em si: uma barra na cor da graduação, com a ponta preta. */}
+          <span className="flex h-2.5 w-7 overflow-hidden rounded-sm" style={{ backgroundColor: belt.color }}>
+            <span className="ml-auto h-full w-2 bg-foreground/80" />
+          </span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground">{t(`belt.${belt.key}`)}</p>

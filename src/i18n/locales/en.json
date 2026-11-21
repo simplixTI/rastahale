@@ -112,7 +112,10 @@
     "featured": "Featured",
     "continueWatching": "Continue Watching",
     "ourAthletes": "Our Athletes",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "catalogEmptyTitle": "Lessons are on the way",
+    "catalogEmptyText": "Meanwhile, meet the team's teachers.",
+    "meetTeachers": "See teachers"
   },
   "store": {
     "title": "Our Store",
@@ -127,13 +130,20 @@
     "level": "Level",
     "allCategories": "All",
     "allLevels": "All",
-    "empty": "No results found"
+    "empty": "No results found",
+    "catalogEmptyTitle": "Lessons are on the way",
+    "catalogEmptyText": "As soon as the teachers publish them, they show up here.",
+    "noMatch": "Nothing found for “{{query}}”",
+    "tryOther": "Try another word or clear the filters.",
+    "clearFilters": "Clear search and filters"
   },
   "favorites": {
     "title": "Favorites",
     "saved_one": "{{count}} saved lesson",
     "saved_other": "{{count}} saved lessons",
-    "empty": "No favorites yet"
+    "empty": "No favorites yet",
+    "emptyHint": "Tap the heart on a lesson to save it for later.",
+    "explore": "Explore lessons"
   },
   "progress": {
     "title": "Ranking & Progress",
@@ -270,7 +280,8 @@
     "iapManagedElsewhere": "Your subscription was not purchased in this app and can't be changed here.",
     "iapLegal": "The subscription renews automatically for the same price and period until cancelled. You can cancel anytime in your store account settings, up to 24 hours before renewal.",
     "iapTerms": "Terms of Service",
-    "iapPrivacy": "Privacy Policy"
+    "iapPrivacy": "Privacy Policy",
+    "accessActive": "Your access is active. To change plans, contact the RastaHale team."
   },
   "video": {
     "notFound": "Video not found",

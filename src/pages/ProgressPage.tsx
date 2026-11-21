@@ -1,4 +1,4 @@
-import { Flame, Clock, BookOpen } from "lucide-react";
+import { Flame, Clock, BookOpen, Award, Medal, Swords, Trophy, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import MobileLayout from "@/components/MobileLayout";
 import StudentRanking from "@/components/StudentRanking";
@@ -10,10 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 const badges = [
-  { emoji: "🥋", titleKey: "progress.badgeJiuJitsu",  key: "jj"     },
-  { emoji: "🤼", titleKey: "progress.badgeLutaLivre", key: "ll"     },
-  { emoji: "🔟", titleKey: "progress.badgeTen",       key: "ten"    },
-  { emoji: "🏆", titleKey: "progress.badgeMaster",    key: "master" },
+  { icon: Award,  titleKey: "progress.badgeJiuJitsu",  key: "jj"     },
+  { icon: Swords, titleKey: "progress.badgeLutaLivre", key: "ll"     },
+  { icon: Medal,  titleKey: "progress.badgeTen",       key: "ten"    },
+  { icon: Trophy, titleKey: "progress.badgeMaster",    key: "master" },
 ];
 
 const ProgressPage = () => {
@@ -95,20 +95,32 @@ const ProgressPage = () => {
       <section className="mt-6 px-4">
         <h2 className="text-sm font-bold text-foreground">{t("progress.achievements")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          {badges.map((b) => (
-            <div
-              key={b.key}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border p-3",
-                badgeUnlocked[b.key as keyof typeof badgeUnlocked]
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border bg-card opacity-50"
-              )}
-            >
-              <span className="text-2xl">{b.emoji}</span>
-              <span className="text-[11px] font-medium text-foreground leading-tight">{t(b.titleKey)}</span>
-            </div>
-          ))}
+          {badges.map((b) => {
+            const unlocked = badgeUnlocked[b.key as keyof typeof badgeUnlocked];
+            const Icon = b.icon;
+            return (
+              <div
+                key={b.key}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-3",
+                  unlocked ? "border-[hsl(var(--brand-yellow))]/60 bg-[hsl(var(--brand-yellow))]/10" : "border-border bg-card"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full",
+                    unlocked ? "bg-[hsl(var(--brand-yellow))] text-foreground" : "bg-secondary text-muted-foreground"
+                  )}
+                >
+                  {unlocked ? <Icon size={17} aria-hidden="true" /> : <Lock size={15} aria-hidden="true" />}
+                </span>
+                <span className={cn("text-xs font-medium leading-tight", unlocked ? "text-foreground" : "text-muted-foreground")}>
+                  {t(b.titleKey)}
+                  <span className="sr-only">{unlocked ? " — conquistada" : " — bloqueada"}</span>
+                </span>
+              </div>
+            );
+          })}
         </div>
       </section>
     </MobileLayout>

@@ -68,16 +68,16 @@ const TabBar = ({ items, ariaLabel, desktopItems, desktopTitle, desktopFooter }:
         aria-label={ariaLabel}
         className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom),var(--safe-area-inset-bottom,0px))] lg:hidden"
       >
-        <div className="pointer-events-auto relative mx-auto flex max-w-[406px] items-stretch rounded-[26px] border border-border/70 bg-card/85 p-1 shadow-[var(--elev-dock)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="pointer-events-auto relative mx-auto flex max-w-[406px] items-stretch rounded-[26px] border border-border/70 bg-card/85 p-0.5 shadow-[var(--elev-dock)] backdrop-blur-xl backdrop-saturate-150">
           <div
             aria-hidden="true"
             className={cn(
-              "absolute inset-y-1 left-1 transition-[transform,opacity] duration-[460ms] motion-reduce:transition-opacity",
+              "absolute inset-y-0.5 left-0.5 transition-[transform,opacity] duration-[460ms] motion-reduce:transition-opacity",
               EASE,
               dockActive >= 0 ? "opacity-100" : "opacity-0"
             )}
             style={{
-              width: `calc((100% - 0.5rem) / ${items.length})`,
+              width: `calc((100% - 0.25rem) / ${items.length})`,
               transform: `translate3d(${Math.max(dockActive, 0) * 100}%, 0, 0)`,
             }}
           >
@@ -96,7 +96,7 @@ const TabBar = ({ items, ariaLabel, desktopItems, desktopTitle, desktopFooter }:
                 aria-label={label}
                 aria-current={isActive && path ? "page" : undefined}
                 className={cn(
-                  "relative flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[22px] px-0.5 text-[10px] leading-none",
+                  "relative flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[22px] px-0 text-[0.625rem] leading-none",
                   "[transition-property:color,transform] duration-200 active:scale-[0.94] motion-reduce:active:scale-100",
                   EASE,
                   isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -114,7 +114,7 @@ const TabBar = ({ items, ariaLabel, desktopItems, desktopTitle, desktopFooter }:
                 />
                 {/* Peso fixo: negrito na aba ativa alargava o texto e cortava
                     "Professores" na barra de seis itens. */}
-                <span className="max-w-full truncate font-medium tracking-tight">{label}</span>
+                <span className="max-w-full truncate font-medium tracking-[-0.03em]">{label}</span>
               </button>
             );
           })}

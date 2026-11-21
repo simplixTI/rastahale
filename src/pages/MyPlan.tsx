@@ -227,6 +227,13 @@ const MyPlan = () => {
                 {t("plan.nativeManageNotice")}
               </p>
             </div>
+          ) : profile?.status === "ativo" && !hasActiveSubscription ? (
+            // Acesso liberado sem assinatura do Stripe (dado pela equipe ou pela
+            // compra na loja do celular): não faz sentido oferecer "Assinar".
+            <div className="flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
+              <CheckCircle size={18} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              <p className="text-sm leading-relaxed text-foreground">{t("plan.accessActive")}</p>
+            </div>
           ) : (
             <>
           {/* Sem assinatura ativa → Assinar (abre checkout do plano atual) */}
