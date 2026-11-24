@@ -483,25 +483,16 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
             )}
           </div>
 
-          {/* Nível / Instrutor */}
-          <div className={cn("grid gap-2", hideInstructor ? "grid-cols-1" : "grid-cols-2")}>
+          {/* Instrutor. O nível da aula saiu do formulário a pedido do admin:
+              aula nova grava "Iniciante" e a editada mantém o que já tinha. */}
+          {!hideInstructor && (
             <div>
-              <label className={labelCls}>Nível</label>
-              <select {...register("level")} className={fieldCls}>
-                <option>Iniciante</option>
-                <option>Intermediário</option>
-                <option>Avançado</option>
+              <label className={labelCls}>Instrutor</label>
+              <select {...register("instructorId")} value={currentInstructor} className={fieldCls}>
+                {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             </div>
-            {!hideInstructor && (
-              <div>
-                <label className={labelCls}>Instrutor</label>
-                <select {...register("instructorId")} value={currentInstructor} className={fieldCls}>
-                  {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Liberação agendada */}
           <div>

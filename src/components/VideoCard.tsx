@@ -75,9 +75,6 @@ const VideoCard = ({ video, size = "md", fluid = false }: VideoCardProps) => {
           {t("video.releaseOn", { date: formatRelease(video.releaseAt, i18n.language) })}
         </p>
       )}
-      <Pill variant="soft" color={levelColor(video.level)} className="mt-1.5">
-        {labels.level(video.level)}
-      </Pill>
     </button>
   );
 };

@@ -252,10 +252,6 @@ const InstructorSection = () => {
                       </p>
                     )}
                     <p className="mt-0.5 text-[10px] text-muted-foreground">{v.subcategory}</p>
-                    <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",
-                      v.level === "Iniciante" ? "bg-emerald-500/20 text-emerald-400" :
-                      v.level === "Intermediário" ? "bg-amber-500/20 text-amber-400" : "bg-red-500/20 text-red-400"
-                    )}>{labels.level(v.level)}</span>
                   </div>
                 </button>
               ))}

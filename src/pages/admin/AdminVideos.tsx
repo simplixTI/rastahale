@@ -174,23 +174,6 @@ const AdminVideos = () => {
         </div>
       </div>
 
-      <div className="mt-3">
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nível</p>
-        <div className="flex gap-1.5">
-          {levels.map((l) => (
-            <button
-              key={l}
-              onClick={() => setSelectedLevel(l)}
-              className={cn(
-                "rounded-full px-3 py-1 text-[11px] font-medium transition-colors",
-                selectedLevel === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-              )}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {isLoading ? (
         <div className="mt-8 flex justify-center">
@@ -234,9 +217,6 @@ const AdminVideos = () => {
                           <p className="text-xs font-medium text-foreground truncate">{v.title}</p>
                           <p className="text-[10px] text-muted-foreground">{v.duration}</p>
                           <div className="mt-1 flex items-center gap-1.5">
-                            <span className={cn("rounded-full px-2 py-0.5 text-[9px] font-semibold", getLevelColor(v.level))}>
-                              {v.level}
-                            </span>
                             {v.unlockByProgress && (
                               <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
                                 🔒 {v.requiredProgress}%

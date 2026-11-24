@@ -95,7 +95,6 @@ function VideoRow({ v, onEdit }: { v: AdminVideo; onEdit: () => void }) {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">{v.title}</p>
           <p className="text-[10px] text-muted-foreground">{v.subcategory}</p>
-          <span className={cn("mt-0.5 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold", getLevelColor(v.level))}>{v.level}</span>
         </div>
       </div>
       {thumbOpen && <ThumbInlineEdit videoId={v.id} onClose={() => setThumbOpen(false)} />}
@@ -189,7 +188,6 @@ function SessionFormModal({ open, onOpenChange, session, myVideos, onSave }: {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-semibold text-foreground truncate">{v.title}</p>
-                      <span className={cn("text-[9px] font-semibold rounded-full px-1.5 py-0.5", getLevelColor(v.level))}>{v.level}</span>
                     </div>
                     <div className={cn("h-4 w-4 flex-shrink-0 rounded border-2 flex items-center justify-center transition-colors", isSel ? "border-primary bg-primary" : "border-border")}>
                       {isSel && <Check size={10} className="text-primary-foreground" />}
@@ -244,7 +242,6 @@ function SessionCard({ session, videos, onEdit, onDelete }: {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold text-foreground truncate">{v.title}</p>
-                <span className={cn("text-[9px] font-semibold rounded-full px-1.5 py-0.5 inline-block mt-0.5", getLevelColor(v.level))}>{v.level}</span>
               </div>
             </div>
           ))}

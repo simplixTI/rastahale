@@ -10,7 +10,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storageUpload";
 import AdminLayout from "@/components/AdminLayout";
 import AvatarImage from "@/components/AvatarImage";
-import { useAdminInstructors, useAdminVideos, useCreateVideo, useDeleteVideo } from "@/hooks/useAdminData";
+import { useAdminInstructors, useAdminVideos, useCreateVideo, useDeleteVideo, useUpdateVideo } from "@/hooks/useAdminData";
 import VideoFormModal from "@/components/VideoFormModal";
 import { useStudioSessions, type SessionExtras, type StudioSession } from "@/hooks/useStudioSessions";
 import {
@@ -36,7 +36,7 @@ const labelCls = "mb-1 block text-xs font-semibold text-foreground";
 
 // ── Linha de aula ───────────────────────────────────────────────────────────
 
-function LessonRow({ lesson, index, children }: { lesson: Lesson; index?: number; children?: React.ReactNode }) {
+function LessonRow({ lesson, index, onEdit, children }: { lesson: Lesson; index?: number; onEdit?: () => void; children?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2">
       {index !== undefined && (
@@ -64,6 +64,11 @@ function LessonRow({ lesson, index, children }: { lesson: Lesson; index?: number
           )}
         </p>
       </div>
+      {onEdit && (
+        <button type="button" onClick={onEdit} aria-label={`Editar a aula ${lesson.title}`} className={iconBtn}>
+          <Pencil size={16} aria-hidden="true" />
+        </button>
+      )}
       {children}
     </div>
   );
@@ -341,7 +346,7 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
 
 // ── Cartão de módulo ────────────────────────────────────────────────────────
 
-function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMoveDown, onMoveModule, onMoveLesson, onAddLesson, onEdit, onDelete, onReorder, onRemoveLesson }: {
+function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMoveDown, onMoveModule, onMoveLesson, onAddLesson, onEdit, onEditLesson, onDelete, onReorder, onRemoveLesson }: {
   module: StudioSession;
   lessonsById: Map<string, Lesson>;
   defaultOpen: boolean;
@@ -357,6 +362,7 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
   onDelete: () => void;
   onReorder: (videoIds: string[]) => void;
   onRemoveLesson: (videoId: string) => void;
+  onEditLesson: (videoId: string) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   // Aula apagada continua no array até alguém salvar; aqui só mostramos as que existem.
@@ -434,7 +440,7 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
                 const lesson = lessonsById.get(id)!;
                 return (
                   <li key={id}>
-                    <LessonRow lesson={lesson} index={index}>
+                    <LessonRow lesson={lesson} index={index} onEdit={() => onEditLesson(id)}>
                       {others.length > 0 && (
                         <select
                           aria-label={`Mover "${lesson.title}" para outro módulo`}
@@ -495,6 +501,9 @@ const AdminInstructorDetail = () => {
   const createVideo = useCreateVideo();
   const deleteVideo = useDeleteVideo();
   const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
+  const updateVideo = useUpdateVideo();
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const editingLesson = editingLessonId ? videos.find((v) => v.id === editingLessonId) ?? null : null;
 
   const instructor = instructors.find((i) => i.id === id);
 
@@ -568,6 +577,25 @@ const AdminInstructorDetail = () => {
                 setUploadTo(null);
               },
               onError: (err) => toast.error((err as Error).message || "Não foi possível salvar a aula. Tente de novo."),
+            }
+          );
+        }}
+      />
+
+      {/* Edição de uma aula específica (título, descrição, capa, vídeo, data...). */}
+      <VideoFormModal
+        open={!!editingLesson}
+        onOpenChange={(v) => { if (!v) setEditingLessonId(null); }}
+        video={editingLesson}
+        hideInstructor
+        isPending={updateVideo.isPending}
+        onSubmit={(values) => {
+          if (!editingLesson) return;
+          updateVideo.mutate(
+            { id: editingLesson.id, ...values, instructorId: instructor.id, videoUrl: values.videoUrl || null },
+            {
+              onSuccess: () => { setEditingLessonId(null); toast.success("Aula atualizada"); },
+              onError:   (err) => toast.error((err as Error).message || "Não foi possível salvar a aula. Tente de novo."),
             }
           );
         }}
@@ -732,6 +760,7 @@ const AdminInstructorDetail = () => {
                   onMoveLesson={(videoId, toId) => moveVideo(module.id, toId, videoId)}
                   onAddLesson={() => setUploadTo({ moduleId: module.id })}
                   onEdit={() => setDialog({ module })}
+                  onEditLesson={(videoId) => setEditingLessonId(videoId)}
                   onDelete={() => setDeleting(module)}
                   onReorder={(videoIds) => update(module.id, module.title, module.description, videoIds)}
                   onRemoveLesson={(videoId) =>
@@ -758,7 +787,7 @@ const AdminInstructorDetail = () => {
             <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
               {loose.map((lesson) => (
                 <li key={lesson.id}>
-                  <LessonRow lesson={lesson}>
+                  <LessonRow lesson={lesson} onEdit={() => setEditingLessonId(lesson.id)}>
                     {sessions.length > 0 ? (
                       <select
                         aria-label={`Adicionar "${lesson.title}" a um módulo`}

@@ -123,14 +123,6 @@ const AthleteModuleLessons = () => {
                         {t("video.upcoming")} · {t("video.releaseOn", { date: formatRelease(v.releaseAt, i18n.language) })}
                       </p>
                     )}
-                  <span
-                    className={cn(
-                      "mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold",
-                      getLevelColor(v.level)
-                    )}
-                  >
-                    {labels.level(v.level)}
-                  </span>
                 </div>
               </button>
             ))}

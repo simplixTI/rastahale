@@ -78,23 +78,6 @@ const Search = () => {
                 ))}
               </div>
             </div>
-            <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("search.level")}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {levels.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLevel(l)}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                      level === l ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                    )}
-                  >
-                    {l === "all" ? t("search.allLevels") : labels.level(l)}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </header>

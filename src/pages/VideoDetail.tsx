@@ -531,9 +531,6 @@ const VideoDetail = () => {
               <span>{video.subcategory}</span>
               <span>·</span>
               <span>{video.duration}</span>
-              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", getLevelColor(video.level))}>
-                {labels.level(video.level)}
-              </span>
             </div>
           </div>
         </div>
