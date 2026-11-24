@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, CalendarClock, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarClock, ChevronDown, Clock, Play, Send, Trash2, MessageCircle, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
@@ -49,6 +49,33 @@ function CommentCard({ comment, canDelete, onDelete }: {
         )}
       </div>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{comment.text}</p>
+    </div>
+  );
+}
+
+// ── Fold ──────────────────────────────────────────────────────────────────────
+// Cabeçalho que recolhe/expande a seção, para a página não virar uma lista
+// gigante de capas.
+
+function Fold({ title, count, icon, defaultOpen = true, className, children }: {
+  title: string; count?: string; icon?: ReactNode; defaultOpen?: boolean;
+  className?: string; children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="mb-3 flex w-full items-center gap-2 text-left"
+      >
+        {icon}
+        <h2 className="flex-1 truncate text-sm font-bold text-foreground">{title}</h2>
+        {count && <span className="text-[10px] text-muted-foreground">{count}</span>}
+        <ChevronDown size={16} className={cn("flex-shrink-0 text-muted-foreground transition-transform", !open && "-rotate-90")} />
+      </button>
+      {open && children}
     </div>
   );
 }
@@ -168,52 +195,44 @@ const InstructorSection = () => {
           </div>
         ) : (
           Object.entries(grouped).map(([cat, catVids]) => (
-            <div key={cat} className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-bold text-foreground">{cat}</h2>
-                <span className="text-[10px] text-muted-foreground">{t("common.lessons", { count: catVids.length })}</span>
-              </div>
+            <Fold key={cat} className="mt-6" title={cat} count={t("common.lessons", { count: catVids.length })}>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {catVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}
               </div>
-            </div>
+            </Fold>
           ))
         )}
 
         {/* módulos do professor (sessões criadas no Studio) */}
         {sessions.length > 0 && (
-          <div className="mt-8">
-            <div className="mb-3 flex items-center gap-2">
-              <LayoutList size={16} className="text-primary" />
-              <h2 className="text-sm font-bold text-foreground">{t("instructorSection.modules")}</h2>
-            </div>
-            <div className="space-y-4">
-              {sessions.map((s) => {
+          <Fold className="mt-8" title={t("instructorSection.modules")} icon={<LayoutList size={16} className="text-primary" />}>
+            <div className="space-y-2">
+              {sessions.map((s, idx) => {
                 const modVids = s.videoIds
                   .map((vid) => allVideos.find((v) => v.id === vid))
                   .filter(Boolean) as typeof allVideos;
+                // Só o primeiro módulo começa aberto; os outros o aluno abre quando quiser.
                 return (
-                  <div key={s.id} className="rounded-xl border border-border bg-card p-3">
-                    <p className="text-xs font-bold text-foreground">{s.title}</p>
-                    {s.description && <p className="mt-0.5 text-[11px] text-muted-foreground">{s.description}</p>}
+                  <Fold key={s.id} className="rounded-xl border border-border bg-card p-3 pb-0"
+                    title={s.title} count={t("common.lessons", { count: modVids.length })} defaultOpen={idx === 0}>
+                    {s.description && <p className="-mt-2 mb-3 text-[11px] text-muted-foreground">{s.description}</p>}
                     {modVids.length > 0 ? (
-                      <div className="mt-3 flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                      <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
                         {modVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}
                       </div>
                     ) : (
-                      <p className="mt-2 text-[10px] text-muted-foreground">{t("instructorSection.emptyModule")}</p>
+                      <p className="pb-3 text-[10px] text-muted-foreground">{t("instructorSection.emptyModule")}</p>
                     )}
-                  </div>
+                  </Fold>
                 );
               })}
             </div>
-          </div>
+          </Fold>
         )}
 
-        {/* lista completa */}
+        {/* lista completa — recolhida de início: as aulas já aparecem nos carrosséis */}
         {videos.length > 0 && (
-          <div className="mt-8">
-            <h2 className="mb-3 text-sm font-bold text-foreground">{t("instructorSection.allLessons")}</h2>
+          <Fold className="mt-8" title={t("instructorSection.allLessons")} count={t("common.lessons", { count: videos.length })} defaultOpen={false}>
             <div className="space-y-2">
               {videos.map((v) => (
                 <button key={v.id} onClick={() => navigate(`/video/${v.id}`)}
@@ -241,7 +260,7 @@ const InstructorSection = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </Fold>
         )}
 
         {/* ── seção de comentários ── */}

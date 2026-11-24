@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
-import { bunnyVideoIdFromUrl, deleteBunnyVideo } from "@/lib/bunnyStream";
+import { bunnyVideoIdFromUrl, deleteBunnyVideo, lessonThumbnail } from "@/lib/bunnyStream";
 import {
   videos as mockVideos,
   mockUsers,
@@ -232,7 +232,7 @@ export function useAdminVideos() {
           id:               v.id,
           title:            v.title,
           description:      v.description ?? "",
-          thumbnail:        v.thumbnail || "/placeholder.svg",
+          thumbnail:        lessonThumbnail(v.thumbnail, v.video_url),
           videoUrl:         v.video_url ?? null,
           duration:         v.duration,
           category:         v.category as string,

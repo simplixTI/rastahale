@@ -6,7 +6,7 @@ import { Upload, CalendarClock, Video as VideoIcon, X, Loader2, LinkIcon, Trash2
 import { toast } from "sonner";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { uploadMedia, UploadError } from "@/lib/storageUpload";
-import { bunnyVideoIdFromUrl, deleteBunnyVideo, isBunnyConfigured, uploadVideoToBunny } from "@/lib/bunnyStream";
+import { bunnyVideoIdFromUrl, deleteBunnyVideo, isBunnyConfigured, isDefaultThumbnail, uploadVideoToBunny } from "@/lib/bunnyStream";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -294,7 +294,7 @@ export default function VideoFormModal({ open, onOpenChange, video, onSubmit, is
         video
           ? {
               title: video.title, description: video.description,
-              thumbnail: video.thumbnail === "/placeholder.svg" ? "" : video.thumbnail, videoUrl: video.videoUrl ?? "",
+              thumbnail: isDefaultThumbnail(video.thumbnail) ? "" : video.thumbnail, videoUrl: video.videoUrl ?? "",
               releaseAt: toLocalInput(video.releaseAt),
               duration: video.duration, category: video.category,
               subcategory: video.subcategory, level: video.level,

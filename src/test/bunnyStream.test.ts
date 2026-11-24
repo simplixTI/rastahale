@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bunnyVideoIdFromUrl, isHlsUrl } from "@/lib/bunnyStream";
+import { bunnyVideoIdFromUrl, isHlsUrl, lessonThumbnail, isDefaultThumbnail } from "@/lib/bunnyStream";
 
 const GUID = "3f2a9c1e-8b7d-4e6f-a5c4-1b2d3e4f5a6b";
 
@@ -26,5 +26,23 @@ describe("isHlsUrl", () => {
     expect(isHlsUrl(`https://vz-abc.b-cdn.net/${GUID}/playlist.m3u8`)).toBe(true);
     expect(isHlsUrl("https://cdn.example.com/a.m3u8?token=1")).toBe(true);
     expect(isHlsUrl("https://cdn.example.com/aula.mp4")).toBe(false);
+  });
+});
+
+describe("lessonThumbnail", () => {
+  const url = "https://vz-335b2e35-fd3.b-cdn.net/8573e484-1fca-4f4b-8cd0-1f6801e616ca/playlist.m3u8";
+
+  it("usa a capa enviada quando existe", () => {
+    expect(lessonThumbnail("https://x/capa.jpg", url)).toBe("https://x/capa.jpg");
+  });
+
+  it("sem capa, usa o quadro que o Bunny gera do vídeo", () => {
+    const auto = lessonThumbnail("", url);
+    expect(auto).toBe("https://vz-335b2e35-fd3.b-cdn.net/8573e484-1fca-4f4b-8cd0-1f6801e616ca/thumbnail.jpg");
+    expect(isDefaultThumbnail(auto)).toBe(true);
+  });
+
+  it("sem capa e sem vídeo do Bunny, cai na capa neutra", () => {
+    expect(lessonThumbnail(null, "https://x/video.mp4")).toBe("/placeholder.svg");
   });
 });

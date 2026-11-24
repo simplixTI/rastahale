@@ -13,12 +13,15 @@ const Instructors = () => {
   const { user } = useAuth();
   const { t }    = useTranslation();
   const { data: instructors = [], isLoading, isError, refetch } = useInstructors();
-  const { data: videos = [] }                  = useVideos(user?.id ?? "");
+  const { data: videos = [], isLoading: loadingVideos } = useVideos(user?.id ?? "");
 
-  const cards = instructors.map((inst) => ({
-    ...inst,
-    videoCount: videos.filter((v) => v.instructorId === inst.id).length,
-  }));
+  // Professor sem aula publicada não aparece para o aluno.
+  const cards = instructors
+    .map((inst) => ({
+      ...inst,
+      videoCount: videos.filter((v) => v.instructorId === inst.id).length,
+    }))
+    .filter((inst) => inst.videoCount > 0);
 
   return (
     <MobileLayout>
@@ -30,7 +33,7 @@ const Instructors = () => {
         {t("instructors.subtitle")}
       </p>
 
-      {isLoading ? (
+      {isLoading || loadingVideos ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>

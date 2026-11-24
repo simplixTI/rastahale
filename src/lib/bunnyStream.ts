@@ -28,6 +28,25 @@ export function bunnyVideoIdFromUrl(url: string | null | undefined): string | nu
   return url?.match(BUNNY_PLAYLIST)?.[1] ?? null;
 }
 
+// Capa que o próprio Bunny gera para cada vídeo (um quadro do meio dele).
+const BUNNY_AUTO_THUMB = /^https:\/\/[^/]+\/[0-9a-f-]{36}\/thumbnail\.jpg$/i;
+
+/**
+ * Capa da aula: a enviada pelo admin/professor; sem ela, o quadro que o Bunny
+ * gera do vídeo; e só por último a capa neutra.
+ */
+export function lessonThumbnail(thumbnail: string | null | undefined, videoUrl: string | null | undefined): string {
+  if (thumbnail) return thumbnail;
+  const m = videoUrl?.match(BUNNY_PLAYLIST);
+  if (m) return videoUrl!.slice(0, videoUrl!.indexOf(m[1]) + m[1].length) + "/thumbnail.jpg";
+  return "/placeholder.svg";
+}
+
+/** true quando a capa não foi escolhida por ninguém (placeholder ou quadro automático do Bunny). */
+export function isDefaultThumbnail(url: string | null | undefined): boolean {
+  return !url || url === "/placeholder.svg" || BUNNY_AUTO_THUMB.test(url);
+}
+
 interface UploadTicket {
   libraryId: string;
   videoId:   string;

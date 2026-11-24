@@ -75,13 +75,13 @@ const Index = () => {
     (v) => !v.watched && (v.progress ?? 0) > 0 && (v.progress ?? 0) < 100
   );
 
-  // Carrossel com todos os atletas cadastrados (inclusive os que ainda não têm
-  // aula) — quem tem mais aulas aparece primeiro.
+  // Carrossel só com quem tem aula publicada — quem tem mais aulas aparece primeiro.
   const athletes = instructors
     .map((inst) => ({
       ...inst,
       videoCount: videos.filter((v) => v.instructorId === inst.id).length,
     }))
+    .filter((a) => a.videoCount > 0)
     .sort((a, b) => b.videoCount - a.videoCount);
 
   if (isLoading) {

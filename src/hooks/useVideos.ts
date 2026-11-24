@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { videos as mockVideos } from "@/data/mockData";
+import { lessonThumbnail } from "@/lib/bunnyStream";
 
 export interface VideoWithProgress {
   id: string;
@@ -86,7 +87,7 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
       id:               v.id,
       title:            v.title,
       description:      v.description ?? "",
-      thumbnail:        v.thumbnail || "/placeholder.svg",
+      thumbnail:        lessonThumbnail(v.thumbnail, v.video_url),
       videoUrl:         v.video_url ?? null,
       duration:         v.duration,
       category:         v.category as string,
@@ -114,7 +115,7 @@ function buildMockVideoList(userId: string): VideoWithProgress[] {
       id:               v.id,
       title:            v.title,
       description:      v.description,
-      thumbnail:        v.thumbnail || "/placeholder.svg",
+      thumbnail:        lessonThumbnail(v.thumbnail, v.videoUrl),
       videoUrl:         v.videoUrl ?? null,
       duration:         v.duration,
       category:         v.category,
