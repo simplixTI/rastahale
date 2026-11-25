@@ -77,7 +77,7 @@
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "google": "Entrar con Google",
-    "apple": "Entrar con Apple",
+    "apple": "Continuar con Apple",
     "or": "o",
     "notConfigured": "App aún no configurada. Agrega las claves de Supabase/Firebase al .env o activa el modo mock.",
     "forgotPassword": "Olvidé mi contraseña"

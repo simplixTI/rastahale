@@ -77,7 +77,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "google": "Sign in with Google",
-    "apple": "Sign in with Apple",
+    "apple": "Continue with Apple",
     "or": "or",
     "notConfigured": "App not configured yet. Add Supabase/Firebase keys to .env or enable mock mode.",
     "forgotPassword": "Forgot my password"

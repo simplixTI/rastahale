@@ -6,6 +6,7 @@ import { authProvider, isMockModeEnabled, isFirebaseConfigured, isAnyAuthConfigu
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
+import appleLogo from "@/assets/apple-logo-siwa-white-medium.svg";
 
 const prefersReducedMotion = () => {
   if (typeof window === "undefined") return false;
@@ -368,16 +369,18 @@ const Login = () => {
             </button>
 
             {/* Sign in with Apple — obrigatório na App Store (guideline 4.8).
-                Estilo preto fixo seguindo o HIG da Apple, nos dois temas. */}
+                A Apple rejeitou (diretriz 4) o logo desenhado à mão: o logo tem
+                de ser o arquivo oficial do Apple Design Resources ("Sign in with
+                Apple – Left Aligned – White – Medium", 31×44, já com o fundo
+                preto). Botão preto de 44px, fonte do sistema e título oficial. */}
             <button
               type="button"
               onClick={handleAppleLogin}
               disabled={isAppleLoading || isLoading}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-black py-3 text-sm font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+              style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif" }}
+              className="mt-3 flex h-[44px] w-full items-center justify-center overflow-hidden rounded-full bg-black pr-[14px] text-[17px] font-medium text-white shadow-sm transition-all active:scale-[0.99] disabled:opacity-50"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M17.05 20.28c-.98.95-2.05.86-3.08.41-1.09-.47-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.41C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8.98-.2 1.92-.82 3.24-.74 1.13.09 2.11.54 2.87 1.47-2.63 1.58-2.19 5.03.45 6.04-.5 1.32-1.15 2.63-2.14 3.66l-.5.74zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
+              <img src={appleLogo} alt="" aria-hidden="true" width={31} height={44} className="h-[44px] w-[31px] flex-shrink-0" />
               {isAppleLoading ? t("login.submitting") : t("login.apple")}
             </button>
           </>
