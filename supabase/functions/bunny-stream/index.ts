@@ -65,6 +65,7 @@ const admin = createClient(
 );
 
 interface Caller {
+  id:     string;
   role:   string;
   status: string;
 }
@@ -76,7 +77,7 @@ async function getCaller(req: Request): Promise<Caller | null> {
   const { data: { user } } = await admin.auth.getUser(token);
   if (!user) return null;
   const { data: profile } = await admin.from("profiles").select("role, status").eq("id", user.id).maybeSingle();
-  return { role: String(profile?.role), status: String(profile?.status) };
+  return { id: user.id, role: String(profile?.role), status: String(profile?.status) };
 }
 
 /** Só admin/instrutor gerenciam vídeos — mesma regra do bucket "media". */
@@ -136,7 +137,7 @@ async function videoState(guid: string): Promise<{ state: "ready" | "processing"
   }
 }
 
-/** Regra de acesso às aulas: equipe sempre; aluno só com assinatura ativa. */
+/** Regra de acesso às aulas: equipe sempre; aluno com assinatura ativa ou com o módulo comprado. */
 async function playback(caller: Caller, lessonId: string): Promise<Response> {
   const { data: lesson, error } = await admin
     .from("videos")
@@ -147,7 +148,12 @@ async function playback(caller: Caller, lessonId: string): Promise<Response> {
 
   const staff = isStaff(caller);
   if (!lesson || (!lesson.visible && !staff)) return json({ error: "Aula não encontrada" }, 404);
-  if (!staff && caller.status !== "ativo") return json({ error: "Assinatura necessária" }, 403);
+  // Sem plano ativo, o aluno ainda assiste às aulas dos módulos que comprou
+  // avulsos (migration 022). Mesma regra de src/lib/access.ts.
+  if (!staff && caller.status !== "ativo") {
+    const { data: owns } = await admin.rpc("owns_lesson", { p_user: caller.id, p_video: lessonId });
+    if (owns !== true) return json({ error: "Assinatura necessária" }, 403);
+  }
   // Liberação agendada (migration 021): antes da data só a equipe assiste.
   const releaseAt = (lesson as { release_at?: string | null }).release_at;
   if (!staff && releaseAt && Date.parse(releaseAt) > Date.now()) {

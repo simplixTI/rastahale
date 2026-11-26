@@ -50,6 +50,9 @@ Deno.serve(async (req) => {
         // customer.subscription.created cuida do resto.
         const session = event.data.object;
         console.log("[stripe-webhook] checkout completo:", session.id);
+        // Compra avulsa de módulo (migration 022): não há assinatura, a
+        // liberação acontece aqui.
+        if (session.metadata?.kind === "module") await grantModule(session);
         break;
       }
 
@@ -195,4 +198,56 @@ async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou")
   });
 
   console.log("[stripe-webhook] pagamento registrado:", invoiceId, status);
+}
+
+/** Grava a compra avulsa do módulo e o pagamento. Idempotente: o Stripe pode reenviar o evento. */
+async function grantModule(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.payment_status !== "paid") {
+    console.warn("[stripe-webhook] módulo ainda não pago:", session.id, session.payment_status);
+    return;
+  }
+  const userId   = session.metadata?.supabase_user_id;
+  const moduleId = session.metadata?.module_id;
+  if (!userId || !moduleId) {
+    console.warn("[stripe-webhook] compra de módulo sem metadata:", session.id);
+    return;
+  }
+  const amount = (session.amount_total ?? 0) / 100;
+
+  const { error } = await supabaseAdmin.from("module_purchases").upsert({
+    user_id:           userId,
+    module_id:         moduleId,
+    source:            "stripe",
+    amount,
+    stripe_session_id: session.id,
+  }, { onConflict: "user_id,module_id", ignoreDuplicates: true });
+  if (error) {
+    console.error("[stripe-webhook] falha ao gravar compra de módulo:", error.message);
+    throw error;
+  }
+
+  const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
+  if (paymentIntent) {
+    const { data: existing } = await supabaseAdmin
+      .from("payments").select("id").eq("stripe_payment_intent", paymentIntent).maybeSingle();
+    if (existing) return;
+  }
+
+  const [{ data: profile }, { data: mod }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("name").eq("id", userId).maybeSingle(),
+    supabaseAdmin.from("studio_sessions").select("title").eq("id", moduleId).maybeSingle(),
+  ]);
+
+  await supabaseAdmin.from("payments").insert({
+    user_id:               userId,
+    user_name:             profile?.name ?? "",
+    amount,
+    method:                "Stripe",
+    status:                "pago",
+    plan_name:             `Módulo: ${mod?.title ?? moduleId}`,
+    date:                  new Date((session.created ?? Date.now() / 1000) * 1000).toISOString().slice(0, 10),
+    stripe_payment_intent: paymentIntent,
+  });
+
+  console.log("[stripe-webhook] módulo liberado:", moduleId, "para", userId);
 }

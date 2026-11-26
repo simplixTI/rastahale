@@ -10,6 +10,7 @@ import { useVideos } from "@/hooks/useVideos";
 import { useInstructorComments } from "@/hooks/useInstructorComments";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
 import VideoCard from "@/components/VideoCard";
+import BuyModuleButton from "@/components/BuyModuleButton";
 import { useLabels } from "@/i18n/labels";
 import { currentLocale } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -216,6 +217,7 @@ const InstructorSection = () => {
                   <Fold key={s.id} className="rounded-xl border border-border bg-card p-3 pb-0"
                     title={s.title} count={t("common.lessons", { count: modVids.length })} defaultOpen={idx === 0}>
                     {s.description && <p className="-mt-2 mb-3 text-[11px] text-muted-foreground">{s.description}</p>}
+                    <BuyModuleButton module={s} className="mb-3" />
                     {modVids.length > 0 ? (
                       <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide">
                         {modVids.map((v) => <VideoCard key={v.id} video={v} size="sm" />)}

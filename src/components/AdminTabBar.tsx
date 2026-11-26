@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Video, Users, CreditCard, Menu,
-  UserCircle2, DollarSign, Trophy, ShoppingBag, LogOut, ChevronRight,
+  UserCircle2, DollarSign, Trophy, ShoppingBag, ShoppingCart, LogOut, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import TabBar, { type TabItem } from "@/components/TabBar";
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 const moreItems = [
   { path: "/admin/instrutores", icon: UserCircle2, label: "Instrutores", hint: "Professores e acessos ao Studio" },
   { path: "/admin/planos",      icon: DollarSign,  label: "Planos",      hint: "Preços e o que cada plano libera" },
+  { path: "/admin/vendas-modulos", icon: ShoppingCart, label: "Venda de módulos", hint: "Preço dos módulos avulsos" },
   { path: "/admin/temporada",   icon: Trophy,      label: "Temporada",   hint: "Ranking e período de pontuação" },
   { path: "/admin/loja",        icon: ShoppingBag, label: "Banner da loja", hint: "Carrossel da tela inicial" },
 ];

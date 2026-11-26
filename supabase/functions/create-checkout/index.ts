@@ -1,5 +1,6 @@
 // POST /functions/v1/create-checkout
-// Body: { planId: string }
+// Body: { planId: string }                          → assinatura do plano
+//    ou { moduleId: string, returnPath?: string }   → compra avulsa de um módulo (pagamento único)
 // Retorna: { url: string } — URL da sessão de checkout do Stripe pra redirecionar o usuário.
 //
 // Fluxo:
@@ -19,6 +20,7 @@ Deno.serve(async (req) => {
   try {
     const { user } = await requireUser(req);
     const body = await req.json().catch(() => ({}));
+    if (body?.moduleId) return await moduleCheckout(req, user, String(body.moduleId), body?.returnPath);
     const planId: string | undefined = body?.planId;
     if (!planId) return json({ error: "planId obrigatório" }, { status: 400 });
 
@@ -34,26 +36,7 @@ Deno.serve(async (req) => {
       return json({ error: "Plano ainda não sincronizado com o Stripe" }, { status: 400 });
     }
 
-    // Garante o Stripe customer
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("email, name, stripe_customer_id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    let customerId = profile?.stripe_customer_id ?? null;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: profile?.email ?? user.email ?? undefined,
-        name:  profile?.name  ?? undefined,
-        metadata: { supabase_user_id: user.id },
-      });
-      customerId = customer.id;
-      await supabaseAdmin
-        .from("profiles")
-        .update({ stripe_customer_id: customerId })
-        .eq("id", user.id);
-    }
+    const customerId = await ensureCustomer(user);
 
     // Cria a sessão de checkout
     const appUrl = resolveAppUrl(req);
@@ -86,3 +69,87 @@ Deno.serve(async (req) => {
     return json({ error: (err as Error).message }, { status: 500 });
   }
 });
+
+type AuthUser = { id: string; email?: string | null };
+
+/** Devolve o customer do Stripe do aluno, criando na primeira compra. */
+async function ensureCustomer(user: AuthUser): Promise<string> {
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("email, name, stripe_customer_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.stripe_customer_id) return profile.stripe_customer_id;
+  const customer = await stripe.customers.create({
+    email: profile?.email ?? user.email ?? undefined,
+    name:  profile?.name  ?? undefined,
+    metadata: { supabase_user_id: user.id },
+  });
+  await supabaseAdmin
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id })
+    .eq("id", user.id);
+  return customer.id;
+}
+
+/**
+ * Compra avulsa de módulo (migration 022): pagamento único, acesso vitalício.
+ * O preço vem do banco (studio_sessions.price), nunca do navegador. Quem grava
+ * a compra é o webhook, no evento checkout.session.completed.
+ */
+async function moduleCheckout(req: Request, user: AuthUser, moduleId: string, returnPath: unknown): Promise<Response> {
+  const { data: mod, error } = await supabaseAdmin
+    .from("studio_sessions")
+    .select("id, title, price, instructor_id")
+    .eq("id", moduleId)
+    .maybeSingle();
+  if (error || !mod) return json({ error: "Módulo não encontrado" }, { status: 404 });
+  const price = Number(mod.price);
+  if (!price || price <= 0) return json({ error: "Este módulo não está à venda" }, { status: 400 });
+
+  const { data: owned } = await supabaseAdmin
+    .from("module_purchases")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("module_id", mod.id)
+    .maybeSingle();
+  if (owned) return json({ error: "Você já comprou este módulo" }, { status: 400 });
+
+  const { data: instructor } = await supabaseAdmin
+    .from("instructors")
+    .select("name")
+    .eq("id", mod.instructor_id)
+    .maybeSingle();
+
+  // Volta para a tela de onde o aluno saiu. Só caminho interno ("/..."),
+  // nunca outro site.
+  const path = typeof returnPath === "string" && /^\/(?!\/)[^\s]*$/.test(returnPath) ? returnPath : "/";
+  const back = (flag: string) => `${resolveAppUrl(req)}${path}${path.includes("?") ? "&" : "?"}compra=${flag}`;
+
+  const customerId = await ensureCustomer(user);
+  const metadata = { kind: "module", supabase_user_id: user.id, module_id: mod.id };
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    customer: customerId,
+    line_items: [{
+      quantity: 1,
+      price_data: {
+        currency: "brl",
+        unit_amount: Math.round(price * 100),
+        product_data: {
+          name: `Módulo: ${mod.title}`,
+          description: instructor?.name ? `Acesso vitalício · ${instructor.name}` : "Acesso vitalício",
+        },
+      },
+    }],
+    payment_method_types: ["card"],
+    success_url: back("ok"),
+    cancel_url:  back("cancelada"),
+    payment_intent_data: { metadata },
+    metadata,
+    locale: "pt-BR",
+  });
+
+  return json({ url: session.url });
+}

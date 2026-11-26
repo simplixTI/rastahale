@@ -7,6 +7,11 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { Eye, EyeOff, Download, X, Smartphone } from "lucide-react";
 import appleLogo from "@/assets/apple-logo-siwa-white-medium.svg";
+import { Capacitor } from "@capacitor/core";
+
+// A Apple só exige o botão no iOS (guideline 4.8). No app Android o login
+// Apple não está configurado e só confundiria o aluno; no site ele fica.
+const showAppleLogin = Capacitor.getPlatform() !== "android";
 
 const prefersReducedMotion = () => {
   if (typeof window === "undefined") return false;
@@ -373,6 +378,7 @@ const Login = () => {
                 de ser o arquivo oficial do Apple Design Resources ("Sign in with
                 Apple – Left Aligned – White – Medium", 31×44, já com o fundo
                 preto). Botão preto de 44px, fonte do sistema e título oficial. */}
+            {showAppleLogin && (
             <button
               type="button"
               onClick={handleAppleLogin}
@@ -383,6 +389,7 @@ const Login = () => {
               <img src={appleLogo} alt="" aria-hidden="true" width={31} height={44} className="h-[44px] w-[31px] flex-shrink-0" />
               {isAppleLoading ? t("login.submitting") : t("login.apple")}
             </button>
+            )}
           </>
         )}
 

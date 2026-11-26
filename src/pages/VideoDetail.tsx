@@ -14,7 +14,10 @@ import VideoCard from "@/components/VideoCard";
 import LoadError from "@/components/LoadError";
 import { useLabels } from "@/i18n/labels";
 import { getLevelColor } from "@/data/mockData";
-import { canWatchLessons } from "@/lib/access";
+import { canWatchLesson } from "@/lib/access";
+import { useModuleAccess } from "@/hooks/useModulePurchases";
+import { useStudioSessions } from "@/hooks/useStudioSessions";
+import BuyModuleButton from "@/components/BuyModuleButton";
 import { formatRelease, isUpcoming } from "@/lib/release";
 import { bunnyVideoIdFromUrl, getBunnyPlayback, isHlsUrl, type BunnyPlayback } from "@/lib/bunnyStream";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -243,7 +246,7 @@ function PlayerMessage({ text, actionLabel, onAction }: {
   );
 }
 
-function LockedMessage() {
+function LockedMessage({ module }: { module?: { id: string; price: number | null } | null }) {
   const navigate = useNavigate();
   const { t }    = useTranslation();
   return (
@@ -263,6 +266,8 @@ function LockedMessage() {
           >
             {t("video.lockedCta")}
           </button>
+          {/* Sem plano: a aula também pode ser liberada comprando só o módulo dela. */}
+          {module?.price ? <BuyModuleButton module={module} tone="dark" className="mt-1" /> : null}
         </>
       )}
     </div>
@@ -365,11 +370,13 @@ function VideoPlayer({ lessonId, videoUrl, thumbnail, title, startAt, onProgress
 }
 
 /** Aluno sem assinatura ativa vê a capa da aula e o caminho para assinar. */
-function LockedPlayer({ thumbnail, title }: { thumbnail: string; title: string }) {
+function LockedPlayer({ thumbnail, title, module }: {
+  thumbnail: string; title: string; module?: { id: string; price: number | null } | null;
+}) {
   return (
     <div className="relative aspect-video w-full bg-black">
       <img src={thumbnail} alt={title} className="h-full w-full object-cover opacity-60" />
-      <LockedMessage />
+      <LockedMessage module={module} />
     </div>
   );
 }
@@ -404,6 +411,8 @@ const VideoDetail = () => {
   const {
     data: profile, isLoading: profileLoading, isError: profileError, refetch: refetchProfile,
   } = useProfile(user?.id ?? "");
+  const { access: moduleAccess }   = useModuleAccess();
+  const { sessions: instructorModules } = useStudioSessions(video?.instructorId ?? "");
 
   // Grava o progresso de reprodução. A partir de 95% conta como assistida —
   // os segundos finais (créditos, despedida) raramente são vistos até o fim.
@@ -448,7 +457,9 @@ const VideoDetail = () => {
   }
 
   // Modo demo (sem Supabase) não tem assinatura para conferir.
-  const canWatch  = !isSupabaseConfigured || canWatchLessons(user?.role, profile?.status);
+  const canWatch  = !isSupabaseConfigured || canWatchLesson(user?.role, profile?.status, video.id, moduleAccess.videoIds);
+  // Módulo à venda avulso que contém esta aula (o primeiro, se houver mais de um).
+  const saleModule = instructorModules.find((m) => m.price && m.videoIds.includes(video.id)) ?? null;
   // A equipe assiste antes da data, para conferir a aula agendada.
   const isStaff   = user?.role === "admin" || user?.role === "instructor";
   const upcoming  = !isStaff && isUpcoming(video.releaseAt);
@@ -512,7 +523,7 @@ const VideoDetail = () => {
             <PlayerMessage text={t("common.loadError")} actionLabel={t("common.retry")} onAction={() => refetchProfile()} />
           </div>
         ) : (
-          <LockedPlayer thumbnail={video.thumbnail} title={video.title} />
+          <LockedPlayer thumbnail={video.thumbnail} title={video.title} module={saleModule} />
         )}
         <button
           onClick={() => navigate(-1)}

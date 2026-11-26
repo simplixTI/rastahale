@@ -385,5 +385,12 @@
   "notFound": {
     "message": "Oops! Page not found",
     "home": "Return to Home"
+  },
+  "modulePurchase": {
+    "buy": "Buy this module · {{price}}",
+    "owned": "Module purchased · lifetime access",
+    "success": "Module unlocked! Enjoy your training.",
+    "confirming": "Confirming payment…",
+    "cancelled": "Purchase cancelled."
   }
 }

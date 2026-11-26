@@ -246,15 +246,42 @@ export interface Database {
           // Migration 020: ordem do módulo na página do professor e capa.
           position: number;
           cover_url: string | null;
+          // Migration 022: preço da venda avulsa (null = não vende avulso).
+          price: number | null;
         };
-        // id, created_at, position e cover_url têm default no banco.
-        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at" | "position" | "cover_url"> & {
+        // id, created_at, position, cover_url e price têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at" | "position" | "cover_url" | "price"> & {
           id?: string;
           position?: number;
           cover_url?: string | null;
+          price?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["studio_sessions"]["Insert"]>;
         Relationships: [];
+      };
+      // Migration 022: compras avulsas de módulo (acesso vitalício).
+      module_purchases: {
+        Row: {
+          id: string;
+          user_id: string;
+          module_id: string;
+          source: string;
+          amount: number | null;
+          stripe_session_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          module_id: string;
+          source?: string;
+          amount?: number | null;
+          stripe_session_id?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["module_purchases"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "module_purchases_module_id_fkey"; columns: ["module_id"]; isOneToOne: false; referencedRelation: "studio_sessions"; referencedColumns: ["id"] },
+        ];
       };
     };
     Views: {
@@ -273,6 +300,10 @@ export interface Database {
       get_user_overall_progress: {
         Args: { p_user_id: string };
         Returns: number;
+      };
+      owns_lesson: {
+        Args: { p_user: string; p_video: string };
+        Returns: boolean;
       };
     };
   };

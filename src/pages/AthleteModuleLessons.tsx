@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatRelease, isUpcoming } from "@/lib/release";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
 import { LOOSE_MODULE_KEY, SESSION_KEY_PREFIX } from "@/lib/modules";
+import BuyModuleButton from "@/components/BuyModuleButton";
 
 const AthleteModuleLessons = () => {
   const { id, modulo } = useParams<{ id: string; modulo: string }>();
@@ -31,9 +32,11 @@ const AthleteModuleLessons = () => {
   // A chave diz que tipo de módulo é (ver src/lib/modules.ts).
   let moduleName = moduleKey;
   let videos     = mine.filter((v) => v.subcategory === moduleKey);
+  let saleModule: { id: string; price: number | null } | null = null;
   if (moduleKey.startsWith(SESSION_KEY_PREFIX)) {
     const session = sessions.find((s) => s.id === moduleKey.slice(SESSION_KEY_PREFIX.length));
     moduleName = session?.title ?? "";
+    saleModule = session ?? null;
     // Na ordem definida no módulo, não na ordem do catálogo.
     videos = (session?.videoIds ?? [])
       .map((vid) => mine.find((v) => v.id === vid))
@@ -83,6 +86,12 @@ const AthleteModuleLessons = () => {
           </span>
         )}
       </div>
+
+      {saleModule && (
+        <div className="mt-3 px-4">
+          <BuyModuleButton module={saleModule} className="w-full" />
+        </div>
+      )}
 
       {/* aulas */}
       <div className="mt-4 px-4">

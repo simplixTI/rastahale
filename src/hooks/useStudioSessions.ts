@@ -14,6 +14,8 @@ export interface StudioSession {
   position:     number;
   /** Capa escolhida; sem ela, usa-se a miniatura da primeira aula. */
   coverUrl:     string | null;
+  /** Preço da venda avulsa em reais (migration 022); null = não vende avulso. */
+  price:        number | null;
 }
 
 /** Campos opcionais de um módulo. `undefined` = não mexer; `null` = remover. */
@@ -76,6 +78,7 @@ export function useStudioSessions(instructorId: string) {
               createdAt:    row.created_at,
               position:     row.position ?? 0,
               coverUrl:     row.cover_url ?? null,
+              price:        row.price != null ? Number(row.price) : null,
             }));
           }
           if (error && !isMissingTableError(error)) throw error;
@@ -124,6 +127,7 @@ export function useStudioSessions(instructorId: string) {
         createdAt:    new Date().toISOString(),
         position,
         coverUrl:     extras?.coverUrl ?? null,
+        price:        null,
       }]);
     },
     onSuccess,

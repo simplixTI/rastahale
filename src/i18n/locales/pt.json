@@ -385,5 +385,12 @@
   "notFound": {
     "message": "Ops! Página não encontrada",
     "home": "Voltar para o início"
+  },
+  "modulePurchase": {
+    "buy": "Comprar este módulo · {{price}}",
+    "owned": "Módulo comprado · acesso vitalício",
+    "success": "Módulo liberado! Bom treino.",
+    "confirming": "Confirmando o pagamento…",
+    "cancelled": "Compra cancelada."
   }
 }
