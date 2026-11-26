@@ -33,3 +33,29 @@ export function fromLocalInput(value: string | null | undefined): string | null 
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
+
+/**
+ * Liberação agendada de módulos (studio_sessions.release_at, migration 023).
+ * Devolve a data em que a aula sai da trava dos módulos, ou null se ela não
+ * está presa: a trava só vale quando TODOS os módulos que contêm a aula ainda
+ * não chegaram na data. Mesma regra da função SQL lesson_module_release.
+ */
+export function moduleReleaseGate(
+  lessonId: string,
+  modules: { videoIds: string[]; releaseAt: string | null }[],
+  now: number = Date.now(),
+): string | null {
+  const containing = modules.filter((m) => m.videoIds.includes(lessonId));
+  if (containing.length === 0) return null;
+  if (!containing.every((m) => isUpcoming(m.releaseAt, now))) return null;
+  return containing
+    .map((m) => m.releaseAt as string)
+    .sort((a, b) => Date.parse(a) - Date.parse(b))[0];
+}
+
+/** A data mais tarde entre a da aula e a dos módulos dela (null = liberada). */
+export function laterRelease(a: string | null | undefined, b: string | null | undefined): string | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return Date.parse(a) >= Date.parse(b) ? a : b;
+}

@@ -215,7 +215,10 @@ const InstructorSection = () => {
                 // Só o primeiro módulo começa aberto; os outros o aluno abre quando quiser.
                 return (
                   <Fold key={s.id} className="rounded-xl border border-border bg-card p-3 pb-0"
-                    title={s.title} count={t("common.lessons", { count: modVids.length })} defaultOpen={idx === 0}>
+                    title={s.title} defaultOpen={idx === 0}
+                    count={isUpcoming(s.releaseAt)
+                      ? t("video.releaseOn", { date: formatRelease(s.releaseAt as string, i18n.language) })
+                      : t("common.lessons", { count: modVids.length })}>
                     {s.description && <p className="-mt-2 mb-3 text-[11px] text-muted-foreground">{s.description}</p>}
                     <BuyModuleButton module={s} className="mb-3" />
                     {modVids.length > 0 ? (

@@ -159,6 +159,12 @@ async function playback(caller: Caller, lessonId: string): Promise<Response> {
   if (!staff && releaseAt && Date.parse(releaseAt) > Date.now()) {
     return json({ error: "Aula ainda não liberada", releaseAt }, 403);
   }
+  // Módulo agendado (migration 023): a aula espera a data se todos os
+  // módulos que a contêm ainda não foram liberados.
+  if (!staff) {
+    const { data: moduleRelease } = await admin.rpc("lesson_module_release", { p_video: lessonId });
+    if (moduleRelease) return json({ error: "Aula ainda não liberada", releaseAt: moduleRelease }, 403);
+  }
 
   const url  = String(lesson.video_url ?? "");
   const guid = url.match(BUNNY_PLAYLIST)?.[1];

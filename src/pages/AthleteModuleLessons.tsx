@@ -33,10 +33,12 @@ const AthleteModuleLessons = () => {
   let moduleName = moduleKey;
   let videos     = mine.filter((v) => v.subcategory === moduleKey);
   let saleModule: { id: string; price: number | null } | null = null;
+  let moduleRelease: string | null = null;
   if (moduleKey.startsWith(SESSION_KEY_PREFIX)) {
     const session = sessions.find((s) => s.id === moduleKey.slice(SESSION_KEY_PREFIX.length));
     moduleName = session?.title ?? "";
     saleModule = session ?? null;
+    moduleRelease = session?.releaseAt ?? null;
     // Na ordem definida no módulo, não na ordem do catálogo.
     videos = (session?.videoIds ?? [])
       .map((vid) => mine.find((v) => v.id === vid))
@@ -86,6 +88,13 @@ const AthleteModuleLessons = () => {
           </span>
         )}
       </div>
+
+      {isUpcoming(moduleRelease) && (
+        <p className="mx-4 mt-3 flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-[11px] font-medium text-foreground">
+          <CalendarClock size={12} className="text-primary" aria-hidden="true" />
+          {t("video.releaseOn", { date: formatRelease(moduleRelease as string, i18n.language) })}
+        </p>
+      )}
 
       {saleModule && (
         <div className="mt-3 px-4">

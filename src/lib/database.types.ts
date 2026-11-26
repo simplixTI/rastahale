@@ -248,13 +248,16 @@ export interface Database {
           cover_url: string | null;
           // Migration 022: preço da venda avulsa (null = não vende avulso).
           price: number | null;
+          // Migration 023: liberação agendada do módulo (null = já liberado).
+          release_at: string | null;
         };
-        // id, created_at, position, cover_url e price têm default no banco.
-        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at" | "position" | "cover_url" | "price"> & {
+        // id, created_at, position, cover_url, price e release_at têm default no banco.
+        Insert: Omit<Database["public"]["Tables"]["studio_sessions"]["Row"], "id" | "created_at" | "position" | "cover_url" | "price" | "release_at"> & {
           id?: string;
           position?: number;
           cover_url?: string | null;
           price?: number | null;
+          release_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["studio_sessions"]["Insert"]>;
         Relationships: [];
@@ -300,6 +303,10 @@ export interface Database {
       get_user_overall_progress: {
         Args: { p_user_id: string };
         Returns: number;
+      };
+      lesson_module_release: {
+        Args: { p_video: string };
+        Returns: string | null;
       };
       owns_lesson: {
         Args: { p_user: string; p_video: string };

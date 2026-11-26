@@ -16,11 +16,14 @@ export interface StudioSession {
   coverUrl:     string | null;
   /** Preço da venda avulsa em reais (migration 022); null = não vende avulso. */
   price:        number | null;
+  /** Data em que o módulo entra para os alunos (migration 023); null = já liberado. */
+  releaseAt:    string | null;
 }
 
 /** Campos opcionais de um módulo. `undefined` = não mexer; `null` = remover. */
 export interface SessionExtras {
   coverUrl?: string | null;
+  releaseAt?: string | null;
 }
 
 const KEY = "rasta_studio_sessions";
@@ -79,6 +82,7 @@ export function useStudioSessions(instructorId: string) {
               position:     row.position ?? 0,
               coverUrl:     row.cover_url ?? null,
               price:        row.price != null ? Number(row.price) : null,
+              releaseAt:    row.release_at ?? null,
             }));
           }
           if (error && !isMissingTableError(error)) throw error;
@@ -98,7 +102,11 @@ export function useStudioSessions(instructorId: string) {
   const onError = (error: unknown) => {
     if (!isMissingTableError(error)) toast.error("Erro ao salvar sessão. Tente novamente.");
   };
-  const onSuccess = () => qc.invalidateQueries({ queryKey });
+  // A data do módulo muda a trava das aulas no catálogo (useVideos).
+  const onSuccess = () => {
+    qc.invalidateQueries({ queryKey });
+    qc.invalidateQueries({ queryKey: ["videos"] });
+  };
 
   const createMutation = useMutation({
     mutationFn: async ({ title, description, videoIds, extras }: {
@@ -114,6 +122,7 @@ export function useStudioSessions(instructorId: string) {
           video_ids:     videoIds,
           position,
           cover_url:     extras?.coverUrl ?? null,
+          release_at:    extras?.releaseAt ?? null,
         });
         if (!error) return;
         if (!isMissingTableError(error)) throw error;
@@ -128,6 +137,7 @@ export function useStudioSessions(instructorId: string) {
         position,
         coverUrl:     extras?.coverUrl ?? null,
         price:        null,
+        releaseAt:    extras?.releaseAt ?? null,
       }]);
     },
     onSuccess,
@@ -144,6 +154,7 @@ export function useStudioSessions(instructorId: string) {
           description: description.trim(),
           video_ids:   videoIds,
           ...(extras?.coverUrl !== undefined ? { cover_url: extras.coverUrl } : {}),
+          ...(extras?.releaseAt !== undefined ? { release_at: extras.releaseAt } : {}),
         }).eq("id", id);
         if (!error) return;
         if (!isMissingTableError(error)) throw error;
@@ -151,7 +162,8 @@ export function useStudioSessions(instructorId: string) {
       persistLocal(instructorId, (all) => all.map((s) =>
         s.id === id
           ? { ...s, title: title.trim(), description: description.trim(), videoIds,
-              ...(extras?.coverUrl !== undefined ? { coverUrl: extras.coverUrl } : {}) }
+              ...(extras?.coverUrl !== undefined ? { coverUrl: extras.coverUrl } : {}),
+              ...(extras?.releaseAt !== undefined ? { releaseAt: extras.releaseAt } : {}) }
           : s
       ));
     },

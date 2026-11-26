@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { formatRelease, isUpcoming } from "@/lib/release";
+import { formatRelease, fromLocalInput, isUpcoming, toLocalInput } from "@/lib/release";
 
 // Página do professor no admin: perfil + gestão dos módulos dele.
 //
@@ -228,6 +228,7 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
   onSave: (title: string, description: string, videoIds: string[], extras: SessionExtras) => void;
 }) {
   const [cover, setCover]             = useState<string | null>(module?.coverUrl ?? null);
+  const [release, setRelease]         = useState(toLocalInput(module?.releaseAt));
   const [title, setTitle]             = useState(module?.title ?? "");
   const [description, setDescription] = useState(module?.description ?? "");
   const [picked, setPicked]           = useState<string[]>(module?.videoIds ?? []);
@@ -245,7 +246,7 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
     // Mantém a ordem já definida e joga as aulas recém-marcadas para o fim.
     const kept = (module?.videoIds ?? []).filter((id) => picked.includes(id));
     const added = picked.filter((id) => !kept.includes(id));
-    onSave(title.trim(), description.trim(), [...kept, ...added], { coverUrl: cover });
+    onSave(title.trim(), description.trim(), [...kept, ...added], { coverUrl: cover, releaseAt: fromLocalInput(release) });
   };
 
   return (
@@ -291,6 +292,36 @@ function ModuleDialog({ open, module, lessons, onClose, onSave }: {
             <span className={labelCls}>Capa <span className="font-normal text-muted-foreground">(opcional)</span></span>
             <ImagePicker value={cover} onChange={setCover} folder="modules" label="Capa do módulo" />
             <p className="mt-1.5 text-xs text-muted-foreground">Sem capa, o aluno vê a miniatura da primeira aula.</p>
+          </div>
+
+          {/* Liberação agendada (migration 023) */}
+          <div>
+            <label htmlFor="module-release" className={cn(labelCls, "flex items-center gap-1")}>
+              <CalendarClock size={12} aria-hidden="true" /> Liberar para os alunos em <span className="font-normal text-muted-foreground">(opcional)</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="module-release"
+                type="datetime-local"
+                value={release}
+                onChange={(e) => setRelease(e.target.value)}
+                className={cn(fieldCls, "min-w-0 flex-1")}
+              />
+              {release && (
+                <button
+                  type="button"
+                  onClick={() => setRelease("")}
+                  className="flex-shrink-0 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-secondary"
+                >
+                  Liberar já
+                </button>
+              )}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {release
+                ? "Até essa data o aluno vê o módulo e as aulas dele como \"Em breve\", com a data. Você continua assistindo para conferir."
+                : "Em branco, o módulo fica disponível assim que for salvo."}
+            </p>
           </div>
 
           <fieldset>
@@ -397,6 +428,7 @@ function ModuleCard({ module, lessonsById, defaultOpen, others, canMoveUp, canMo
             <span className="block truncate text-sm font-semibold text-foreground">{module.title}</span>
             <span className="tabular block truncate text-xs text-muted-foreground">
               {ids.length === 1 ? "1 aula" : `${ids.length} aulas`}
+              {isUpcoming(module.releaseAt) && ` · Libera ${formatRelease(module.releaseAt as string, "pt-BR")}`}
               {module.description && ` · ${module.description}`}
             </span>
           </span>

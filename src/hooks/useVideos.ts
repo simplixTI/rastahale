@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
 import { videos as mockVideos } from "@/data/mockData";
 import { lessonThumbnail } from "@/lib/bunnyStream";
+import { laterRelease, moduleReleaseGate } from "@/lib/release";
 
 export interface VideoWithProgress {
   id: string;
@@ -55,6 +56,17 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
   if (error) throw error;
   if (!vids || vids.length === 0) return [];
 
+  // Módulos agendados (migration 023): a aula herda a data do módulo. Se a
+  // consulta falhar, segue sem a trava na tela; o servidor continua barrando.
+  let scheduledModules: { videoIds: string[]; releaseAt: string | null }[] = [];
+  try {
+    const { data: mods } = await supabase
+      .from("studio_sessions")
+      .select("video_ids, release_at")
+      .not("release_at", "is", null);
+    scheduledModules = (mods ?? []).map((m) => ({ videoIds: m.video_ids ?? [], releaseAt: m.release_at }));
+  } catch { /* sem trava de módulo na tela */ }
+
   const progressMap: Record<string, { progress: number; watched: boolean; is_favorite: boolean }> = {};
 
   if (isSupabaseUser(userId)) {
@@ -97,7 +109,7 @@ async function fetchVideosFromSupabase(userId: string): Promise<VideoWithProgres
       visible:          v.visible,
       unlockByProgress: v.unlock_by_progress,
       requiredProgress: v.required_progress,
-      releaseAt:        v.release_at ?? null,
+      releaseAt:        laterRelease(v.release_at, moduleReleaseGate(v.id, scheduledModules)),
       progress:         p?.progress    ?? 0,
       watched:          p?.watched     ?? false,
       isFavorite:       p?.is_favorite ?? false,

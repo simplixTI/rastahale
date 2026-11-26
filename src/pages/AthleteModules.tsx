@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, ChevronRight, Clock, LayoutList } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, Clock, LayoutList } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstructor } from "@/hooks/useInstructors";
@@ -9,12 +9,13 @@ import { currentLocale } from "@/i18n";
 import { totalMinutes } from "@/lib/duration";
 import { useStudioSessions } from "@/hooks/useStudioSessions";
 import { LOOSE_MODULE_KEY } from "@/lib/modules";
+import { formatRelease, isUpcoming } from "@/lib/release";
 
 const AthleteModules = () => {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t }    = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels   = useLabels();
 
   const { data: instructor, isLoading: loadInst }     = useInstructor(id ?? "");
@@ -26,14 +27,14 @@ const AthleteModules = () => {
   // pelo admin em /admin/instrutores/:id — com ordem, descrição e capa.
   const { sessions } = useStudioSessions(id ?? "");
 
-  type Mod = { key: string; name: string; description?: string; cover?: string; videos: typeof videos };
+  type Mod = { key: string; name: string; description?: string; cover?: string; videos: typeof videos; releaseAt?: string | null };
 
   const curated: Mod[] = sessions
     .map((s) => {
       const list = s.videoIds
         .map((vid) => videos.find((v) => v.id === vid))
         .filter((v): v is (typeof videos)[number] => !!v);
-      return { key: `s:${s.id}`, name: s.title, description: s.description, cover: s.coverUrl ?? list[0]?.thumbnail, videos: list };
+      return { key: `s:${s.id}`, name: s.title, description: s.description, cover: s.coverUrl ?? list[0]?.thumbnail, videos: list, releaseAt: s.releaseAt };
     })
     .filter((m) => m.videos.length > 0);
 
@@ -170,6 +171,12 @@ const AthleteModules = () => {
                         <span className="flex items-center gap-1">
                           <Clock size={10} className="text-primary" />
                           {labels.duration(minutes)}
+                        </span>
+                      )}
+                      {isUpcoming(mod.releaseAt) && (
+                        <span className="flex items-center gap-1 font-medium text-foreground">
+                          <CalendarClock size={10} className="text-primary" aria-hidden="true" />
+                          {t("video.releaseOn", { date: formatRelease(mod.releaseAt as string, i18n.language) })}
                         </span>
                       )}
                     </div>
