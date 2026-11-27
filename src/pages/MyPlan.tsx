@@ -32,8 +32,11 @@ const MyPlan = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
   const planName = profile?.planName ?? "Básico";
-  const plan     = plans.find((p) => p.name === planName) ?? plans[0];
-  const otherPlans = plans.filter((p) => p.name !== plan?.name);
+  // O Básico não está à venda: é a conta grátis com que todo aluno começa.
+  // Quem está nele (ou num plano que saiu de venda) não tem um plano da lista.
+  const subscribedPlan = plans.find((p) => p.name === planName);
+  const plan     = subscribedPlan ?? plans[0];
+  const otherPlans = plans.filter((p) => p.name !== subscribedPlan?.name);
 
   const hasActiveSubscription = !!profile?.stripeSubscriptionId
     && (profile.subscriptionStatus === "active" || profile.subscriptionStatus === "trialing");
@@ -42,12 +45,16 @@ const MyPlan = () => {
   // Conta que nunca assinou (status "pendente"): não tem plano em vigor. Sem
   // isto o cartão dizia "Plano atual: Básico — Ativo" para quem não paga nada.
   const noSubscription = profile?.status === "pendente";
+  // Conta grátis (Básico): mostra os planos à venda em vez de "Assinar" um
+  // plano atual. Quem ainda paga um plano antigo (status ativo) não entra aqui.
+  const isFree = noSubscription || (!subscribedPlan && profile?.status !== "ativo");
 
   const nextBilling = profile?.currentPeriodEnd
     ? labels.longDate(new Date(profile.currentPeriodEnd))
     : "—";
 
-  const isPremium = plan?.name?.toLowerCase().includes("premium") ?? false;
+  const shownName = subscribedPlan?.name ?? planName;
+  const isPremium = !isFree && shownName.toLowerCase().includes("premium");
 
   // App nativo (iOS/Android): Apple guideline 3.1.1 e o equivalente do Google
   // proíbem checkout externo (Stripe) de conteúdo digital. No app a assinatura
@@ -146,26 +153,26 @@ const MyPlan = () => {
                 {isPremium ? <Crown size={18} className="text-primary" /> : <Zap size={18} className="text-primary" />}
                 <span className="text-xs font-semibold uppercase tracking-wider text-primary">{t("plan.current")}</span>
               </div>
-              <h2 className="mt-1 text-2xl font-bold text-foreground">{plan.name}</h2>
+              <h2 className="mt-1 text-2xl font-bold text-foreground">{shownName}</h2>
             </div>
             <span className={cn(
               "rounded-full px-3 py-1 text-xs font-semibold",
-              noSubscription ? "bg-muted text-muted-foreground"
+              isFree ? "bg-muted text-muted-foreground"
                 : isCancelled ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"
             )}>
-              {noSubscription ? t("plan.noSubscription") : isCancelled ? t("plan.cancelled") : t("plan.active")}
+              {isFree ? t("plan.noSubscription") : isCancelled ? t("plan.cancelled") : t("plan.active")}
             </span>
           </div>
 
           {/* O preço do banco é o da web; no app quem informa o preço é a loja. */}
-          {!isNative && (
+          {!isNative && !isFree && subscribedPlan && (
             <div className="mt-4 flex items-end gap-1">
               <span className="text-3xl font-bold text-foreground">{labels.currency(plan.price)}</span>
               <span className="mb-1 text-sm text-muted-foreground">{labels.interval(plan.interval)}</span>
             </div>
           )}
 
-          {isCancelled && (
+          {isCancelled && !isFree && (
             <p className="mt-3 text-xs text-muted-foreground">
               {t("plan.cancelNotice")}
             </p>
@@ -193,13 +200,13 @@ const MyPlan = () => {
 
         {!hideCurrentPlan && (<>
         {/* Features */}
-        {plan.features?.length > 0 && (
+        {!isFree && subscribedPlan?.features?.length > 0 && (
           <div className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               {t("plan.included")}
             </p>
             <ul className="space-y-2.5">
-              {plan.features.map((feature: string) => (
+              {subscribedPlan.features.map((feature: string) => (
                 <li key={feature} className="flex items-center gap-2.5">
                   <CheckCircle size={15} className="shrink-0 text-emerald-400" />
                   <span className="text-sm text-foreground">{feature}</span>
@@ -233,6 +240,42 @@ const MyPlan = () => {
             <div className="flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4">
               <CheckCircle size={18} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               <p className="text-sm leading-relaxed text-foreground">{t("plan.accessActive")}</p>
+            </div>
+          ) : isFree ? (
+            // Conta grátis: um cartão por plano à venda, cada um com seu botão.
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("plan.choose")}</p>
+              {plans.map((p) => (
+                <div key={p.id} className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
+                        <Crown size={14} className="text-primary" aria-hidden="true" /> {p.name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {labels.currency(p.price)} {labels.interval(p.interval)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => openCheckout(p.id)}
+                      disabled={busyExternal}
+                      className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-60"
+                    >
+                      <CreditCard size={13} aria-hidden="true" /> {t("plan.subscribe")}
+                    </button>
+                  </div>
+                  {p.features?.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {p.features.slice(0, 4).map((f: string) => (
+                        <li key={f} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <CheckCircle size={10} className="shrink-0 text-emerald-400" aria-hidden="true" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <>
@@ -337,7 +380,7 @@ const MyPlan = () => {
 
           <div className="space-y-3">
             {plans.map((p) => {
-              const isCurrentPlan = p.name === plan.name;
+              const isCurrentPlan = p.name === subscribedPlan?.name;
               const isSelected = selectedPlanId === p.id;
               return (
                 <button
