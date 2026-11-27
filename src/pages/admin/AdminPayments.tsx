@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { CheckCircle, AlertCircle, XCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { CheckCircle, AlertCircle, XCircle, TrendingUp, TrendingDown, KeyRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AdminLayout from "@/components/AdminLayout";
 import { useAdminPayments, useUpdatePaymentStatus } from "@/hooks/useAdminData";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 const AdminPayments = () => {
   const { data: payments = [], isLoading } = useAdminPayments();
   const updateStatus = useUpdatePaymentStatus();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [methodFilter, setMethodFilter] = useState<string>("todos");
 
@@ -29,7 +31,15 @@ const AdminPayments = () => {
 
   return (
     <AdminLayout title="Pagamentos">
-      <h2 className="text-lg font-bold text-foreground">Gerenciar Pagamentos</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold text-foreground">Gerenciar Pagamentos</h2>
+        <button
+          onClick={() => navigate("/admin/ativacao")}
+          className="flex items-center gap-1.5 rounded-full btn-press bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
+        >
+          <KeyRound size={13} /> Ativar aluno
+        </button>
+      </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-2.5 text-center">

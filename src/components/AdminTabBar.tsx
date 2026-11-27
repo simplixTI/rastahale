@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Video, Users, CreditCard, Menu,
-  UserCircle2, DollarSign, Trophy, ShoppingBag, ShoppingCart, LogOut, ChevronRight,
+  UserCircle2, DollarSign, Trophy, ShoppingBag, ShoppingCart, KeyRound, LogOut, ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import TabBar, { type TabItem } from "@/components/TabBar";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 // Sete destinos não cabem numa barra inferior (o último ficava cortado).
 // Os quatro de uso diário ficam na barra; o resto abre em "Mais".
 const moreItems = [
+  { path: "/admin/ativacao",    icon: KeyRound,    label: "Ativação manual", hint: "Liberar aluno que pagou por fora" },
   { path: "/admin/instrutores", icon: UserCircle2, label: "Instrutores", hint: "Professores e acessos ao Studio" },
   { path: "/admin/planos",      icon: DollarSign,  label: "Planos",      hint: "Preços e o que cada plano libera" },
   { path: "/admin/vendas-modulos", icon: ShoppingCart, label: "Venda de módulos", hint: "Preço dos módulos avulsos" },

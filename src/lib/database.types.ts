@@ -286,6 +286,32 @@ export interface Database {
           { foreignKeyName: "module_purchases_module_id_fkey"; columns: ["module_id"]; isOneToOne: false; referencedRelation: "studio_sessions"; referencedColumns: ["id"] },
         ];
       };
+      // Migrations 024/025: acesso pago antes do cadastro (Stripe ou admin).
+      stripe_pending_access: {
+        Row: {
+          email: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          plan_name: string | null;
+          current_period_end: string | null;
+          source: string;
+          amount: number | null;
+          method: string | null;
+          created_at: string;
+        };
+        Insert: {
+          email: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          plan_name?: string | null;
+          current_period_end?: string | null;
+          source?: string;
+          amount?: number | null;
+          method?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["stripe_pending_access"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       // View da migration 011: projeção de profiles com role = 'user'.
@@ -311,6 +337,14 @@ export interface Database {
       owns_lesson: {
         Args: { p_user: string; p_video: string };
         Returns: boolean;
+      };
+      admin_grant_access: {
+        Args: { p_email: string; p_plan_id: string; p_amount: number; p_method: string };
+        Returns: { result: "ativado" | "reservado"; period_end: string }[];
+      };
+      admin_revoke_manual_access: {
+        Args: { p_user: string };
+        Returns: undefined;
       };
     };
   };
