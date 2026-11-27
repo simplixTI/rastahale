@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
             status: "inativo",
           })
           .eq("stripe_customer_id", sub.customer as string);
+        await supabaseAdmin.from("stripe_pending_access").delete().eq("stripe_customer_id", sub.customer as string);
         console.log("[stripe-webhook] assinatura cancelada:", sub.id);
         break;
       }
@@ -132,12 +133,6 @@ async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
   // Stripe para uma promoção): escolhe o plano ativo de mesmo intervalo.
   if (!plan) plan = await planByInterval(item?.price?.recurring?.interval);
 
-  const linked = await linkCustomer(customerId);
-  if (!linked) {
-    console.warn("[stripe-webhook] assinatura sem aluno no app:", sub.id, customerId);
-    return;
-  }
-
   // API 2025+: current_period_end saiu do topo da subscription e foi para o item.
   // Fallback: usa o topo se ainda existir (versões antigas ou compatibilidade).
   const itemPeriodEnd = (item as { current_period_end?: number } | undefined)?.current_period_end;
@@ -146,6 +141,30 @@ async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
   const currentPeriodEnd = typeof periodEndUnix === "number"
     ? new Date(periodEndUnix * 1000).toISOString()
     : null;
+
+  const linked = await linkCustomer(customerId);
+  if (!linked) {
+    // Pagou antes de ter conta: reserva o acesso pelo e-mail. O perfil já
+    // nasce liberado no cadastro (migration 024).
+    const customer = await stripe.customers.retrieve(customerId).catch(() => null);
+    const email = customer && !("deleted" in customer && customer.deleted)
+      ? (customer as Stripe.Customer).email?.trim().toLowerCase() : undefined;
+    if (email && (sub.status === "active" || sub.status === "trialing")) {
+      const { error } = await supabaseAdmin.from("stripe_pending_access").upsert({
+        email,
+        stripe_customer_id:     customerId,
+        stripe_subscription_id: sub.id,
+        plan_name:              plan?.name ?? null,
+        current_period_end:     currentPeriodEnd,
+      });
+      if (error) throw error;
+      console.log("[stripe-webhook] acesso reservado para cadastro futuro:", email, sub.id);
+    } else {
+      console.warn("[stripe-webhook] assinatura sem aluno no app:", sub.id, customerId);
+    }
+    return;
+  }
+
 
   const updates: Record<string, unknown> = {
     stripe_subscription_id: sub.id,
