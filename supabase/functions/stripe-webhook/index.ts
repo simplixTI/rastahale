@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
         // Compra avulsa de módulo (migration 022): não há assinatura, a
         // liberação acontece aqui.
         if (session.metadata?.kind === "module") await grantModule(session);
+        else if (typeof session.customer === "string") {
+          await linkCustomer(session.customer, session.customer_details?.email ?? session.customer_email);
+        }
         break;
       }
 
@@ -122,9 +125,18 @@ async function syncSubscription(sub: Stripe.Subscription): Promise<void> {
   if (rpcErr) console.warn("[stripe-webhook] RPC plan_id_by_stripe_price:", rpcErr.message);
 
   const planId = typeof planIdRow === "string" ? planIdRow : null;
-  const { data: plan } = planId
+  let { data: plan } = planId
     ? await supabaseAdmin.from("plans").select("name").eq("id", planId).maybeSingle()
     : { data: null };
+  // Preço que não está em plans (ex.: link de pagamento criado direto no
+  // Stripe para uma promoção): escolhe o plano ativo de mesmo intervalo.
+  if (!plan) plan = await planByInterval(item?.price?.recurring?.interval);
+
+  const linked = await linkCustomer(customerId);
+  if (!linked) {
+    console.warn("[stripe-webhook] assinatura sem aluno no app:", sub.id, customerId);
+    return;
+  }
 
   // API 2025+: current_period_end saiu do topo da subscription e foi para o item.
   // Fallback: usa o topo se ainda existir (versões antigas ou compatibilidade).
@@ -168,6 +180,7 @@ async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou")
     .maybeSingle();
   if (existing) return;
 
+  await linkCustomer(customerId, invoice.customer_email);
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("id, name")
@@ -250,4 +263,55 @@ async function grantModule(session: Stripe.Checkout.Session): Promise<void> {
   });
 
   console.log("[stripe-webhook] módulo liberado:", moduleId, "para", userId);
+}
+
+/**
+ * Garante que o cliente do Stripe está ligado a um aluno (profiles.stripe_customer_id).
+ * O botão "Assinar" do site já grava esse vínculo antes do pagamento; quem paga
+ * por um link de pagamento criado direto no Stripe chega sem ele. Nesse caso
+ * achamos o aluno pelo e-mail usado no pagamento, só entre perfis ainda sem
+ * cliente do Stripe (nunca troca o cliente de quem já tem um).
+ * Devolve o id do perfil, ou null se não houver aluno com esse e-mail.
+ */
+async function linkCustomer(customerId: string, emailHint?: string | null): Promise<string | null> {
+  const { data: current } = await supabaseAdmin
+    .from("profiles").select("id").eq("stripe_customer_id", customerId).maybeSingle();
+  if (current) return current.id;
+
+  let email = emailHint?.trim();
+  if (!email) {
+    const customer = await stripe.customers.retrieve(customerId).catch(() => null);
+    email = customer && !("deleted" in customer && customer.deleted)
+      ? (customer as Stripe.Customer).email?.trim() : undefined;
+  }
+  if (!email) {
+    console.warn("[stripe-webhook] cliente sem e-mail, não dá para achar o aluno:", customerId);
+    return null;
+  }
+
+  const { data: matches } = await supabaseAdmin
+    .from("profiles").select("id").ilike("email", email).is("stripe_customer_id", null).limit(2);
+  if (!matches || matches.length !== 1) {
+    console.warn("[stripe-webhook] nenhum aluno (ou mais de um) com o e-mail do pagamento:", email, customerId);
+    return null;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("profiles").update({ stripe_customer_id: customerId })
+    .eq("id", matches[0].id).is("stripe_customer_id", null);
+  if (error) {
+    console.error("[stripe-webhook] falha ao ligar cliente ao aluno:", error.message);
+    throw error;
+  }
+  console.log("[stripe-webhook] cliente ligado ao aluno pelo e-mail:", customerId, matches[0].id);
+  return matches[0].id;
+}
+
+/** Plano ativo com o mesmo intervalo do preço ("month" → mensal, "year" → anual). */
+async function planByInterval(interval?: string | null): Promise<{ name: string } | null> {
+  const wanted = interval === "year" ? "anual" : interval === "month" ? "mensal" : null;
+  if (!wanted) return null;
+  const { data } = await supabaseAdmin
+    .from("plans").select("name").eq("active", true).eq("interval", wanted).limit(1).maybeSingle();
+  return data ?? null;
 }
