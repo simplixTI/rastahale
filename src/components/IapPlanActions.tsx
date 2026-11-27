@@ -146,14 +146,32 @@ const IapPlanActions = ({ userId, isActive, subscriptionSource }: Props) => {
 
       {packages.map((pkg) => {
         const interval = PERIOD_TO_INTERVAL[pkg.product.subscriptionPeriod ?? ""];
+        // Oferta de entrada da Apple (ex.: R$ 214,90 no 1º ano). A janela de
+        // compra da Apple mostra o valor final; aqui deixamos claro o preço
+        // da oferta e o da renovação.
+        const intro = pkg.product.introPrice;
+        const regular = (
+          <>
+            {pkg.product.priceString}
+            {interval && <span className="text-muted-foreground"> {labels.interval(interval)}</span>}
+          </>
+        );
         return (
           <div key={pkg.identifier} className="rounded-xl border border-border bg-card p-4 space-y-3">
             <div>
               <p className="text-sm font-bold text-foreground">{pkg.product.title}</p>
-              <p className="mt-0.5 text-sm text-foreground">
-                {pkg.product.priceString}
-                {interval && <span className="text-muted-foreground"> {labels.interval(interval)}</span>}
-              </p>
+              {intro && intro.price > 0 ? (
+                <>
+                  <p className="mt-0.5 text-sm font-semibold text-primary">
+                    {t(intro.periodUnit === "YEAR" ? "plan.iapIntroYear" : "plan.iapIntroPrice", { price: intro.priceString })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("plan.iapIntroThen")} {regular}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-0.5 text-sm text-foreground">{regular}</p>
+              )}
               {pkg.product.description && (
                 <p className="mt-1 text-xs text-muted-foreground">{pkg.product.description}</p>
               )}
