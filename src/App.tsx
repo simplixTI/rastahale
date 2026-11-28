@@ -43,6 +43,7 @@ import StudioBottomBar from "./components/StudioBottomBar";
 import NotFound from "./pages/NotFound";
 import EditProfile from "./pages/EditProfile";
 import MyPlan from "./pages/MyPlan";
+import Checkout from "./pages/Checkout";
 import Settings from "./pages/Settings";
 import BottomTabBar from "./components/BottomTabBar";
 import AdminTabBar from "./components/AdminTabBar";
@@ -163,6 +164,7 @@ const AppRoutes = () => {
         <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/perfil/editar" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path="/perfil/plano" element={<ProtectedRoute><MyPlan /></ProtectedRoute>} />
+        <Route path="/assinar/:planId" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
         <Route path="/perfil/configuracoes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/video/:id" element={<ProtectedRoute><VideoDetail /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />

@@ -15,7 +15,7 @@ const AdminPayments = () => {
   const [methodFilter, setMethodFilter] = useState<string>("todos");
 
   const statuses = ["todos", "pago", "pendente", "falhou"];
-  const methods   = ["todos", "Stripe", "PIX", "Cartão", "Boleto"];
+  const methods   = ["todos", "Appmax", "Stripe", "PIX", "Cartão", "Boleto"];
 
   const filtered = useMemo(() => {
     return payments.filter((p) => {

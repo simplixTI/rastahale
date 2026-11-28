@@ -186,7 +186,7 @@ export function useAdminPayments() {
           user_id:   p.user_id,
           user_name: p.user_name,
           amount:    Number(p.amount),
-          method:    p.method as "PIX" | "Cartão" | "Boleto" | "Stripe",
+          method:    p.method as "PIX" | "Cartão" | "Boleto" | "Stripe" | "Appmax",
           status:    p.status as "pago" | "pendente" | "falhou",
           date:      p.date,
           plan_name: p.plan_name,

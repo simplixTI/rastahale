@@ -132,7 +132,7 @@ export interface Database {
           user_name: string;
           amount: number;
           // Migration 018 amplia o enum para incluir "Stripe".
-          method: "PIX" | "Cartão" | "Boleto" | "Stripe";
+          method: "PIX" | "Cartão" | "Boleto" | "Stripe" | "Appmax";
           status: "pago" | "pendente" | "falhou";
           date: string;
           plan_name: string;
@@ -140,9 +140,11 @@ export interface Database {
           stripe_invoice_id: string | null;
           stripe_subscription_id: string | null;
           stripe_payment_intent: string | null;
+          // Migration 027: "appmax:<order_id>", idempotência do pagamento.
+          external_ref: string | null;
         };
-        Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "created_at" | "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent"> &
-          Partial<Pick<Database["public"]["Tables"]["payments"]["Row"], "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent">>;
+        Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "created_at" | "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent" | "external_ref" | "email"> &
+          Partial<Pick<Database["public"]["Tables"]["payments"]["Row"], "stripe_invoice_id" | "stripe_subscription_id" | "stripe_payment_intent" | "external_ref" | "email">>;
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
         Relationships: [];
       };
@@ -287,6 +289,29 @@ export interface Database {
         Relationships: [
           { foreignKeyName: "module_purchases_module_id_fkey"; columns: ["module_id"]; isOneToOne: false; referencedRelation: "studio_sessions"; referencedColumns: ["id"] },
         ];
+      };
+      // Migration 027: pedidos do checkout do site pela Appmax.
+      appmax_orders: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_id: string;
+          amount: number;
+          method: "creditcard" | "pix";
+          appmax_customer_id: number | null;
+          appmax_order_id: number | null;
+          status: string;
+          applied: boolean;
+          refunded: boolean;
+          pix_emv: string | null;
+          pix_expires_at: string | null;
+          error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["appmax_orders"]["Row"]> & Pick<Database["public"]["Tables"]["appmax_orders"]["Row"], "user_id" | "plan_id" | "amount" | "method">;
+        Update: Partial<Database["public"]["Tables"]["appmax_orders"]["Row"]>;
+        Relationships: [];
       };
       // Migrations 024/025: acesso pago antes do cadastro (Stripe ou admin).
       stripe_pending_access: {

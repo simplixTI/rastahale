@@ -87,14 +87,11 @@ const MyPlan = () => {
     setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams, queryClient, user?.id, t]);
 
-  const openCheckout = async (planId: string) => {
+  // Assinatura nova no site: checkout próprio pela Appmax (cartão e Pix).
+  // O Stripe continua só para quem já assina por lá (portal de gerenciamento).
+  const openCheckout = (planId: string) => {
     if (!planId) return;
-    try {
-      const url = await checkout.mutateAsync(planId);
-      window.location.href = url;
-    } catch (err) {
-      toast.error((err as Error).message || t("plan.cancelError"));
-    }
+    navigate(`/assinar/${planId}`);
   };
 
   const openPortal = async () => {

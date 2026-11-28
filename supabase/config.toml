@@ -63,3 +63,6 @@ otp_expiry = 3600
 # falhar com 402. Fixamos como false pra o config push ficar limpo.
 [storage.vector]
 enabled = false
+
+[functions.appmax-checkout]
+verify_jwt = false
