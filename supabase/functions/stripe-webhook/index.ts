@@ -202,12 +202,15 @@ async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou")
   await linkCustomer(customerId, invoice.customer_email);
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("id, name")
+    .select("id, name, email")
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
 
-  if (!profile) {
-    console.warn("[stripe-webhook] fatura sem perfil correspondente:", invoiceId);
+  // Sem conta no app (pagou pelo link antes de se cadastrar): grava assim
+  // mesmo, com o e-mail. O cadastro liga o pagamento à conta (migration 026).
+  const email = (profile?.email ?? invoice.customer_email ?? "").trim().toLowerCase() || null;
+  if (!profile && !email) {
+    console.warn("[stripe-webhook] fatura sem aluno e sem e-mail:", invoiceId);
     return;
   }
 
@@ -216,9 +219,10 @@ async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou")
     ?? invoice.lines?.data?.[0]?.price?.nickname
     ?? "Assinatura";
 
-  await supabaseAdmin.from("payments").insert({
-    user_id:                profile.id,
-    user_name:              profile.name,
+  const { error: insertErr } = await supabaseAdmin.from("payments").insert({
+    user_id:                profile?.id ?? null,
+    user_name:              profile?.name || invoice.customer_name || email || "",
+    email,
     amount,
     method:                 "Stripe",
     status,
@@ -228,6 +232,10 @@ async function recordPayment(invoice: Stripe.Invoice, status: "pago" | "falhou")
     stripe_subscription_id: invoice.subscription as string | null,
     stripe_payment_intent:  invoice.payment_intent as string | null,
   });
+  if (insertErr) {
+    console.error("[stripe-webhook] falha ao gravar pagamento:", insertErr.message, invoiceId);
+    throw insertErr;
+  }
 
   console.log("[stripe-webhook] pagamento registrado:", invoiceId, status);
 }

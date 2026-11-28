@@ -178,14 +178,15 @@ export function useAdminPayments() {
         const { data, error } = await supabase
           .from("payments")
           .select("*")
-          .order("date", { ascending: false });
+          .order("date", { ascending: false })
+          .order("created_at", { ascending: false });
         if (error) throw error;
         return (data ?? []).map((p) => ({
           id:        p.id,
           user_id:   p.user_id,
           user_name: p.user_name,
           amount:    Number(p.amount),
-          method:    p.method as "PIX" | "Cartão" | "Boleto",
+          method:    p.method as "PIX" | "Cartão" | "Boleto" | "Stripe",
           status:    p.status as "pago" | "pendente" | "falhou",
           date:      p.date,
           plan_name: p.plan_name,

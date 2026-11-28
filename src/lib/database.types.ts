@@ -126,7 +126,9 @@ export interface Database {
       payments: {
         Row: {
           id: string;
-          user_id: string;
+          // Migration 026: nulo enquanto quem pagou não tem conta (ver email).
+          user_id: string | null;
+          email: string | null;
           user_name: string;
           amount: number;
           // Migration 018 amplia o enum para incluir "Stripe".

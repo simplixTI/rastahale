@@ -97,6 +97,18 @@ const AdminDashboard = () => {
     const thisMonth = months[5].total;
     const lastMonth = months[4].total;
 
+    // Do mês: o que veio do Stripe e o que foi ativação avulsa (Pix,
+    // maquininha... lançado em Ativação manual).
+    const paidThisMonth = payments.filter((p) => {
+      const d = parseDate(p.date);
+      return p.status === "pago" && d && monthKey(d) === monthKey(today);
+    });
+    const isManual = (p: { method: string }) => p.method !== "Stripe";
+    const monthStripe = paidThisMonth.filter((p) => !isManual(p)).reduce((s, p) => s + Number(p.amount), 0);
+    const monthManualList = paidThisMonth.filter(isManual);
+    const monthManual = monthManualList.reduce((s, p) => s + Number(p.amount), 0);
+    const totalRevenue = payments.filter((p) => p.status === "pago").reduce((s, p) => s + Number(p.amount), 0);
+
     const newThisMonth = students.filter((u) => {
       const d = parseDate(u.join_date);
       return d && monthKey(d) === monthKey(today);
@@ -106,6 +118,7 @@ const AdminDashboard = () => {
 
     return {
       students, byStatus, plans, months, thisMonth, lastMonth, newThisMonth, hidden,
+      monthStripe, monthManual, monthManualCount: monthManualList.length, totalRevenue,
       pendingPayments: payments.filter((p) => p.status === "pendente").length,
       noPhoto: instructors.filter((i) => !i.avatar).length,
       withStudio: instructors.filter((i) => i.hasLogin).length,
@@ -234,7 +247,12 @@ const AdminDashboard = () => {
         <button type="button" onClick={() => navigate("/admin/pagamentos")} className="rounded-2xl border border-border bg-card p-4 text-left">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><CreditCard size={14} aria-hidden="true" /> Receita do mês</p>
           <p className="tabular mt-2 text-3xl font-bold tracking-tight text-foreground">{brl(data.thisMonth)}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="tabular mt-2 text-xs text-muted-foreground">
+            Stripe {brl(data.monthStripe)} · Avulso {brl(data.monthManual)}
+            {data.monthManualCount > 0 && ` (${data.monthManualCount})`}
+          </p>
+          <p className="tabular mt-1 text-xs text-muted-foreground">Total desde o início: {brl(data.totalRevenue)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             {revenueDelta === null
               ? `Mês passado: ${brl(data.lastMonth)}`
               : <><span className={revenueDelta >= 0 ? "font-semibold text-emerald-700 dark:text-emerald-400" : "font-semibold text-red-700 dark:text-red-400"}>{revenueDelta >= 0 ? "+" : ""}{revenueDelta}%</span> sobre o mês passado</>}
@@ -339,7 +357,7 @@ const AdminDashboard = () => {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{p.user_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {parseDate(p.date)?.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {p.method}
+                      {parseDate(p.date)?.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {p.method === "Stripe" ? "Stripe" : `Avulso (${p.method})`}
                     </p>
                   </div>
                   <div className="text-right">
